@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LogAktivitas;
 use App\Models\Spp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,7 +48,9 @@ class SppController extends Controller
             'nominal.min' => 'Nominal SPP minimal Rp 1.000.',
         ]);
 
-        Spp::create($validated);
+        $spp = Spp::create($validated);
+
+        LogAktivitas::catat('spp.dibuat', "Tarif SPP TA {$spp->tahun_ajaran} dibuat ({$spp->formattedNominal()}/bulan)", $spp, $validated);
 
         return redirect()->route('spp.index')->with('success', 'Tarif SPP berhasil ditambahkan.');
     }
@@ -77,7 +80,14 @@ class SppController extends Controller
             'nominal.required' => 'Nominal SPP per bulan wajib diisi.',
         ]);
 
+        $sebelum = $spp->only(['tahun', 'tahun_ajaran', 'nominal', 'keterangan']);
+
         $spp->update($validated);
+
+        LogAktivitas::catat('spp.diubah', "Tarif SPP TA {$spp->tahun_ajaran} diubah", $spp, [
+            'sebelum' => $sebelum,
+            'sesudah' => $validated,
+        ]);
 
         return redirect()->route('spp.index')->with('success', 'Tarif SPP berhasil diperbarui.');
     }
@@ -94,6 +104,8 @@ class SppController extends Controller
         if ($spp->pembayarans()->exists()) {
             return back()->with('error', 'Tarif SPP tidak dapat dihapus karena sudah ada riwayat transaksi pembayaran.');
         }
+
+        LogAktivitas::catat('spp.dihapus', "Tarif SPP TA {$spp->tahun_ajaran} dihapus", $spp, $spp->only(['tahun', 'tahun_ajaran', 'nominal', 'keterangan']));
 
         $spp->delete();
 

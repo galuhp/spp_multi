@@ -152,6 +152,28 @@ class SppSystemTest extends TestCase
         $printResponse->assertStatus(200);
     }
 
+    public function test_payment_form_flows_from_class_to_student_to_months(): void
+    {
+        // Step 1: classes are listed
+        $this->actingAs($this->petugas)->get('/pembayaran/create')
+            ->assertStatus(200)
+            ->assertSee('Pilih Kelas')
+            ->assertSee($this->kelas->nama_kelas);
+
+        // Step 2: students of the chosen class are listed
+        $this->actingAs($this->petugas)->get('/pembayaran/create?kelas_id=' . $this->kelas->id)
+            ->assertStatus(200)
+            ->assertSee($this->siswa->nama)
+            ->assertSee('0/12 dibayar');
+
+        // Step 3: opening a student resolves the class and shows the recommendation
+        $this->actingAs($this->petugas)->get('/pembayaran/create?siswa_id=' . $this->siswa->id)
+            ->assertStatus(200)
+            ->assertSee('Rekomendasi')
+            ->assertSee('DISARANKAN')
+            ->assertSee('Juli');
+    }
+
     public function test_duplicate_payment_for_same_month_is_prevented(): void
     {
         // First payment

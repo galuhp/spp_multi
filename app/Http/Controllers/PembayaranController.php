@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kelas;
+use App\Models\LogAktivitas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
@@ -58,19 +60,22 @@ class PembayaranController extends Controller
      */
     public function create(Request $request): View
     {
-        $selectedSiswaId = $request->query('siswa_id');
         $selectedSiswa = null;
         $unpaidMonths = [];
+        $siswaId = $request->query('siswa_id');
+        $kelasId = $request->query('kelas_id');
 
-        if ($selectedSiswaId) {
-            $selectedSiswa = Siswa::with(['kelas.jurusan', 'spp', 'pembayarans'])->find($selectedSiswaId);
+        if ($siswaId) {
+            $selectedSiswa = Siswa::with(['kelas.jurusan', 'spp', 'pembayarans'])->find($siswaId);
 
             if ($selectedSiswa) {
+                $kelasId = $selectedSiswa->kelas_id;
                 $activeYear = $selectedSiswa->spp?->tahun ?? (int) date('Y');
                 $paidMonths = $selectedSiswa->pembayarans
                     ->where('tahun_dibayar', $activeYear)
                     ->pluck('bulan_dibayar')
                     ->all();
+                $dueMonths = $this->dueMonths($activeYear);
 
                 foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
                     if (! in_array($bulan, $paidMonths, true)) {
@@ -78,20 +83,65 @@ class PembayaranController extends Controller
                             'bulan' => $bulan,
                             'tahun' => $activeYear,
                             'nominal' => $selectedSiswa->spp?->nominal ?? 0,
+                            'jatuh_tempo' => in_array($bulan, $dueMonths, true),
                         ];
                     }
                 }
             }
         }
 
-        $allSiswas = Siswa::with('kelas')->orderBy('nama')->get();
+        $kelasList = Kelas::with('jurusan')
+            ->withCount('siswas')
+            ->orderBy('tingkat')
+            ->orderBy('nama_kelas')
+            ->get();
+
+        $siswaKelas = collect();
+
+        if ($kelasId) {
+            $siswaKelas = Siswa::with(['spp', 'pembayarans:id,siswa_id,bulan_dibayar,tahun_dibayar'])
+                ->where('kelas_id', $kelasId)
+                ->orderBy('nama')
+                ->get()
+                ->each(function (Siswa $siswa) {
+                    $tahun = $siswa->spp?->tahun ?? (int) date('Y');
+                    $dibayar = $siswa->pembayarans->where('tahun_dibayar', $tahun)->pluck('bulan_dibayar')->all();
+                    $siswa->jumlah_dibayar = count($dibayar);
+                    $siswa->jumlah_tunggakan = count(array_diff($this->dueMonths($tahun), $dibayar));
+                });
+        }
 
         return view('pembayaran.create', [
-            'allSiswas' => $allSiswas,
+            'kelasList' => $kelasList,
+            'kelasId' => $kelasId ? (int) $kelasId : null,
+            'siswaKelas' => $siswaKelas,
             'selectedSiswa' => $selectedSiswa,
             'unpaidMonths' => $unpaidMonths,
-            'allMonths' => Pembayaran::TAHUN_AJARAN_BULAN_LIST,
         ]);
+    }
+
+    /**
+     * Months that are already due for a tariff year, based on today's date.
+     * The school year runs July to June and is keyed by its starting year.
+     *
+     * @return array<int, string>
+     */
+    protected function dueMonths(int $tarifTahun): array
+    {
+        $now = now();
+        $tahunAjaranMulai = $now->month >= 7 ? $now->year : $now->year - 1;
+
+        if ($tarifTahun > $tahunAjaranMulai) {
+            return [];
+        }
+
+        if ($tarifTahun < $tahunAjaranMulai) {
+            return Pembayaran::TAHUN_AJARAN_BULAN_LIST;
+        }
+
+        $indexSekarang = ($now->month + 5) % 12;
+
+        return array_slice(Pembayaran::TAHUN_AJARAN_BULAN_LIST, 0, $indexSekarang + 1);
     }
 
     /**
@@ -149,6 +199,13 @@ class PembayaranController extends Controller
                     'metode_pembayaran' => $validated['metode_pembayaran'],
                     'catatan' => $validated['catatan'] ?? ('Pembayaran SPP Bulan ' . $bulan . ' ' . $validated['tahun_dibayar']),
                 ]);
+
+                LogAktivitas::catat(
+                    'pembayaran.dibuat',
+                    "Pembayaran SPP {$bulan} {$validated['tahun_dibayar']} atas nama {$siswa->nama} ({$pembayaran->kode_transaksi})",
+                    $pembayaran,
+                    $pembayaran->only(['kode_transaksi', 'siswa_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar', 'metode_pembayaran', 'tgl_bayar'])
+                );
 
                 $createdPembayarans[] = $pembayaran;
             }
@@ -208,6 +265,15 @@ class PembayaranController extends Controller
      */
     public function destroy(Pembayaran $pembayaran): RedirectResponse
     {
+        $pembayaran->loadMissing('siswa');
+
+        LogAktivitas::catat(
+            'pembayaran.dihapus',
+            "Transaksi {$pembayaran->kode_transaksi} ({$pembayaran->bulan_dibayar} {$pembayaran->tahun_dibayar}, " . ($pembayaran->siswa?->nama ?? 'siswa tidak diketahui') . ') dihapus',
+            $pembayaran,
+            $pembayaran->only(['kode_transaksi', 'siswa_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar', 'metode_pembayaran', 'tgl_bayar', 'user_id'])
+        );
+
         $pembayaran->delete();
 
         return redirect()->route('pembayaran.index')->with('success', 'Transaksi pembayaran berhasil dihapus.');

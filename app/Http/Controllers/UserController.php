@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Models\LogAktivitas;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -67,7 +68,12 @@ class UserController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
 
-        User::create($validated);
+        $baru = User::create($validated);
+
+        LogAktivitas::catat('user.dibuat', "Pengguna {$baru->username} dibuat dengan peran {$baru->role->label()}", $baru, [
+            'username' => $baru->username,
+            'role' => $baru->role->value,
+        ]);
 
         return redirect()->route('user.index')->with('success', 'Pengguna berhasil ditambahkan.');
     }
@@ -108,7 +114,26 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
+        $sebelum = [
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'role' => $user->role->value,
+        ];
+        $passwordDiganti = array_key_exists('password', $validated);
+
         $user->update($validated);
+
+        LogAktivitas::catat('user.diubah', "Data pengguna {$user->username} diubah", $user, [
+            'sebelum' => $sebelum,
+            'sesudah' => [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role->value,
+            ],
+            'password_diganti' => $passwordDiganti,
+        ]);
 
         return redirect()->route('user.index')->with('success', 'Data pengguna berhasil diperbarui.');
     }
@@ -125,6 +150,12 @@ class UserController extends Controller
         if ($user->pembayarans()->exists()) {
             return back()->with('error', 'Pengguna tidak dapat dihapus karena memiliki riwayat input transaksi pembayaran.');
         }
+
+        LogAktivitas::catat('user.dihapus', "Pengguna {$user->username} dihapus", $user, [
+            'name' => $user->name,
+            'username' => $user->username,
+            'role' => $user->role->value,
+        ]);
 
         $user->delete();
 

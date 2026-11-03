@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JurusanController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\LogAktivitasController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\SiswaPortalController;
@@ -62,6 +63,9 @@ Route::middleware('auth')->group(function () {
 
         // Manajemen Pengguna & Hak Akses
         Route::resource('user', UserController::class)->except(['show']);
+
+        // Log Aktivitas
+        Route::get('/log-aktivitas', [LogAktivitasController::class, 'index'])->name('log.index');
     });
 
     // Siswa Only Portal Routes
