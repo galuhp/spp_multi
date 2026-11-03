@@ -16,13 +16,18 @@
 </head>
 <body class="bg-slate-100 p-4 sm:p-8 text-slate-900 antialiased font-sans">
     <div class="no-print max-w-2xl mx-auto mb-4 flex items-center justify-between">
-        <a href="{{ route('pembayaran.show', $pembayaran->id) }}" class="text-xs font-semibold text-slate-600 hover:text-slate-900">
+        <a href="{{ auth()->user()?->isSiswa() ? route('portal.riwayat') : route('pembayaran.show', $pembayaran->id) }}" class="text-xs font-semibold text-slate-600 hover:text-slate-900">
             &larr; Kembali ke Aplikasi
         </a>
-        <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm inline-flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-            Cetak Kuitansi
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ $pembayaran->buktiUrl() }}" target="_blank" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition shadow-sm inline-flex items-center gap-1.5">
+                Cek Link Bukti Digital
+            </a>
+            <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm inline-flex items-center gap-2 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Cetak Kuitansi
+            </button>
+        </div>
     </div>
 
     <!-- Printable Receipt Container -->
@@ -91,20 +96,27 @@
             </tfoot>
         </table>
 
-        <!-- Signatures -->
-        <div class="grid grid-cols-2 gap-4 text-xs text-center pt-6 mt-6 border-t border-slate-200">
-            <div>
+        <!-- QR Verification & Signatures -->
+        <div class="grid grid-cols-3 gap-4 items-end text-xs pt-6 mt-6 border-t border-slate-200">
+            <div class="text-center">
                 <p class="text-slate-600 mb-16">Siswa / Orang Tua,</p>
                 <p class="font-bold underline">{{ $pembayaran->siswa?->nama }}</p>
             </div>
-            <div>
+            <div class="flex flex-col items-center justify-center text-center">
+                <div class="p-1.5 bg-white border border-slate-300 rounded-lg inline-block shadow-2xs">
+                    {!! $pembayaran->qrCodeSvg(96) !!}
+                </div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-700 mt-1.5">Scan Cek Bukti Asli</p>
+                <p class="text-[9px] text-slate-500 leading-tight mt-0.5">Verifikasi online orang tua/wali</p>
+            </div>
+            <div class="text-center">
                 <p class="text-slate-600 mb-16">Bandung, {{ $pembayaran->tgl_bayar->translatedFormat('d F Y') }}<br>Petugas Kasir,</p>
                 <p class="font-bold underline">{{ $pembayaran->user?->name }}</p>
             </div>
         </div>
 
-        <p class="text-center text-[10px] text-slate-400 mt-8">
-            * Kuitansi ini merupakan bukti pembayaran SPP yang sah yang diterbitkan oleh sistem komputer sekolah.
+        <p class="text-center text-[10px] text-slate-500 mt-6 pt-3 border-t border-dashed border-slate-200">
+            * Kuitansi ini sah diterbitkan oleh sistem sekolah. Orang tua dapat memindai (scan) QR Code di atas menggunakan kamera HP untuk melihat bukti pembayaran digital resmi.
         </p>
     </div>
 </body>

@@ -110,15 +110,9 @@ class SiswaPortalController extends Controller
 
         $pembayaran->load(['siswa.kelas.jurusan', 'user', 'spp']);
 
-        $relatedPayments = Pembayaran::where('siswa_id', $pembayaran->siswa_id)
-            ->whereDate('tgl_bayar', $pembayaran->tgl_bayar)
-            ->where('created_at', '>=', $pembayaran->created_at->subMinutes(5))
-            ->where('created_at', '<=', $pembayaran->created_at->addMinutes(5))
-            ->get();
-
         return view('pembayaran.cetak', [
             'pembayaran' => $pembayaran,
-            'relatedPayments' => $relatedPayments,
+            'relatedPayments' => $pembayaran->relatedBatchPayments(),
         ]);
     }
 }

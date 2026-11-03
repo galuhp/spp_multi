@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\QrCodeSvg;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -118,5 +120,65 @@ class Pembayaran extends Model
     public function formattedJumlahBayar(): string
     {
         return 'Rp ' . number_format($this->jumlah_bayar, 0, ',', '.');
+    }
+
+    /**
+     * Retrieve all payments recorded in the same checkout batch for this student.
+     *
+     * @return Collection<int, self>
+     */
+    public function relatedBatchPayments(): Collection
+    {
+        $query = static::query()
+            ->with('spp')
+            ->where('siswa_id', $this->siswa_id)
+            ->whereDate('tgl_bayar', $this->tgl_bayar);
+
+        if ($this->created_at !== null) {
+            $query->where('created_at', '>=', $this->created_at->copy()->subMinutes(5))
+                ->where('created_at', '<=', $this->created_at->copy()->addMinutes(5));
+        } else {
+            $query->whereKey($this->id);
+        }
+
+        return $query->orderBy('id')->get();
+    }
+
+    /**
+     * Generate a deterministic HMAC-SHA256 verification token for public receipt links.
+     */
+    public function verificationToken(): string
+    {
+        $secret = (string) config('app.key', 'spp-verification-key');
+        $payload = 'bukti-spp:' . $this->id . ':' . $this->kode_transaksi;
+
+        return substr(hash_hmac('sha256', $payload, $secret), 0, 16);
+    }
+
+    /**
+     * Determine whether the given token matches this payment's verification token.
+     */
+    public function hasValidVerificationToken(string $token): bool
+    {
+        return hash_equals($this->verificationToken(), strtolower($token));
+    }
+
+    /**
+     * Build the public digital receipt URL embedded inside the printed QR code.
+     */
+    public function buktiUrl(): string
+    {
+        return route('bukti.pembayaran', [
+            'kode' => $this->kode_transaksi,
+            'token' => $this->verificationToken(),
+        ]);
+    }
+
+    /**
+     * Render an inline SVG QR code encoding the public verification URL.
+     */
+    public function qrCodeSvg(int $sizePx = 96): string
+    {
+        return QrCodeSvg::generate($this->buktiUrl(), $sizePx);
     }
 }

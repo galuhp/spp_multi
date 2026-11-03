@@ -228,16 +228,9 @@ class PembayaranController extends Controller
     {
         $pembayaran->load(['siswa.kelas.jurusan', 'user', 'spp']);
 
-        // Check if there are batch payments on the same date for the same student
-        $relatedPayments = Pembayaran::where('siswa_id', $pembayaran->siswa_id)
-            ->whereDate('tgl_bayar', $pembayaran->tgl_bayar)
-            ->where('created_at', '>=', $pembayaran->created_at->subMinutes(5))
-            ->where('created_at', '<=', $pembayaran->created_at->addMinutes(5))
-            ->get();
-
         return view('pembayaran.show', [
             'pembayaran' => $pembayaran,
-            'relatedPayments' => $relatedPayments,
+            'relatedPayments' => $pembayaran->relatedBatchPayments(),
         ]);
     }
 
@@ -248,15 +241,9 @@ class PembayaranController extends Controller
     {
         $pembayaran->load(['siswa.kelas.jurusan', 'user', 'spp']);
 
-        $relatedPayments = Pembayaran::where('siswa_id', $pembayaran->siswa_id)
-            ->whereDate('tgl_bayar', $pembayaran->tgl_bayar)
-            ->where('created_at', '>=', $pembayaran->created_at->subMinutes(5))
-            ->where('created_at', '<=', $pembayaran->created_at->addMinutes(5))
-            ->get();
-
         return view('pembayaran.cetak', [
             'pembayaran' => $pembayaran,
-            'relatedPayments' => $relatedPayments,
+            'relatedPayments' => $pembayaran->relatedBatchPayments(),
         ]);
     }
 

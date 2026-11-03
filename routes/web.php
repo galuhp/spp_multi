@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BuktiPembayaranController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JurusanController;
 use App\Http\Controllers\KelasController;
@@ -17,6 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
+
+// Public Digital Receipt Verification (QR Code Scan)
+Route::get('/bukti/{kode}/{token}', [BuktiPembayaranController::class, 'show'])
+    ->name('bukti.pembayaran');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {

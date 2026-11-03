@@ -92,11 +92,20 @@
                 </tfoot>
             </table>
 
-            <!-- Signatures & Status -->
-            <div class="pt-6 grid grid-cols-2 gap-6 text-xs text-center border-t border-slate-100 dark:border-white/10">
+            <!-- Signatures, QR Verification & Status -->
+            <div class="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-6 items-end text-xs text-center border-t border-slate-100 dark:border-white/10">
                 <div>
                     <p class="text-slate-500 dark:text-slate-400 mb-14">Siswa / Pembayar,</p>
                     <p class="font-bold text-slate-900 dark:text-white underline">{{ $pembayaran->siswa?->nama }}</p>
+                </div>
+                <div class="flex flex-col items-center justify-center">
+                    <a href="{{ $pembayaran->buktiUrl() }}" target="_blank" title="Buka halaman verifikasi bukti pembayaran publik" class="p-2 bg-white rounded-xl border border-slate-200 dark:border-white/20 shadow-xs hover:scale-[1.03] transition">
+                        {!! $pembayaran->qrCodeSvg(92) !!}
+                    </a>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mt-2">QR Bukti Pembayaran</span>
+                    <a href="{{ $pembayaran->buktiUrl() }}" target="_blank" class="text-[11px] text-prism-600 dark:text-prism-300 hover:underline mt-0.5">
+                        Buka Link Verifikasi &rarr;
+                    </a>
                 </div>
                 <div>
                     <p class="text-slate-500 dark:text-slate-400 mb-14">Petugas Kasir Penerima,</p>
