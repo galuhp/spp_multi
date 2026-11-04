@@ -19,6 +19,7 @@
             }
         }
     </style>
+    @wirekitStyles
 </head>
 <body class="h-full text-slate-800 antialiased flex flex-col min-h-screen">
     <!-- Mobile Navigation Drawer -->
@@ -178,5 +179,6 @@
             </main>
         </div>
     </div>
+    @wirekitScripts
 </body>
 </html>

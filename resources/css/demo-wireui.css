@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+
+@source '../views/demo/wireui.blade.php';
+@source '../../vendor/wireui/wireui/src';

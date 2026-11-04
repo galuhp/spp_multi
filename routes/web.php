@@ -22,6 +22,15 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
+// Demo UI kit (sementara, untuk evaluasi)
+Route::prefix('demo')->name('demo.')->group(function () {
+    Route::view('/preline', 'demo.preline')->name('preline');
+    Route::view('/mary', 'demo.mary')->name('mary');
+    Route::view('/flux', 'demo.flux')->name('flux');
+    Route::view('/wireui', 'demo.wireui')->name('wireui');
+    Route::view('/wirekit', 'demo.wirekit')->name('wirekit');
+});
+
 // Public Digital Receipt Verification (QR Code Scan)
 Route::get('/bukti/{kode}/{token}', [BuktiPembayaranController::class, 'show'])
     ->name('bukti.pembayaran');

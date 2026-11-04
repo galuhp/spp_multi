@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+
+@plugin 'daisyui' {
+    themes: light --default;
+}
+
+@source '../views/demo/mary.blade.php';
+@source '../../vendor/robsontenorio/mary/src/View/Components';

@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+
+@source '../views/demo/wirekit.blade.php';
+@source '../../vendor/pushery/wirekit/resources/views/**/*.blade.php';
