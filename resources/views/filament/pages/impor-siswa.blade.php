@@ -54,8 +54,8 @@
                         Format .xlsx, maksimal 5 MB dan 2.000 baris. Data dibaca per 500 baris ke tabel staging.
                     </p>
                 </div>
-                <a href="{{ route('impor-siswa.template') }}">
-                    <flux:button variant="primary" size="sm">Unduh Template Excel</flux:button>
+                <a href="{{ route('impor-siswa.template') }}" class="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
+                    Unduh Template Excel
                 </a>
             </div>
 
@@ -64,12 +64,14 @@
                     <label for="tahun_ajaran_id" class="mb-1 block text-xs font-medium text-slate-600">
                         Tahun ajaran tujuan
                     </label>
-                    <flux:select id="tahun_ajaran_id" wire:model.live="tahun_ajaran_id" :disabled="$batchId !== null">
-                        <flux:select.option value="">Pilih tahun ajaran</flux:select.option>
+                    <select id="tahun_ajaran_id" wire:model.live="tahun_ajaran_id"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        @disabled($batchId !== null)>
+                        <option value="">Pilih tahun ajaran</option>
                         @foreach ($this->tahunAjaranOptions as $id => $nama)
-                            <flux:select.option value="{{ $id }}">{{ $nama }}</flux:select.option>
+                            <option value="{{ $id }}">{{ $nama }}</option>
                         @endforeach
-                    </flux:select>
+                    </select>
                     @error('tahun_ajaran_id')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
@@ -79,12 +81,14 @@
                     <label for="spp_id" class="mb-1 block text-xs font-medium text-slate-600">
                         Tarif SPP siswa baru
                     </label>
-                    <flux:select id="spp_id" wire:model="spp_id" :disabled="$batchId !== null">
-                        <flux:select.option value="">Pilih tarif SPP</flux:select.option>
+                    <select id="spp_id" wire:model="spp_id"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        @disabled($batchId !== null)>
+                        <option value="">Pilih tarif SPP</option>
                         @foreach ($this->sppOptions as $id => $label)
-                            <flux:select.option value="{{ $id }}">{{ $label }}</flux:select.option>
+                            <option value="{{ $id }}">{{ $label }}</option>
                         @endforeach
-                    </flux:select>
+                    </select>
                     @error('spp_id')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
@@ -96,7 +100,9 @@
                     <label for="berkas" class="mb-1 block text-xs font-medium text-slate-600">
                         Berkas Excel
                     </label>
-                    <flux:input id="berkas" type="file" wire:model="berkas" accept=".xlsx" :disabled="$batchId !== null" />
+                    <input id="berkas" type="file" wire:model="berkas" accept=".xlsx"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-indigo-700"
+                        @disabled($batchId !== null) />
                     @error('berkas')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
@@ -107,7 +113,9 @@
 
                 <div class="flex flex-col justify-end">
                     <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 p-3">
-                        <flux:checkbox wire:model="perbarui" :disabled="$batchId !== null" class="mt-0.5" />
+                        <input type="checkbox" wire:model="perbarui"
+                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            @disabled($batchId !== null) />
                         <span>
                             <span class="block text-xs font-medium text-slate-900">Perbarui data siswa yang sudah ada</span>
                             <span class="mt-0.5 block text-[11px] leading-relaxed text-slate-500">
@@ -119,17 +127,19 @@
             </div>
 
             <div class="mt-4 flex flex-wrap items-center gap-2">
-                <flux:button type="button" variant="primary" size="sm" wire:click="unggah" wire:loading.attr="disabled" wire:target="unggah,berkas" :disabled="$batchId !== null">
+                <button type="button" wire:click="unggah" wire:loading.attr="disabled" wire:target="unggah,berkas"
+                    class="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    @disabled($batchId !== null)>
                     <span wire:loading.remove wire:target="unggah">Unggah dan Validasi</span>
                     <span wire:loading wire:target="unggah">Memproses...</span>
-                </flux:button>
+                </button>
 
                 @if ($batchId !== null)
-                    <flux:button type="button" variant="ghost" size="sm" wire:click="batalkan">
+                    <button type="button" wire:click="batalkan" class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
                         Batalkan Pratinjau
-                    </flux:button>
-                    <a href="{{ route('impor-siswa.error', $batchId) }}">
-                        <flux:button variant="outline" size="sm">Unduh Laporan Error</flux:button>
+                    </button>
+                    <a href="{{ route('impor-siswa.error', $batchId) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                        Unduh Laporan Error
                     </a>
                 @endif
             </div>
@@ -172,9 +182,10 @@
 
                     <div class="flex flex-wrap items-center gap-1">
                         @foreach (['semua' => 'Semua', 'error' => 'Error', 'peringatan' => 'Peringatan', 'valid' => 'Valid'] as $nilai => $label)
-                            <flux:button type="button" size="xs" variant="{{ $filter === $nilai ? 'primary' : 'ghost' }}" wire:click="gantiFilter('{{ $nilai }}')">
+                            <button type="button" wire:click="gantiFilter('{{ $nilai }}')"
+                                class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium {{ $filter === $nilai ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                                 {{ $label }}
-                            </flux:button>
+                            </button>
                         @endforeach
                     </div>
                 </div>
@@ -229,26 +240,33 @@
                         Halaman {{ $halaman }} dari {{ $this->totalHalaman }}
                     </p>
                     <div class="flex items-center gap-2">
-                        <flux:button type="button" variant="ghost" size="sm" wire:click="keHalaman({{ $halaman - 1 }})" :disabled="$halaman <= 1">
+                        <button type="button" wire:click="keHalaman({{ $halaman - 1 }})"
+                            class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                            @disabled($halaman <= 1)>
                             Sebelumnya
-                        </flux:button>
-                        <flux:button type="button" variant="ghost" size="sm" wire:click="keHalaman({{ $halaman + 1 }})" :disabled="$halaman >= $this->totalHalaman">
+                        </button>
+                        <button type="button" wire:click="keHalaman({{ $halaman + 1 }})"
+                            class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                            @disabled($halaman >= $this->totalHalaman)>
                             Berikutnya
-                        </flux:button>
+                        </button>
                     </div>
                 </div>
 
                 <div class="mt-4 border-t border-slate-200 pt-4">
                     @if ($perbarui)
-                        <flux:button type="button" variant="primary" size="sm" wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan" wire:confirm="Simpan impor dan timpa {{ $jumlahAkanDitimpa }} data siswa yang sudah ada?">
+                        <button type="button" wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan"
+                            class="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                            wire:confirm="Simpan impor dan timpa {{ $jumlahAkanDitimpa }} data siswa yang sudah ada?">
                             <span wire:loading.remove wire:target="simpan">Simpan Baris Valid</span>
                             <span wire:loading wire:target="simpan">Menyimpan...</span>
-                        </flux:button>
+                        </button>
                     @else
-                        <flux:button type="button" variant="primary" size="sm" wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan">
+                        <button type="button" wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan"
+                            class="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
                             <span wire:loading.remove wire:target="simpan">Simpan Baris Valid</span>
                             <span wire:loading wire:target="simpan">Menyimpan...</span>
-                        </flux:button>
+                        </button>
                     @endif
                     <p class="mt-2 text-[11px] text-slate-500">
                         Penyimpanan dilakukan per 500 baris dalam transaksi database. Baris error tidak disimpan.
