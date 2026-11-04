@@ -10,7 +10,7 @@
     <div class="w-full max-w-md">
         <!-- Logo & Title -->
         <div class="text-center mb-8">
-            <div class="w-16 h-16 mx-auto rounded-2xl bg-zinc-900 flex items-center justify-center text-white font-black text-3xl shadow-xl mb-3">
+            <div class="w-16 h-16 mx-auto rounded-xl bg-zinc-900 flex items-center justify-center text-white font-black text-3xl shadow-xl mb-3">
                 S
             </div>
             <h1 class="text-2xl font-bold tracking-tight">Sistem Pembayaran SPP</h1>

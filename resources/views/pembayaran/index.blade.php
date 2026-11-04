@@ -7,8 +7,8 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h3 class="text-xl font-bold text-slate-900">Riwayat Transaksi SPP</h3>
-            <p class="text-xs text-slate-500 mt-1">Daftar seluruh penerimaan pembayaran SPP siswa sekolah</p>
+            <h3 class="text-xl font-bold text-zinc-900">Riwayat Transaksi SPP</h3>
+            <p class="text-xs text-zinc-500 mt-1">Daftar seluruh penerimaan pembayaran SPP siswa sekolah</p>
         </div>
         <x-ui.button as="a" href="{{ route('pembayaran.create') }}" variant="primary" icon="plus" class="self-start">
             Entri Pembayaran Baru
@@ -16,18 +16,18 @@
     </div>
 
     <!-- Filter Card -->
-    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+    <div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
         <form action="{{ route('pembayaran.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-5 gap-3">
             <div class="sm:col-span-2 relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-zinc-400 pointer-events-none">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </span>
                 <input type="text" name="search" value="{{ $search }}" placeholder="Cari No. Transaksi, Nama Siswa, NISN..."
-                    class="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    class="w-full pl-10 pr-3.5 py-2 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm">
             </div>
 
             <div>
-                <select name="kategori" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                <select name="kategori" class="w-full px-3 py-2 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm bg-white">
                     <option value="">-- Semua Pos Tarif --</option>
                     @foreach($kategoriList as $kat)
                         <option value="{{ $kat }}" {{ $kategori === $kat ? 'selected' : '' }}>{{ $kat }}</option>
@@ -37,17 +37,17 @@
 
             <div>
                 <input type="date" name="tgl_awal" value="{{ $tglAwal }}" title="Tanggal Awal"
-                    class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm">
             </div>
 
             <div class="flex items-center gap-2">
                 <input type="date" name="tgl_akhir" value="{{ $tglAkhir }}" title="Tanggal Akhir"
-                    class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    class="w-full px-3.5 py-2 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm">
 
                 <x-ui.button type="submit" variant="primary" size="sm" class="shrink-0">Filter</x-ui.button>
 
                 @if($search || $tglAwal || $tglAkhir || $kategori)
-                    <a href="{{ route('pembayaran.index') }}" class="px-2.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shrink-0">
+                    <a href="{{ route('pembayaran.index') }}" class="px-2.5 py-2 rounded-xl border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs transition shrink-0">
                         Reset
                     </a>
                 @endif
@@ -56,7 +56,7 @@
     </div>
 
     <!-- Summary Box -->
-    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
         <span class="text-xs font-semibold uppercase tracking-wider text-emerald-800">
             Total Penerimaan Berdasarkan Filter{{ $kategori ? " ({$kategori})" : '' }}:
         </span>
@@ -64,11 +64,11 @@
     </div>
 
     <!-- Transactions Table -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div class="bg-white rounded-xl border border-zinc-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
                 <thead>
-                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider">
+                    <tr class="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-semibold text-xs uppercase tracking-wider">
                         <th class="py-3 px-4 w-14 text-center">No</th>
                         <th class="py-3 px-4">No. Transaksi</th>
                         <th class="py-3 px-4">Tgl. Bayar</th>
@@ -81,25 +81,25 @@
                         <th class="py-3 px-4 text-center w-36">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tbody class="divide-y divide-zinc-100 text-zinc-700">
                     @forelse($pembayarans as $index => $item)
-                        <tr class="hover:bg-slate-50/60 transition">
-                            <td class="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
+                        <tr class="hover:bg-zinc-50 transition">
+                            <td class="py-3.5 px-4 text-center text-xs text-zinc-400 font-medium">
                                 {{ $pembayarans->firstItem() + $index }}
                             </td>
-                            <td class="py-3.5 px-4 font-mono font-bold text-xs text-indigo-700">
+                            <td class="py-3.5 px-4 font-mono font-bold text-xs text-zinc-900">
                                 {{ $item->kode_transaksi }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-600">
+                            <td class="py-3.5 px-4 text-xs text-zinc-600">
                                 {{ $item->tgl_bayar->format('d/m/Y') }}
                             </td>
                             <td class="py-3.5 px-4">
-                                <a href="{{ route('siswa.show', $item->siswa_id) }}" class="font-bold text-slate-900 hover:text-indigo-600 transition block">
+                                <a href="{{ route('siswa.show', $item->siswa_id) }}" class="font-bold text-zinc-900 hover:text-zinc-900 transition block">
                                     {{ $item->siswa?->nama ?? '-' }}
                                 </a>
-                                <div class="text-xs text-slate-400 font-mono">NISN: {{ $item->siswa?->nisn ?? '-' }}</div>
+                                <div class="text-xs text-zinc-400 font-mono">NISN: {{ $item->siswa?->nisn ?? '-' }}</div>
                             </td>
-                            <td class="py-3.5 px-4 text-xs font-medium text-slate-600">
+                            <td class="py-3.5 px-4 text-xs font-medium text-zinc-600">
                                 {{ $item->siswa?->kelas?->nama_kelas ?? '-' }}
                             </td>
                             <td class="py-3.5 px-4">
@@ -107,23 +107,23 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border {{ $item->spp?->badgeClass() }}">
                                         {{ $item->spp?->kategori ?? 'SPP' }}
                                     </span>
-                                    <span class="text-xs font-medium text-slate-800">
+                                    <span class="text-xs font-medium text-zinc-800">
                                         {{ $item->namaPos() }}
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 font-bold text-slate-900">
+                            <td class="py-3.5 px-4 font-bold text-zinc-900">
                                 {{ $item->formattedJumlahBayar() }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-600">
+                            <td class="py-3.5 px-4 text-xs text-zinc-600">
                                 {{ $item->metode_pembayaran }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-600">
+                            <td class="py-3.5 px-4 text-xs text-zinc-600">
                                 {{ $item->user?->name ?? '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <a href="{{ route('pembayaran.show', $item->id) }}" class="px-2 py-1 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition" title="Lihat & Cetak Kuitansi">
+                                    <a href="{{ route('pembayaran.show', $item->id) }}" class="px-2 py-1 rounded-lg text-xs font-semibold bg-zinc-100 hover:bg-indigo-100 text-zinc-900 border border-zinc-300 transition" title="Lihat & Cetak Kuitansi">
                                         Kuitansi
                                     </a>
                                     @if(auth()->user()->isAdmin())
@@ -140,7 +140,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="py-8 text-center text-slate-400 text-sm">
+                            <td colspan="10" class="py-8 text-center text-zinc-400 text-sm">
                                 Tidak ada data transaksi pembayaran yang ditemukan.
                             </td>
                         </tr>
@@ -150,7 +150,7 @@
         </div>
 
         @if($pembayarans->hasPages())
-            <div class="p-4 border-t border-slate-100">
+            <div class="p-4 border-t border-zinc-200">
                 {{ $pembayarans->links() }}
             </div>
         @endif

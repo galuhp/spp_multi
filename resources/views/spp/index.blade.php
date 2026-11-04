@@ -7,8 +7,8 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h3 class="text-xl font-bold text-slate-900">Tarif & Kategori Pembayaran</h3>
-            <p class="text-xs text-slate-500 mt-1">Kelola standar besaran iuran SPP bulanan serta pos tarif lainnya (uang gedung, seragam, dll.)</p>
+            <h3 class="text-xl font-bold text-zinc-900">Tarif & Kategori Pembayaran</h3>
+            <p class="text-xs text-zinc-500 mt-1">Kelola standar besaran iuran SPP bulanan serta pos tarif lainnya (uang gedung, seragam, dll.)</p>
         </div>
         <x-ui.button as="a" href="{{ route('spp.create') }}" variant="primary" icon="plus" class="self-start">
             Tambah Tarif Baru
@@ -18,22 +18,22 @@
     <!-- Category Filter Pills -->
     <div class="flex flex-wrap items-center gap-2">
         <a href="{{ route('spp.index') }}"
-            class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border {{ empty($kategori) ? 'bg-indigo-600 text-white shadow-sm border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50' }}">
+            class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border {{ empty($kategori) ? 'bg-zinc-900 text-white shadow-sm border-transparent' : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-50' }}">
             Semua Pos
         </a>
         @foreach($availableKategori as $kat)
             <a href="{{ route('spp.index', ['kategori' => $kat]) }}"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border {{ $kategori === $kat ? 'bg-indigo-600 text-white shadow-sm border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50' }}">
+                class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border {{ $kategori === $kat ? 'bg-zinc-900 text-white shadow-sm border-transparent' : 'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-50' }}">
                 {{ $kat }}
             </a>
         @endforeach
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div class="bg-white rounded-xl border border-zinc-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
                 <thead>
-                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider">
+                    <tr class="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-semibold text-xs uppercase tracking-wider">
                         <th class="py-3 px-4 w-16 text-center">No</th>
                         <th class="py-3 px-4">Kategori & Nama Pos</th>
                         <th class="py-3 px-4">Tipe Pembayaran</th>
@@ -44,10 +44,10 @@
                         <th class="py-3 px-4 text-center w-36">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tbody class="divide-y divide-zinc-100 text-zinc-700">
                     @forelse($spps as $index => $item)
-                        <tr class="hover:bg-slate-50/60 transition">
-                            <td class="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
+                        <tr class="hover:bg-zinc-50 transition">
+                            <td class="py-3.5 px-4 text-center text-xs text-zinc-400 font-medium">
                                 {{ $spps->firstItem() + $index }}
                             </td>
                             <td class="py-3.5 px-4">
@@ -56,28 +56,28 @@
                                         {{ $item->kategori }}
                                     </span>
                                     @if($item->nama)
-                                        <span class="font-bold text-slate-900 text-xs">{{ $item->nama }}</span>
+                                        <span class="font-bold text-zinc-900 text-xs">{{ $item->nama }}</span>
                                     @endif
                                 </div>
                             </td>
                             <td class="py-3.5 px-4 text-xs">
                                 @if($item->isBulanan())
-                                    <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
+                                    <span class="inline-flex items-center gap-1 text-zinc-700 font-medium">
                                         <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Bulanan (12 bln)
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
+                                    <span class="inline-flex items-center gap-1 text-zinc-700 font-medium">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Sekali Bayar / Bebas
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-3.5 px-4 font-semibold text-slate-900 text-xs">
-                                {{ $item->tahun_ajaran }} <span class="text-slate-400 font-normal">({{ $item->tahun }})</span>
+                            <td class="py-3.5 px-4 font-semibold text-zinc-900 text-xs">
+                                {{ $item->tahun_ajaran }} <span class="text-zinc-400 font-normal">({{ $item->tahun }})</span>
                             </td>
                             <td class="py-3.5 px-4 font-bold text-emerald-700 text-xs">
                                 {{ $item->formattedNominal() }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-500">
+                            <td class="py-3.5 px-4 text-xs text-zinc-500">
                                 {{ $item->keterangan ?? '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
@@ -86,14 +86,14 @@
                                         {{ $item->siswas_count }} Siswa
                                     </span>
                                 @else
-                                    <span class="text-xs text-slate-400">
+                                    <span class="text-xs text-zinc-400">
                                         Umum Angkatan
                                     </span>
                                 @endif
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <a href="{{ route('spp.edit', $item->id) }}" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Ubah Data">
+                                    <a href="{{ route('spp.edit', $item->id) }}" class="p-1.5 text-zinc-900 hover:bg-zinc-100 rounded-lg transition" title="Ubah Data">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
                                     <form action="{{ route('spp.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tarif {{ $item->kategori }} ini?');" class="inline">
@@ -108,7 +108,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-400 text-sm">
+                            <td colspan="8" class="py-8 text-center text-zinc-400 text-sm">
                                 Belum ada data tarif yang terdaftar{{ $kategori ? ' untuk kategori ' . $kategori : '' }}.
                             </td>
                         </tr>
@@ -118,7 +118,7 @@
         </div>
 
         @if($spps->hasPages())
-            <div class="p-4 border-t border-slate-100">
+            <div class="p-4 border-t border-zinc-200">
                 {{ $spps->links() }}
             </div>
         @endif

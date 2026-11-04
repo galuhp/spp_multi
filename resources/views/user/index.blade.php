@@ -7,8 +7,8 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h3 class="text-xl font-bold text-slate-900">Pengguna & Hak Akses</h3>
-            <p class="text-xs text-slate-500 mt-1">Kelola akun dan peranan (Administrator, Petugas/Kasir, dan Siswa)</p>
+            <h3 class="text-xl font-bold text-zinc-900">Pengguna & Hak Akses</h3>
+            <p class="text-xs text-zinc-500 mt-1">Kelola akun dan peranan (Administrator, Petugas/Kasir, dan Siswa)</p>
         </div>
         <x-ui.button as="a" href="{{ route('user.create') }}" variant="primary" icon="user-plus" class="self-start">
             Tambah Pengguna Baru
@@ -17,21 +17,21 @@
 
     <!-- Filter by Role Pills -->
     <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <a href="{{ route('user.index') }}" class="px-3.5 py-1.5 rounded-xl font-medium transition {{ ! $currentRole ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100' }}">
+        <a href="{{ route('user.index') }}" class="px-3.5 py-1.5 rounded-xl font-medium transition {{ ! $currentRole ? 'bg-zinc-900 text-white shadow-xs' : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100' }}">
             Semua Peran
         </a>
         @foreach($roles as $role)
-            <a href="{{ route('user.index', ['role' => $role->value]) }}" class="px-3.5 py-1.5 rounded-xl font-medium transition {{ $currentRole === $role->value ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100' }}">
+            <a href="{{ route('user.index', ['role' => $role->value]) }}" class="px-3.5 py-1.5 rounded-xl font-medium transition {{ $currentRole === $role->value ? 'bg-zinc-900 text-white shadow-xs' : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100' }}">
                 {{ $role->label() }}
             </a>
         @endforeach
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div class="bg-white rounded-xl border border-zinc-200 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
                 <thead>
-                    <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase">
+                    <tr class="border-b border-zinc-200 bg-zinc-50 text-zinc-600 text-xs font-semibold uppercase">
                         <th class="py-3 px-4 w-16 text-center">No</th>
                         <th class="py-3 px-4">Nama Lengkap</th>
                         <th class="py-3 px-4">Username / Akun</th>
@@ -41,22 +41,22 @@
                         <th class="py-3 px-4 text-center w-36">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tbody class="divide-y divide-zinc-100 text-zinc-700">
                     @forelse($users as $index => $item)
-                        <tr class="hover:bg-slate-50/60 transition">
-                            <td class="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
+                        <tr class="hover:bg-zinc-50 transition">
+                            <td class="py-3.5 px-4 text-center text-xs text-zinc-400 font-medium">
                                 {{ $users->firstItem() + $index }}
                             </td>
-                            <td class="py-3.5 px-4 font-semibold text-slate-900">
+                            <td class="py-3.5 px-4 font-semibold text-zinc-900">
                                 {{ $item->name }}
                                 @if(auth()->id() === $item->id)
-                                    <span class="ml-1 text-[10px] text-indigo-600 font-bold">(Akun Anda)</span>
+                                    <span class="ml-1 text-[10px] text-zinc-900 font-bold">(Akun Anda)</span>
                                 @endif
                             </td>
-                            <td class="py-3.5 px-4 font-mono font-medium text-xs text-slate-700">
+                            <td class="py-3.5 px-4 font-mono font-medium text-xs text-zinc-700">
                                 {{ $item->username }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-500">
+                            <td class="py-3.5 px-4 text-xs text-zinc-500">
                                 {{ $item->email ?? '-' }}
                             </td>
                             <td class="py-3.5 px-4">
@@ -64,12 +64,12 @@
                                     {{ $item->role->label() }}
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-500">
+                            <td class="py-3.5 px-4 text-xs text-zinc-500">
                                 {{ $item->created_at->format('d/m/Y') }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <a href="{{ route('user.edit', $item->id) }}" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Ubah Data">
+                                    <a href="{{ route('user.edit', $item->id) }}" class="p-1.5 text-zinc-900 hover:bg-zinc-100 rounded-lg transition" title="Ubah Data">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
                                     @if(auth()->id() !== $item->id)
@@ -86,7 +86,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
+                            <td colspan="7" class="py-8 text-center text-zinc-400 text-sm">
                                 Tidak ada data pengguna yang ditemukan.
                             </td>
                         </tr>
@@ -96,7 +96,7 @@
         </div>
 
         @if($users->hasPages())
-            <div class="p-4 border-t border-slate-100">
+            <div class="p-4 border-t border-zinc-200">
                 {{ $users->links() }}
             </div>
         @endif
