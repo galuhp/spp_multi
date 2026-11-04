@@ -308,11 +308,17 @@ class ImporSiswaMassalTest extends TestCase
         $this->assertDatabaseHas('siswas', ['nama' => 'Andi Wijaya', 'status' => 'aktif']);
     }
 
-    public function test_pengguna_biasa_tidak_bisa_membuka_halaman_impor(): void
+    public function test_petugas_dapat_membuka_halaman_impor_dan_siswa_tidak(): void
     {
         $petugas = User::factory()->create(['role' => UserRole::Petugas]);
 
         $this->actingAs($petugas)
+            ->get(route('filament.admin.pages.impor-siswa'))
+            ->assertOk();
+
+        $siswa = User::factory()->create(['role' => UserRole::Siswa]);
+
+        $this->actingAs($siswa)
             ->get(route('filament.admin.pages.impor-siswa'))
             ->assertForbidden();
     }
