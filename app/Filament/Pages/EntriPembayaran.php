@@ -27,6 +27,19 @@ class EntriPembayaran extends Page
         return auth()->user()?->isStaff() ?? false;
     }
 
+    /**
+     * Highlight this menu on both the redirect page and the create page.
+     *
+     * @return array<int, string>
+     */
+    public static function getNavigationItemActiveRoutePattern(): string|array
+    {
+        return [
+            static::getRouteName(),
+            CreatePembayaran::getRouteName(),
+        ];
+    }
+
     public function mount(): void
     {
         $this->redirect(CreatePembayaran::getUrl());

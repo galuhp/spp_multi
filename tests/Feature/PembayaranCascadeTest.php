@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Filament\Pages\EntriPembayaran;
 use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
+use App\Filament\Resources\Pembayarans\PembayaranResource;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Siswa;
@@ -147,5 +148,12 @@ class PembayaranCascadeTest extends TestCase
     {
         $this->get(EntriPembayaran::getUrl())
             ->assertRedirect(CreatePembayaran::getUrl());
+    }
+
+    public function test_tombol_tambah_tidak_tampil_di_history_pembayaran(): void
+    {
+        $this->get(PembayaranResource::getUrl('index'))
+            ->assertOk()
+            ->assertDontSee('New History Pembayaran');
     }
 }

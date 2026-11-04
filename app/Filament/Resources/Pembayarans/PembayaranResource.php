@@ -36,6 +36,16 @@ class PembayaranResource extends Resource
         return auth()->user()?->isStaff() ?? false;
     }
 
+    /**
+     * Keep the history menu inactive while the create form is open.
+     *
+     * @return array<int, string>
+     */
+    public static function getNavigationItemActiveRoutePattern(): string|array
+    {
+        return [static::getRouteBaseName().'.index'];
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
