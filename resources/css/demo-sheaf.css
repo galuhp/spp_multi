@@ -1,0 +1,7 @@
+@import './theme.css';
+@import 'tailwindcss';
+
+@source '../views/components/ui';
+@source '../views/demo/sheaf.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));

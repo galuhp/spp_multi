@@ -29,6 +29,7 @@ Route::prefix('demo')->name('demo.')->group(function () {
     Route::view('/flux', 'demo.flux')->name('flux');
     Route::view('/wireui', 'demo.wireui')->name('wireui');
     Route::view('/wirekit', 'demo.wirekit')->name('wirekit');
+    Route::view('/sheaf', 'demo.sheaf')->name('sheaf');
 });
 
 // Public Digital Receipt Verification (QR Code Scan)
