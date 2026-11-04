@@ -112,7 +112,7 @@
                             @else
                                 <span class="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700 dark:bg-rose-900 dark:text-rose-300">
                                     Belum Lunas
-                                </div>
+                                </span>
                                 <div class="mt-1 text-xs text-gray-500">
                                     Rp {{ number_format($item['nominal'], 0, ',', '.') }}
                                 </div>
