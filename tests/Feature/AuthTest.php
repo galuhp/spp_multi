@@ -65,24 +65,4 @@ class AuthTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/login');
     }
-
-    public function test_prism_theme_and_color_scheme_controls_are_rendered(): void
-    {
-        $loginResponse = $this->get('/login');
-        $loginResponse->assertStatus(200);
-        $loginResponse->assertSee('name="color-scheme" content="light dark"', false);
-        $loginResponse->assertSee('data-theme-toggle', false);
-        $loginResponse->assertSee('prism-canvas', false);
-
-        $user = User::factory()->create([
-            'username' => 'admin_prism',
-            'role' => UserRole::Admin,
-        ]);
-
-        $dashboardResponse = $this->actingAs($user)->get('/dashboard');
-        $dashboardResponse->assertStatus(200);
-        $dashboardResponse->assertSee('name="color-scheme" content="light dark"', false);
-        $dashboardResponse->assertSee('data-theme-toggle', false);
-        $dashboardResponse->assertSee('prism-hero', false);
-    }
 }

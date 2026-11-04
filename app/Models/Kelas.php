@@ -8,10 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['jurusan_id', 'nama_kelas', 'tingkat'])]
+#[Fillable(['jurusan_id', 'tahun_ajaran_id', 'nama_kelas', 'tingkat'])]
 class Kelas extends Model
 {
     use HasFactory;
+
+    /**
+     * Academic year that owns this class.
+     */
+    public function tahunAjaran(): BelongsTo
+    {
+        return $this->belongsTo(TahunAjaran::class);
+    }
 
     /**
      * Get the department that owns this class.

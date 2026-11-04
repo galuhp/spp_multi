@@ -7,11 +7,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['user_id', 'kelas_id', 'spp_id', 'nisn', 'nis', 'nama', 'jenis_kelamin', 'alamat', 'no_telp'])]
+#[Fillable(['user_id', 'kelas_id', 'spp_id', 'nisn', 'nik', 'nis', 'nama', 'tempat_lahir', 'tanggal_lahir', 'agama', 'jenis_kelamin', 'alamat', 'tanggal_masuk', 'status', 'no_telp'])]
 class Siswa extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'tanggal_lahir' => 'date',
+            'tanggal_masuk' => 'date',
+        ];
+    }
 
     /**
      * User account associated with this student (optional login).
@@ -43,6 +57,22 @@ class Siswa extends Model
     public function pembayarans(): HasMany
     {
         return $this->hasMany(Pembayaran::class);
+    }
+
+    /**
+     * Guardian data of this student.
+     */
+    public function wali(): HasOne
+    {
+        return $this->hasOne(Wali::class);
+    }
+
+    /**
+     * Class history of this student per academic year.
+     */
+    public function riwayatKelas(): HasMany
+    {
+        return $this->hasMany(RiwayatKelas::class);
     }
 
     /**

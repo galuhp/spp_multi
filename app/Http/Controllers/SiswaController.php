@@ -116,6 +116,7 @@ class SiswaController extends Controller
             ->get();
 
         $activeYear = $siswa->spp?->tahun ?? (int) date('Y');
+        $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
         $statusBulan = [];
 
         foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
@@ -131,10 +132,33 @@ class SiswaController extends Controller
             ];
         }
 
+        $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
+            ->where(function ($q) use ($activeYear, $activeTahunAjaran) {
+                $q->where('tahun', $activeYear)
+                    ->orWhere('tahun_ajaran', $activeTahunAjaran);
+            })
+            ->get()
+            ->map(function (Spp $tarif) use ($siswa) {
+                $dibayar = (int) $siswa->pembayarans
+                    ->where('spp_id', $tarif->id)
+                    ->sum('jumlah_bayar');
+                $sisa = max(0, $tarif->nominal - $dibayar);
+                $lunas = $sisa === 0 && $dibayar > 0;
+
+                return [
+                    'tarif' => $tarif,
+                    'nominal' => $tarif->nominal,
+                    'dibayar' => $dibayar,
+                    'sisa' => $sisa,
+                    'lunas' => $lunas,
+                ];
+            });
+
         return view('siswa.show', [
             'siswa' => $siswa,
             'riwayatPembayaran' => $riwayatPembayaran,
             'statusBulan' => $statusBulan,
+            'nonSppTarifs' => $nonSppTarifs,
             'activeYear' => $activeYear,
         ]);
     }
@@ -156,8 +180,8 @@ class SiswaController extends Controller
     public function update(Request $request, Siswa $siswa): RedirectResponse
     {
         $validated = $request->validate([
-            'nisn' => ['required', 'string', 'max:15', 'unique:siswas,nisn,' . $siswa->id],
-            'nis' => ['required', 'string', 'max:20', 'unique:siswas,nis,' . $siswa->id],
+            'nisn' => ['required', 'string', 'max:15', 'unique:siswas,nisn,'.$siswa->id],
+            'nis' => ['required', 'string', 'max:20', 'unique:siswas,nis,'.$siswa->id],
             'nama' => ['required', 'string', 'max:100'],
             'kelas_id' => ['required', 'exists:kelas,id'],
             'spp_id' => ['required', 'exists:spps,id'],

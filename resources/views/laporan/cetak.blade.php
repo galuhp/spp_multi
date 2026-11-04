@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light">
-    <title>Laporan Rekapitulasi Pembayaran SPP</title>
+    @php $sekolah = \App\Models\ProfilSekolah::current(); @endphp
+    <title>Laporan Rekapitulasi Pembayaran SPP - {{ $sekolah->nama_sekolah }}</title>
     @vite(['resources/css/app.css'])
     <style>
         @media print {
@@ -29,19 +29,22 @@
     <div class="max-w-5xl mx-auto bg-white p-8 sm:p-10 rounded-xl shadow-sm border border-slate-200">
         <!-- Official School Letterhead (Kop Surat) -->
         <div class="text-center border-b-2 border-black pb-4 mb-6">
-            <h1 class="text-xl font-black uppercase tracking-wider">PEMERINTAH DAERAH PROVINSI JAWA BARAT</h1>
-            <h2 class="text-lg font-extrabold uppercase">DINAS PENDIDIKAN DAN KEBUDAYAAN</h2>
-            <h3 class="text-2xl font-black uppercase tracking-wide mt-1">SMK NEGERI CONTOH KOTA BANDUNG</h3>
+            <h1 class="text-xl font-black uppercase tracking-wider">{{ $sekolah->pemerintah_daerah }}</h1>
+            <h2 class="text-lg font-extrabold uppercase">{{ $sekolah->dinas_pendidikan }}</h2>
+            <h3 class="text-2xl font-black uppercase tracking-wide mt-1">{{ $sekolah->nama_sekolah }} {{ $sekolah->kota ? 'KOTA ' . strtoupper($sekolah->kota) : '' }}</h3>
             <p class="text-xs text-slate-600 mt-1">
-                Jl. Pendidikan No. 123, Bandung 40123 &bull; Telp. (022) 1234567 &bull; Email: info@smknegericontoh.sch.id
+                {{ $sekolah->alamatLengkap() }} &bull; Telp. {{ $sekolah->no_telp }} &bull; Email: {{ $sekolah->email }}
             </p>
         </div>
 
         <!-- Document Title -->
         <div class="text-center mb-6">
-            <h4 class="text-base font-bold uppercase underline">LAPORAN REKAPITULASI PEMBAYARAN IURAN SPP</h4>
+            <h4 class="text-base font-bold uppercase underline">LAPORAN REKAPITULASI PENERIMAAN PEMBAYARAN</h4>
             <div class="text-xs text-slate-700 mt-1">
                 <span>Periode: <strong>{{ \Carbon\Carbon::parse($tglAwal)->translatedFormat('d F Y') }} s/d {{ \Carbon\Carbon::parse($tglAkhir)->translatedFormat('d F Y') }}</strong></span>
+                @if($kategori ?? false)
+                    <span class="ml-3">&bull; Pos Tarif: <strong>{{ $kategori }}</strong></span>
+                @endif
                 @if($selectedKelas)
                     <span class="ml-3">&bull; Kelas: <strong>{{ $selectedKelas->nama_kelas }}</strong></span>
                 @endif
@@ -61,7 +64,7 @@
                     <th class="py-2 px-2 border-r border-slate-300">Nama Siswa</th>
                     <th class="py-2 px-2 border-r border-slate-300">NISN</th>
                     <th class="py-2 px-2 border-r border-slate-300">Kelas</th>
-                    <th class="py-2 px-2 border-r border-slate-300">Bulan Dibayar</th>
+                    <th class="py-2 px-2 border-r border-slate-300">Pos Pembayaran</th>
                     <th class="py-2 px-2 border-r border-slate-300 text-right">Nominal</th>
                     <th class="py-2 px-2 border-r border-slate-300">Metode</th>
                     <th class="py-2 px-2">Petugas Kasir</th>
@@ -76,7 +79,9 @@
                         <td class="py-2 px-2 border-r border-slate-200 font-semibold">{{ $item->siswa?->nama ?? '-' }}</td>
                         <td class="py-2 px-2 border-r border-slate-200 font-mono">{{ $item->siswa?->nisn ?? '-' }}</td>
                         <td class="py-2 px-2 border-r border-slate-200">{{ $item->siswa?->kelas?->nama_kelas ?? '-' }}</td>
-                        <td class="py-2 px-2 border-r border-slate-200">{{ $item->bulan_dibayar }} {{ $item->tahun_dibayar }}</td>
+                        <td class="py-2 px-2 border-r border-slate-200">
+                            <strong>{{ $item->spp?->kategori ?? 'SPP' }}</strong> &bull; {{ $item->namaPos() }}
+                        </td>
                         <td class="py-2 px-2 border-r border-slate-200 text-right font-semibold">{{ $item->formattedJumlahBayar() }}</td>
                         <td class="py-2 px-2 border-r border-slate-200">{{ $item->metode_pembayaran }}</td>
                         <td class="py-2 px-2">{{ $item->user?->name ?? '-' }}</td>
@@ -92,7 +97,7 @@
             <tfoot>
                 <tr class="border-t-2 border-black font-bold bg-slate-50 text-xs">
                     <td colspan="7" class="py-2.5 px-3 border-r border-slate-300 text-right uppercase">
-                        Total Penerimaan SPP:
+                        Total Penerimaan:
                     </td>
                     <td class="py-2.5 px-3 border-r border-slate-300 text-right text-sm">
                         Rp {{ number_format($totalPenerimaan, 0, ',', '.') }}
@@ -107,14 +112,14 @@
             <div>
                 <p class="text-slate-600 mb-20">
                     Mengetahui,<br>
-                    <strong>Kepala Sekolah SMK Negeri Contoh</strong>
+                    <strong>Kepala Sekolah {{ $sekolah->nama_sekolah }}</strong>
                 </p>
-                <p class="font-bold underline text-sm">Drs. H. Rahmat Hidayat, M.M.Pd.</p>
-                <p class="text-[11px] text-slate-500">NIP. 19700101 199503 1 001</p>
+                <p class="font-bold underline text-sm">{{ $sekolah->nama_kepala_sekolah }}</p>
+                <p class="text-[11px] text-slate-500">NIP. {{ $sekolah->nip_kepala_sekolah ?? '-' }}</p>
             </div>
             <div>
                 <p class="text-slate-600 mb-20">
-                    Bandung, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+                    {{ $sekolah->kota ?? 'Bandung' }}, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
                     <strong>Bendahara / Petugas Keuangan</strong>
                 </p>
                 <p class="font-bold underline text-sm">{{ auth()->user()->name }}</p>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\Spp;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -19,6 +20,7 @@ class LaporanController extends Controller
         $tglAkhir = $request->query('tgl_akhir', Carbon::now()->format('Y-m-d'));
         $kelasId = $request->query('kelas_id');
         $metode = $request->query('metode_pembayaran');
+        $kategori = $request->query('kategori');
 
         $pembayarans = Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp'])
             ->when($tglAwal, function ($query, $tgl) {
@@ -35,12 +37,18 @@ class LaporanController extends Controller
             ->when($metode, function ($query, $m) {
                 return $query->where('metode_pembayaran', $m);
             })
+            ->when($kategori, function ($query, $kat) {
+                return $query->whereHas('spp', function ($q) use ($kat) {
+                    $q->where('kategori', $kat);
+                });
+            })
             ->orderBy('tgl_bayar', 'desc')
             ->orderBy('id', 'desc')
             ->get();
 
         $totalPenerimaan = $pembayarans->sum('jumlah_bayar');
         $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $kategoriList = Spp::select('kategori')->distinct()->pluck('kategori')->all();
 
         return view('laporan.index', [
             'pembayarans' => $pembayarans,
@@ -50,6 +58,8 @@ class LaporanController extends Controller
             'tglAkhir' => $tglAkhir,
             'kelasId' => $kelasId,
             'metode' => $metode,
+            'kategori' => $kategori,
+            'kategoriList' => $kategoriList,
         ]);
     }
 
@@ -62,6 +72,7 @@ class LaporanController extends Controller
         $tglAkhir = $request->query('tgl_akhir', Carbon::now()->format('Y-m-d'));
         $kelasId = $request->query('kelas_id');
         $metode = $request->query('metode_pembayaran');
+        $kategori = $request->query('kategori');
 
         $pembayarans = Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp'])
             ->when($tglAwal, function ($query, $tgl) {
@@ -77,6 +88,11 @@ class LaporanController extends Controller
             })
             ->when($metode, function ($query, $m) {
                 return $query->where('metode_pembayaran', $m);
+            })
+            ->when($kategori, function ($query, $kat) {
+                return $query->whereHas('spp', function ($q) use ($kat) {
+                    $q->where('kategori', $kat);
+                });
             })
             ->orderBy('tgl_bayar', 'asc')
             ->orderBy('id', 'asc')
@@ -92,6 +108,7 @@ class LaporanController extends Controller
             'tglAkhir' => $tglAkhir,
             'selectedKelas' => $selectedKelas,
             'metode' => $metode,
+            'kategori' => $kategori,
         ]);
     }
 }

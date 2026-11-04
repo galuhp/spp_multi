@@ -7,7 +7,6 @@ use App\Models\LogAktivitas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +22,7 @@ class PembayaranController extends Controller
         $search = $request->query('search');
         $tglAwal = $request->query('tgl_awal');
         $tglAkhir = $request->query('tgl_akhir');
+        $kategori = $request->query('kategori');
 
         $pembayarans = Pembayaran::with(['siswa.kelas', 'user', 'spp'])
             ->when($search, function ($query, $term) {
@@ -38,13 +38,25 @@ class PembayaranController extends Controller
             ->when($tglAkhir, function ($query, $tgl) {
                 return $query->whereDate('tgl_bayar', '<=', $tgl);
             })
+            ->when($kategori, function ($query, $kat) {
+                return $query->whereHas('spp', function ($q) use ($kat) {
+                    $q->where('kategori', $kat);
+                });
+            })
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
 
         $totalPenerimaan = Pembayaran::when($tglAwal, fn ($q) => $q->whereDate('tgl_bayar', '>=', $tglAwal))
             ->when($tglAkhir, fn ($q) => $q->whereDate('tgl_bayar', '<=', $tglAkhir))
+            ->when($kategori, fn ($q) => $q->whereHas('spp', fn ($sq) => $sq->where('kategori', $kategori)))
             ->sum('jumlah_bayar');
+
+        $kategoriList = Spp::query()
+            ->select('kategori')
+            ->distinct()
+            ->pluck('kategori')
+            ->all();
 
         return view('pembayaran.index', [
             'pembayarans' => $pembayarans,
@@ -52,6 +64,8 @@ class PembayaranController extends Controller
             'search' => $search,
             'tglAwal' => $tglAwal,
             'tglAkhir' => $tglAkhir,
+            'kategori' => $kategori,
+            'kategoriList' => $kategoriList,
         ]);
     }
 
@@ -62,17 +76,19 @@ class PembayaranController extends Controller
     {
         $selectedSiswa = null;
         $unpaidMonths = [];
+        $nonSppTarifs = collect();
         $siswaId = $request->query('siswa_id');
         $kelasId = $request->query('kelas_id');
 
         if ($siswaId) {
-            $selectedSiswa = Siswa::with(['kelas.jurusan', 'spp', 'pembayarans'])->find($siswaId);
+            $selectedSiswa = Siswa::with(['kelas.jurusan', 'spp', 'pembayarans.spp'])->find($siswaId);
 
             if ($selectedSiswa) {
                 $kelasId = $selectedSiswa->kelas_id;
                 $activeYear = $selectedSiswa->spp?->tahun ?? (int) date('Y');
                 $paidMonths = $selectedSiswa->pembayarans
                     ->where('tahun_dibayar', $activeYear)
+                    ->whereNotNull('bulan_dibayar')
                     ->pluck('bulan_dibayar')
                     ->all();
                 $dueMonths = $this->dueMonths($activeYear);
@@ -87,6 +103,31 @@ class PembayaranController extends Controller
                         ];
                     }
                 }
+
+                // Retrieve all non-SPP tariffs applicable to this student's year or academic year
+                $activeTahunAjaran = $selectedSiswa->spp?->tahun_ajaran;
+                $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
+                    ->where(function ($q) use ($activeYear, $activeTahunAjaran) {
+                        $q->where('tahun', $activeYear)
+                            ->orWhere('tahun_ajaran', $activeTahunAjaran);
+                    })
+                    ->orderBy('kategori')
+                    ->get()
+                    ->map(function (Spp $tarif) use ($selectedSiswa) {
+                        $dibayar = (int) $selectedSiswa->pembayarans
+                            ->where('spp_id', $tarif->id)
+                            ->sum('jumlah_bayar');
+                        $sisa = max(0, $tarif->nominal - $dibayar);
+                        $lunas = $sisa === 0 && $dibayar > 0;
+
+                        return [
+                            'tarif' => $tarif,
+                            'nominal' => $tarif->nominal,
+                            'dibayar' => $dibayar,
+                            'sisa' => $sisa,
+                            'lunas' => $lunas,
+                        ];
+                    });
             }
         }
 
@@ -105,7 +146,7 @@ class PembayaranController extends Controller
                 ->get()
                 ->each(function (Siswa $siswa) {
                     $tahun = $siswa->spp?->tahun ?? (int) date('Y');
-                    $dibayar = $siswa->pembayarans->where('tahun_dibayar', $tahun)->pluck('bulan_dibayar')->all();
+                    $dibayar = $siswa->pembayarans->where('tahun_dibayar', $tahun)->whereNotNull('bulan_dibayar')->pluck('bulan_dibayar')->all();
                     $siswa->jumlah_dibayar = count($dibayar);
                     $siswa->jumlah_tunggakan = count(array_diff($this->dueMonths($tahun), $dibayar));
                 });
@@ -117,6 +158,7 @@ class PembayaranController extends Controller
             'siswaKelas' => $siswaKelas,
             'selectedSiswa' => $selectedSiswa,
             'unpaidMonths' => $unpaidMonths,
+            'nonSppTarifs' => $nonSppTarifs,
         ]);
     }
 
@@ -149,6 +191,68 @@ class PembayaranController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $jenisTransaksi = $request->input('jenis_transaksi', 'spp');
+
+        // Handle Non-SPP payment (Uang Gedung, Uang Seragam, Biaya Praktik, etc.)
+        if ($jenisTransaksi === 'non_spp') {
+            $validated = $request->validate([
+                'siswa_id' => ['required', 'exists:siswas,id'],
+                'spp_id' => ['required', 'exists:spps,id'],
+                'jumlah_bayar' => ['required', 'integer', 'min:1000'],
+                'tgl_bayar' => ['required', 'date'],
+                'metode_pembayaran' => ['required', 'string', 'max:30'],
+                'catatan' => ['nullable', 'string', 'max:255'],
+            ], [
+                'siswa_id.required' => 'Pilih siswa yang akan melakukan pembayaran.',
+                'spp_id.required' => 'Pilih pos tagihan yang akan dibayar.',
+                'jumlah_bayar.required' => 'Jumlah nominal pembayaran wajib diisi.',
+                'jumlah_bayar.min' => 'Jumlah nominal pembayaran minimal Rp 1.000.',
+                'tgl_bayar.required' => 'Tanggal pembayaran wajib diisi.',
+                'metode_pembayaran.required' => 'Metode pembayaran wajib dipilih.',
+            ]);
+
+            $siswa = Siswa::findOrFail($validated['siswa_id']);
+            $tarif = Spp::findOrFail($validated['spp_id']);
+
+            $sudahDibayar = (int) Pembayaran::where('siswa_id', $siswa->id)
+                ->where('spp_id', $tarif->id)
+                ->sum('jumlah_bayar');
+
+            $sisa = max(0, $tarif->nominal - $sudahDibayar);
+
+            if ($sisa <= 0) {
+                return back()->withInput()->with('error', "Tagihan {$tarif->kategori} untuk siswa ini sudah lunas.");
+            }
+
+            if ($validated['jumlah_bayar'] > $sisa) {
+                return back()->withInput()->with('error', 'Jumlah bayar melebihi sisa tagihan (Maksimal Rp '.number_format($sisa, 0, ',', '.').').');
+            }
+
+            $pembayaran = Pembayaran::create([
+                'kode_transaksi' => Pembayaran::generateKodeTransaksi(),
+                'user_id' => auth()->id(),
+                'siswa_id' => $siswa->id,
+                'spp_id' => $tarif->id,
+                'tgl_bayar' => $validated['tgl_bayar'],
+                'bulan_dibayar' => null,
+                'tahun_dibayar' => $tarif->tahun,
+                'jumlah_bayar' => $validated['jumlah_bayar'],
+                'metode_pembayaran' => $validated['metode_pembayaran'],
+                'catatan' => $validated['catatan'] ?: ('Pembayaran '.($tarif->nama ?: $tarif->kategori)." ({$tarif->tahun_ajaran}) an. {$siswa->nama}"),
+            ]);
+
+            LogAktivitas::catat(
+                'pembayaran.dibuat',
+                "Pembayaran {$tarif->kategori} ({$pembayaran->formattedJumlahBayar()}) an. {$siswa->nama} ({$pembayaran->kode_transaksi})",
+                $pembayaran,
+                $pembayaran->only(['kode_transaksi', 'siswa_id', 'spp_id', 'jumlah_bayar', 'metode_pembayaran', 'tgl_bayar'])
+            );
+
+            return redirect()->route('pembayaran.show', $pembayaran->id)
+                ->with('success', "Transaksi pembayaran {$tarif->kategori} berhasil disimpan. Kuitansi siap dicetak.");
+        }
+
+        // SPP Monthly payment flow
         $validated = $request->validate([
             'siswa_id' => ['required', 'exists:siswas,id'],
             'tgl_bayar' => ['required', 'date'],
@@ -197,7 +301,7 @@ class PembayaranController extends Controller
                     'tahun_dibayar' => $validated['tahun_dibayar'],
                     'jumlah_bayar' => $nominalPerBulan,
                     'metode_pembayaran' => $validated['metode_pembayaran'],
-                    'catatan' => $validated['catatan'] ?? ('Pembayaran SPP Bulan ' . $bulan . ' ' . $validated['tahun_dibayar']),
+                    'catatan' => $validated['catatan'] ?? ('Pembayaran SPP Bulan '.$bulan.' '.$validated['tahun_dibayar']),
                 ]);
 
                 LogAktivitas::catat(
@@ -218,7 +322,7 @@ class PembayaranController extends Controller
         $firstTrx = $createdPembayarans[0];
 
         return redirect()->route('pembayaran.show', $firstTrx->id)
-            ->with('success', 'Transaksi berhasil disimpan (' . count($createdPembayarans) . ' bulan SPP). Kuitansi siap dicetak.');
+            ->with('success', 'Transaksi berhasil disimpan ('.count($createdPembayarans).' bulan SPP). Kuitansi siap dicetak.');
     }
 
     /**
@@ -256,7 +360,7 @@ class PembayaranController extends Controller
 
         LogAktivitas::catat(
             'pembayaran.dihapus',
-            "Transaksi {$pembayaran->kode_transaksi} ({$pembayaran->bulan_dibayar} {$pembayaran->tahun_dibayar}, " . ($pembayaran->siswa?->nama ?? 'siswa tidak diketahui') . ') dihapus',
+            "Transaksi {$pembayaran->kode_transaksi} ({$pembayaran->bulan_dibayar} {$pembayaran->tahun_dibayar}, ".($pembayaran->siswa?->nama ?? 'siswa tidak diketahui').') dihapus',
             $pembayaran,
             $pembayaran->only(['kode_transaksi', 'siswa_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar', 'metode_pembayaran', 'tgl_bayar', 'user_id'])
         );

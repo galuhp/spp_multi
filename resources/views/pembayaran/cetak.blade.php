@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light">
-    <title>Kuitansi SPP - {{ $pembayaran->kode_transaksi }}</title>
+    @php $sekolah = \App\Models\ProfilSekolah::current(); @endphp
+    <title>Kuitansi SPP - {{ $pembayaran->kode_transaksi }} - {{ $sekolah->nama_sekolah }}</title>
     @vite(['resources/css/app.css'])
     <style>
         @media print {
@@ -35,13 +35,13 @@
         <!-- School Header -->
         <div class="flex items-center justify-between border-b-2 border-black pb-4">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-2xl">
-                    S
+                <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-2xl uppercase">
+                    {{ substr($sekolah->nama_sekolah, 0, 1) }}
                 </div>
                 <div>
-                    <h1 class="text-base font-black tracking-wide uppercase">SMK NEGERI CONTOH</h1>
-                    <p class="text-xs text-slate-600">Jl. Pendidikan No. 123, Bandung &bull; Telp. (022) 1234567</p>
-                    <p class="text-[10px] text-slate-500">Website: www.smknegericontoh.sch.id</p>
+                    <h1 class="text-base font-black tracking-wide uppercase">{{ $sekolah->nama_sekolah }}</h1>
+                    <p class="text-xs text-slate-600">{{ $sekolah->alamatLengkap() }} &bull; Telp. {{ $sekolah->no_telp }}</p>
+                    <p class="text-[10px] text-slate-500">Website: {{ $sekolah->website ?? '-' }} &bull; NPSN: {{ $sekolah->npsn ?? '-' }}</p>
                 </div>
             </div>
             <div class="text-right">
@@ -81,7 +81,7 @@
                     <tr>
                         <td class="py-2 px-2 text-center">{{ $index + 1 }}</td>
                         <td class="py-2 px-2 font-medium">
-                            Pembayaran SPP Bulan <strong>{{ $trx->bulan_dibayar }} {{ $trx->tahun_dibayar }}</strong>
+                            {{ $trx->namaPos() }}
                         </td>
                         <td class="py-2 px-2 text-center">{{ $trx->spp?->tahun_ajaran }}</td>
                         <td class="py-2 px-2 text-right font-semibold">{{ $trx->formattedJumlahBayar() }}</td>
@@ -110,7 +110,7 @@
                 <p class="text-[9px] text-slate-500 leading-tight mt-0.5">Verifikasi online orang tua/wali</p>
             </div>
             <div class="text-center">
-                <p class="text-slate-600 mb-16">Bandung, {{ $pembayaran->tgl_bayar->translatedFormat('d F Y') }}<br>Petugas Kasir,</p>
+                <p class="text-slate-600 mb-16">{{ $sekolah->kota ?? 'Bandung' }}, {{ $pembayaran->tgl_bayar->translatedFormat('d F Y') }}<br>Petugas Kasir,</p>
                 <p class="font-bold underline">{{ $pembayaran->user?->name }}</p>
             </div>
         </div>

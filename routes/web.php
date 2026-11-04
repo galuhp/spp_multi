@@ -3,20 +3,23 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BuktiPembayaranController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImporSiswaController;
 use App\Http\Controllers\JurusanController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LogAktivitasController;
 use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\ProfilSekolahController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\SiswaPortalController;
 use App\Http\Controllers\SppController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Redirect root to dashboard or login
+// Redirect root to Filament panel
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return redirect('/admin');
 });
 
 // Public Digital Receipt Verification (QR Code Scan)
@@ -31,9 +34,20 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Unduhan pendukung impor siswa massal (admin).
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/impor-siswa/template', [ImporSiswaController::class, 'template'])->name('impor-siswa.template');
+    Route::get('/impor-siswa/{batchId}/error', [ImporSiswaController::class, 'laporanError'])->name('impor-siswa.error');
+});
+
 // Protected Routes
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Profil Pengguna (Semua Role)
+    Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
+    Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
+    Route::put('/profil/password', [ProfilController::class, 'updatePassword'])->name('profil.password');
 
     // Admin & Petugas (Staff) Routes
     Route::middleware('role:admin,petugas')->group(function () {
@@ -71,6 +85,10 @@ Route::middleware('auth')->group(function () {
 
         // Log Aktivitas
         Route::get('/log-aktivitas', [LogAktivitasController::class, 'index'])->name('log.index');
+
+        // Pengaturan Profil Sekolah
+        Route::get('/profil-sekolah', [ProfilSekolahController::class, 'edit'])->name('sekolah.edit');
+        Route::put('/profil-sekolah', [ProfilSekolahController::class, 'update'])->name('sekolah.update');
     });
 
     // Siswa Only Portal Routes

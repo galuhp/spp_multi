@@ -8,6 +8,7 @@ use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
+use App\Models\TahunAjaran;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -74,20 +75,65 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 4. SPP Tariffs
+        // 4. Tahun Ajaran
+        TahunAjaran::query()->update(['aktif' => false]);
+
+        $tahunAjaranModels = [];
+        $daftarTahunAjaran = [
+            ['nama' => '2024/2025', 'tanggal_mulai' => '2024-07-01', 'tanggal_selesai' => '2025-06-30'],
+            ['nama' => '2025/2026', 'tanggal_mulai' => '2025-07-01', 'tanggal_selesai' => '2026-06-30'],
+            ['nama' => '2026/2027', 'tanggal_mulai' => '2026-07-01', 'tanggal_selesai' => '2027-06-30'],
+        ];
+
+        foreach ($daftarTahunAjaran as $tahunAjaran) {
+            $tahunAjaranModels[$tahunAjaran['nama']] = TahunAjaran::updateOrCreate(
+                ['nama' => $tahunAjaran['nama']],
+                $tahunAjaran + ['aktif' => $tahunAjaran['nama'] === '2026/2027'],
+            );
+        }
+
+        foreach ($kelasModels as $kelas) {
+            $kelas->update(['tahun_ajaran_id' => $tahunAjaranModels['2026/2027']->id]);
+        }
+
+        // 5. SPP & Fee Tariffs
         $spp2025 = Spp::firstOrCreate(
-            ['tahun' => 2025],
-            ['tahun_ajaran' => '2024/2025', 'nominal' => 200000, 'keterangan' => 'Tarif SPP TA 2024/2025']
+            ['tahun' => 2025, 'kategori' => Spp::KATEGORI_SPP],
+            ['kategori' => Spp::KATEGORI_SPP, 'tipe' => Spp::TIPE_BULANAN, 'tahun_ajaran' => '2024/2025', 'nominal' => 200000, 'keterangan' => 'Tarif SPP TA 2024/2025']
         );
 
         $spp2026 = Spp::firstOrCreate(
-            ['tahun' => 2026],
-            ['tahun_ajaran' => '2025/2026', 'nominal' => 225000, 'keterangan' => 'Tarif SPP TA 2025/2026']
+            ['tahun' => 2026, 'kategori' => Spp::KATEGORI_SPP],
+            ['kategori' => Spp::KATEGORI_SPP, 'tipe' => Spp::TIPE_BULANAN, 'tahun_ajaran' => '2025/2026', 'nominal' => 225000, 'keterangan' => 'Tarif SPP TA 2025/2026']
         );
 
         $spp2027 = Spp::firstOrCreate(
-            ['tahun' => 2027],
-            ['tahun_ajaran' => '2026/2027', 'nominal' => 250000, 'keterangan' => 'Tarif SPP TA 2026/2027 (Berjalan)']
+            ['tahun' => 2027, 'kategori' => Spp::KATEGORI_SPP],
+            ['kategori' => Spp::KATEGORI_SPP, 'tipe' => Spp::TIPE_BULANAN, 'tahun_ajaran' => '2026/2027', 'nominal' => 250000, 'keterangan' => 'Tarif SPP TA 2026/2027 (Berjalan)']
+        );
+
+        $gedung2027 = Spp::firstOrCreate(
+            ['tahun' => 2027, 'kategori' => Spp::KATEGORI_UANG_GEDUNG],
+            [
+                'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+                'tipe' => Spp::TIPE_SEKALI_BAYAR,
+                'nama' => 'Uang Gedung & Pengembangan Sarana',
+                'tahun_ajaran' => '2026/2027',
+                'nominal' => 2500000,
+                'keterangan' => 'Sumbangan fasilitas dan gedung siswa baru angkatan 2026/2027',
+            ]
+        );
+
+        $seragam2027 = Spp::firstOrCreate(
+            ['tahun' => 2027, 'kategori' => Spp::KATEGORI_UANG_SERAGAM],
+            [
+                'kategori' => Spp::KATEGORI_UANG_SERAGAM,
+                'tipe' => Spp::TIPE_SEKALI_BAYAR,
+                'nama' => 'Paket Seragam Sekolah Lengkap (4 Stel)',
+                'tahun_ajaran' => '2026/2027',
+                'nominal' => 850000,
+                'keterangan' => 'Seragam OSIS, Pramuka, Kejuruan, dan Olahraga',
+            ]
         );
 
         // 5. User Siswa
@@ -201,13 +247,13 @@ class DatabaseSeeder extends Seeder
                         'tahun_dibayar' => 2026,
                     ],
                     [
-                        'kode_transaksi' => 'SPP-20261102-' . str_pad((string) $counter++, 4, '0', STR_PAD_LEFT),
+                        'kode_transaksi' => 'SPP-20261102-'.str_pad((string) $counter++, 4, '0', STR_PAD_LEFT),
                         'user_id' => $petugas->id,
                         'spp_id' => $siswa->spp_id,
                         'tgl_bayar' => Carbon::now()->subDays(rand(1, 30))->format('Y-m-d'),
                         'jumlah_bayar' => $siswa->spp->nominal,
                         'metode_pembayaran' => $counter % 2 === 0 ? 'Tunai' : 'Transfer Bank',
-                        'catatan' => 'Pembayaran SPP Bulan ' . $bulan . ' 2026',
+                        'catatan' => 'Pembayaran SPP Bulan '.$bulan.' 2026',
                     ]
                 );
             }

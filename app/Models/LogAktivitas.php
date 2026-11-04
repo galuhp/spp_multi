@@ -55,9 +55,9 @@ class LogAktivitas extends Model
     public function badgeClass(): string
     {
         return match (true) {
-            str_ends_with($this->aksi, '.dihapus') => 'bg-rose-100/90 text-rose-800 border border-rose-200/80 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-400/25',
-            str_ends_with($this->aksi, '.diubah') => 'bg-amber-100/90 text-amber-800 border border-amber-200/80 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-400/25',
-            default => 'bg-emerald-100/90 text-emerald-800 border border-emerald-200/80 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-400/25',
+            str_ends_with($this->aksi, '.dihapus') => 'bg-rose-100 text-rose-800 border border-rose-200',
+            str_ends_with($this->aksi, '.diubah') => 'bg-amber-100 text-amber-800 border border-amber-200',
+            default => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
         };
     }
 }

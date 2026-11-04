@@ -1,67 +1,106 @@
 @extends('layouts.app')
 
-@section('title', 'Tarif SPP')
-@section('header_title', 'Data Tarif & Nominal SPP')
+@section('title', 'Tarif & Kategori Pembayaran')
+@section('header_title', 'Data Tarif & Kategori Pembayaran')
 
 @section('content')
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white">Tarif & Periode SPP</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kelola standar besaran iuran SPP per bulan berdasarkan tahun ajaran</p>
+            <h3 class="text-xl font-bold text-slate-900">Tarif & Kategori Pembayaran</h3>
+            <p class="text-xs text-slate-500 mt-1">Kelola standar besaran iuran SPP bulanan serta pos tarif lainnya (uang gedung, seragam, dll.)</p>
         </div>
-        <a href="{{ route('spp.create') }}" class="px-4 py-2.5 prism-btn-primary text-sm self-start">
+        <a href="{{ route('spp.create') }}" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm inline-flex items-center gap-2 self-start">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Tambah Tarif SPP
+            Tambah Tarif Baru
         </a>
     </div>
 
-    <div class="prism-card overflow-hidden">
+    <!-- Category Filter Pills -->
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ route('spp.index') }}"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border {{ empty($kategori) ? 'bg-indigo-600 text-white shadow-sm border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50' }}">
+            Semua Pos
+        </a>
+        @foreach($availableKategori as $kat)
+            <a href="{{ route('spp.index', ['kategori' => $kat]) }}"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border {{ $kategori === $kat ? 'bg-indigo-600 text-white shadow-sm border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-400 hover:bg-slate-50' }}">
+                {{ $kat }}
+            </a>
+        @endforeach
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
                 <thead>
-                    <tr class="prism-thead">
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider">
                         <th class="py-3 px-4 w-16 text-center">No</th>
-                        <th class="py-3 px-4">Tahun</th>
+                        <th class="py-3 px-4">Kategori & Nama Pos</th>
+                        <th class="py-3 px-4">Tipe Pembayaran</th>
                         <th class="py-3 px-4">Tahun Ajaran</th>
-                        <th class="py-3 px-4">Nominal / Bulan</th>
+                        <th class="py-3 px-4">Nominal</th>
                         <th class="py-3 px-4">Keterangan</th>
-                        <th class="py-3 px-4 text-center">Siswa Menggunakan</th>
+                        <th class="py-3 px-4 text-center">Siswa Terkait</th>
                         <th class="py-3 px-4 text-center w-36">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="prism-tbody">
+                <tbody class="divide-y divide-slate-100 text-slate-700">
                     @forelse($spps as $index => $item)
-                        <tr class="prism-tr">
-                            <td class="py-3.5 px-4 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
+                        <tr class="hover:bg-slate-50/60 transition">
+                            <td class="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
                                 {{ $spps->firstItem() + $index }}
                             </td>
-                            <td class="py-3.5 px-4 font-mono font-bold text-xs text-prism-700 dark:text-prism-300">
-                                {{ $item->tahun }}
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-bold border {{ $item->badgeClass() }}">
+                                        {{ $item->kategori }}
+                                    </span>
+                                    @if($item->nama)
+                                        <span class="font-bold text-slate-900 text-xs">{{ $item->nama }}</span>
+                                    @endif
+                                </div>
                             </td>
-                            <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                                {{ $item->tahun_ajaran }}
+                            <td class="py-3.5 px-4 text-xs">
+                                @if($item->isBulanan())
+                                    <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Bulanan (12 bln)
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-slate-700 font-medium">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Sekali Bayar / Bebas
+                                    </span>
+                                @endif
                             </td>
-                            <td class="py-3.5 px-4 font-bold text-emerald-700 dark:text-emerald-400">
+                            <td class="py-3.5 px-4 font-semibold text-slate-900 text-xs">
+                                {{ $item->tahun_ajaran }} <span class="text-slate-400 font-normal">({{ $item->tahun }})</span>
+                            </td>
+                            <td class="py-3.5 px-4 font-bold text-emerald-700 text-xs">
                                 {{ $item->formattedNominal() }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
+                            <td class="py-3.5 px-4 text-xs text-slate-500">
                                 {{ $item->keterangan ?? '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 dark:bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-200/70 dark:border-sky-400/25">
-                                    {{ $item->siswas_count }} Siswa
-                                </span>
+                                @if($item->kategori === 'SPP')
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                                        {{ $item->siswas_count }} Siswa
+                                    </span>
+                                @else
+                                    <span class="text-xs text-slate-400">
+                                        Umum Angkatan
+                                    </span>
+                                @endif
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <a href="{{ route('spp.edit', $item->id) }}" class="p-1.5 text-prism-600 dark:text-prism-300 hover:bg-prism-50 dark:hover:bg-prism-500/15 rounded-lg transition" title="Ubah Data">
+                                    <a href="{{ route('spp.edit', $item->id) }}" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Ubah Data">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
-                                    <form action="{{ route('spp.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tarif SPP ini?');" class="inline">
+                                    <form action="{{ route('spp.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tarif {{ $item->kategori }} ini?');" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/15 rounded-lg transition cursor-pointer" title="Hapus Data">
+                                        <button type="submit" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Hapus Data">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>
                                     </form>
@@ -70,8 +109,8 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
-                                Belum ada data tarif SPP yang terdaftar.
+                            <td colspan="8" class="py-8 text-center text-slate-400 text-sm">
+                                Belum ada data tarif yang terdaftar{{ $kategori ? ' untuk kategori ' . $kategori : '' }}.
                             </td>
                         </tr>
                     @endforelse
@@ -80,7 +119,7 @@
         </div>
 
         @if($spps->hasPages())
-            <div class="p-4 border-t border-slate-100 dark:border-white/10">
+            <div class="p-4 border-t border-slate-100">
                 {{ $spps->links() }}
             </div>
         @endif

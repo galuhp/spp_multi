@@ -6,6 +6,7 @@ use App\Models\LogAktivitas;
 use App\Models\Spp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SppController extends Controller
@@ -13,13 +14,30 @@ class SppController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $spps = Spp::withCount('siswas')
-            ->orderByDesc('tahun')
-            ->paginate(10);
+        $kategori = $request->query('kategori');
 
-        return view('spp.index', compact('spps'));
+        $spps = Spp::withCount('siswas')
+            ->when($kategori, fn ($q) => $q->where('kategori', $kategori))
+            ->orderByDesc('tahun')
+            ->orderBy('kategori')
+            ->paginate(10)
+            ->withQueryString();
+
+        $kategoriList = Spp::query()
+            ->select('kategori')
+            ->distinct()
+            ->pluck('kategori')
+            ->all();
+
+        $availableKategori = array_values(array_unique(array_merge(Spp::DEFAULT_KATEGORI_LIST, $kategoriList)));
+
+        return view('spp.index', [
+            'spps' => $spps,
+            'kategori' => $kategori,
+            'availableKategori' => $availableKategori,
+        ]);
     }
 
     /**
@@ -27,7 +45,17 @@ class SppController extends Controller
      */
     public function create(): View
     {
-        return view('spp.create');
+        $kategoriList = Spp::query()
+            ->select('kategori')
+            ->distinct()
+            ->pluck('kategori')
+            ->all();
+
+        $availableKategori = array_values(array_unique(array_merge(Spp::DEFAULT_KATEGORI_LIST, $kategoriList)));
+
+        return view('spp.create', [
+            'availableKategori' => $availableKategori,
+        ]);
     }
 
     /**
@@ -35,24 +63,43 @@ class SppController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $kategori = $request->input('kategori') ?: Spp::KATEGORI_SPP;
+        $tipe = $request->input('tipe') ?: ($kategori === Spp::KATEGORI_SPP ? Spp::TIPE_BULANAN : Spp::TIPE_SEKALI_BAYAR);
+        $request->merge(['kategori' => $kategori, 'tipe' => $tipe]);
+
         $validated = $request->validate([
-            'tahun' => ['required', 'integer', 'min:2000', 'max:2100', 'unique:spps,tahun'],
+            'kategori' => ['required', 'string', 'max:50'],
+            'tipe' => ['required', 'in:bulanan,sekali_bayar'],
+            'nama' => ['nullable', 'string', 'max:100'],
+            'tahun' => [
+                'required',
+                'integer',
+                'min:2000',
+                'max:2100',
+                Rule::unique('spps')->where(function ($query) use ($request) {
+                    return $query->where('kategori', $request->input('kategori'))
+                        ->where('tahun', $request->input('tahun'))
+                        ->when($request->filled('nama'), fn ($q) => $q->where('nama', $request->input('nama')));
+                }),
+            ],
             'tahun_ajaran' => ['required', 'string', 'max:20'],
             'nominal' => ['required', 'integer', 'min:1000'],
             'keterangan' => ['nullable', 'string', 'max:255'],
         ], [
+            'kategori.required' => 'Kategori tarif wajib dipilih atau diisi.',
+            'tipe.required' => 'Tipe pembayaran wajib dipilih.',
             'tahun.required' => 'Tahun wajib diisi.',
-            'tahun.unique' => 'Tarif untuk tahun ini sudah terdaftar.',
+            'tahun.unique' => 'Tarif untuk kategori dan tahun ini sudah terdaftar.',
             'tahun_ajaran.required' => 'Tahun ajaran wajib diisi (contoh: 2026/2027).',
-            'nominal.required' => 'Nominal SPP per bulan wajib diisi.',
-            'nominal.min' => 'Nominal SPP minimal Rp 1.000.',
+            'nominal.required' => 'Besaran nominal tarif wajib diisi.',
+            'nominal.min' => 'Nominal minimal Rp 1.000.',
         ]);
 
         $spp = Spp::create($validated);
 
-        LogAktivitas::catat('spp.dibuat', "Tarif SPP TA {$spp->tahun_ajaran} dibuat ({$spp->formattedNominal()}/bulan)", $spp, $validated);
+        LogAktivitas::catat('spp.dibuat', "Tarif {$spp->kategori} ({$spp->namaLengkap()}) dibuat ({$spp->formattedNominal()})", $spp, $validated);
 
-        return redirect()->route('spp.index')->with('success', 'Tarif SPP berhasil ditambahkan.');
+        return redirect()->route('spp.index')->with('success', "Tarif {$spp->kategori} berhasil ditambahkan.");
     }
 
     /**
@@ -60,7 +107,18 @@ class SppController extends Controller
      */
     public function edit(Spp $spp): View
     {
-        return view('spp.edit', compact('spp'));
+        $kategoriList = Spp::query()
+            ->select('kategori')
+            ->distinct()
+            ->pluck('kategori')
+            ->all();
+
+        $availableKategori = array_values(array_unique(array_merge(Spp::DEFAULT_KATEGORI_LIST, $kategoriList)));
+
+        return view('spp.edit', [
+            'spp' => $spp,
+            'availableKategori' => $availableKategori,
+        ]);
     }
 
     /**
@@ -68,28 +126,48 @@ class SppController extends Controller
      */
     public function update(Request $request, Spp $spp): RedirectResponse
     {
+        $kategori = $request->input('kategori') ?: ($spp->kategori ?? Spp::KATEGORI_SPP);
+        $tipe = $request->input('tipe') ?: ($spp->tipe ?? Spp::TIPE_BULANAN);
+        $request->merge(['kategori' => $kategori, 'tipe' => $tipe]);
+
         $validated = $request->validate([
-            'tahun' => ['required', 'integer', 'min:2000', 'max:2100', 'unique:spps,tahun,' . $spp->id],
+            'kategori' => ['required', 'string', 'max:50'],
+            'tipe' => ['required', 'in:bulanan,sekali_bayar'],
+            'nama' => ['nullable', 'string', 'max:100'],
+            'tahun' => [
+                'required',
+                'integer',
+                'min:2000',
+                'max:2100',
+                Rule::unique('spps')->where(function ($query) use ($request, $spp) {
+                    return $query->where('kategori', $request->input('kategori'))
+                        ->where('tahun', $request->input('tahun'))
+                        ->where('id', '!=', $spp->id)
+                        ->when($request->filled('nama'), fn ($q) => $q->where('nama', $request->input('nama')));
+                }),
+            ],
             'tahun_ajaran' => ['required', 'string', 'max:20'],
             'nominal' => ['required', 'integer', 'min:1000'],
             'keterangan' => ['nullable', 'string', 'max:255'],
         ], [
+            'kategori.required' => 'Kategori tarif wajib dipilih atau diisi.',
+            'tipe.required' => 'Tipe pembayaran wajib dipilih.',
             'tahun.required' => 'Tahun wajib diisi.',
-            'tahun.unique' => 'Tarif untuk tahun ini sudah terdaftar.',
+            'tahun.unique' => 'Tarif untuk kategori dan tahun ini sudah terdaftar.',
             'tahun_ajaran.required' => 'Tahun ajaran wajib diisi.',
-            'nominal.required' => 'Nominal SPP per bulan wajib diisi.',
+            'nominal.required' => 'Besaran nominal tarif wajib diisi.',
         ]);
 
-        $sebelum = $spp->only(['tahun', 'tahun_ajaran', 'nominal', 'keterangan']);
+        $sebelum = $spp->only(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'nominal', 'keterangan']);
 
         $spp->update($validated);
 
-        LogAktivitas::catat('spp.diubah', "Tarif SPP TA {$spp->tahun_ajaran} diubah", $spp, [
+        LogAktivitas::catat('spp.diubah', "Tarif {$spp->kategori} ({$spp->namaLengkap()}) diubah", $spp, [
             'sebelum' => $sebelum,
             'sesudah' => $validated,
         ]);
 
-        return redirect()->route('spp.index')->with('success', 'Tarif SPP berhasil diperbarui.');
+        return redirect()->route('spp.index')->with('success', "Tarif {$spp->kategori} berhasil diperbarui.");
     }
 
     /**
@@ -98,17 +176,17 @@ class SppController extends Controller
     public function destroy(Spp $spp): RedirectResponse
     {
         if ($spp->siswas()->exists()) {
-            return back()->with('error', 'Tarif SPP tidak dapat dihapus karena sudah dipakai oleh data siswa.');
+            return back()->with('error', "Tarif {$spp->kategori} tidak dapat dihapus karena sudah dipakai oleh data siswa.");
         }
 
         if ($spp->pembayarans()->exists()) {
-            return back()->with('error', 'Tarif SPP tidak dapat dihapus karena sudah ada riwayat transaksi pembayaran.');
+            return back()->with('error', "Tarif {$spp->kategori} tidak dapat dihapus karena sudah ada riwayat transaksi pembayaran.");
         }
 
-        LogAktivitas::catat('spp.dihapus', "Tarif SPP TA {$spp->tahun_ajaran} dihapus", $spp, $spp->only(['tahun', 'tahun_ajaran', 'nominal', 'keterangan']));
+        LogAktivitas::catat('spp.dihapus', "Tarif {$spp->kategori} ({$spp->namaLengkap()}) dihapus", $spp, $spp->only(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'nominal', 'keterangan']));
 
         $spp->delete();
 
-        return redirect()->route('spp.index')->with('success', 'Tarif SPP berhasil dihapus.');
+        return redirect()->route('spp.index')->with('success', "Tarif {$spp->kategori} berhasil dihapus.");
     }
 }

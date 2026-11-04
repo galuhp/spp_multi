@@ -74,9 +74,9 @@ class Pembayaran extends Model
      */
     public static function generateKodeTransaksi(): string
     {
-        $prefix = 'SPP-' . date('Ymd') . '-';
+        $prefix = 'SPP-'.date('Ymd').'-';
         $latest = static::query()
-            ->where('kode_transaksi', 'like', $prefix . '%')
+            ->where('kode_transaksi', 'like', $prefix.'%')
             ->latest('id')
             ->first();
 
@@ -87,7 +87,7 @@ class Pembayaran extends Model
             $nextNumber = '0001';
         }
 
-        return $prefix . $nextNumber;
+        return $prefix.$nextNumber;
     }
 
     /**
@@ -119,7 +119,23 @@ class Pembayaran extends Model
      */
     public function formattedJumlahBayar(): string
     {
-        return 'Rp ' . number_format($this->jumlah_bayar, 0, ',', '.');
+        return 'Rp '.number_format($this->jumlah_bayar, 0, ',', '.');
+    }
+
+    /**
+     * Get display title for the payment item / post.
+     */
+    public function namaPos(): string
+    {
+        $kategori = $this->spp?->kategori ?? 'SPP';
+
+        if ($this->bulan_dibayar) {
+            return "{$kategori} Bulan {$this->bulan_dibayar} {$this->tahun_dibayar}";
+        }
+
+        $label = $this->spp?->nama ?: "{$kategori} TA {$this->spp?->tahun_ajaran}";
+
+        return $label;
     }
 
     /**
@@ -150,7 +166,7 @@ class Pembayaran extends Model
     public function verificationToken(): string
     {
         $secret = (string) config('app.key', 'spp-verification-key');
-        $payload = 'bukti-spp:' . $this->id . ':' . $this->kode_transaksi;
+        $payload = 'bukti-spp:'.$this->id.':'.$this->kode_transaksi;
 
         return substr(hash_hmac('sha256', $payload, $secret), 0, 16);
     }

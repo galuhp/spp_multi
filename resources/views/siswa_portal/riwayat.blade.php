@@ -7,63 +7,70 @@
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white">Riwayat Pembayaran SPP Saya</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Daftar seluruh kuitansi pembayaran SPP yang tercatat atas nama Anda</p>
+            <h3 class="text-xl font-bold text-slate-900">Riwayat Pembayaran SPP Saya</h3>
+            <p class="text-xs text-slate-500 mt-1">Daftar seluruh kuitansi pembayaran SPP yang tercatat atas nama Anda</p>
         </div>
         <div class="text-right">
-            <div class="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">Total Pembayaran Berhasil</div>
-            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</div>
+            <div class="text-xs text-slate-500 uppercase font-semibold">Total Pembayaran Berhasil</div>
+            <div class="text-xl font-bold text-emerald-600">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</div>
         </div>
     </div>
 
-    <div class="prism-card overflow-hidden">
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
                 <thead>
-                    <tr class="prism-thead">
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider">
                         <th class="py-3 px-4 w-14 text-center">No</th>
                         <th class="py-3 px-4">No. Kuitansi</th>
                         <th class="py-3 px-4">Tgl. Bayar</th>
-                        <th class="py-3 px-4">Bulan Dibayar</th>
+                        <th class="py-3 px-4">Pos Pembayaran</th>
                         <th class="py-3 px-4">Jumlah Bayar</th>
                         <th class="py-3 px-4">Metode Bayar</th>
                         <th class="py-3 px-4">Petugas Kasir</th>
                         <th class="py-3 px-4 text-center w-36">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="prism-tbody">
+                <tbody class="divide-y divide-slate-100 text-slate-700">
                     @forelse($pembayarans as $index => $item)
-                        <tr class="prism-tr">
-                            <td class="py-3.5 px-4 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
+                        <tr class="hover:bg-slate-50/60 transition">
+                            <td class="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
                                 {{ $pembayarans->firstItem() + $index }}
                             </td>
-                            <td class="py-3.5 px-4 font-mono font-medium text-xs text-prism-700 dark:text-prism-300">
+                            <td class="py-3.5 px-4 font-mono font-medium text-xs text-indigo-700">
                                 {{ $item->kode_transaksi }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-400">
+                            <td class="py-3.5 px-4 text-xs text-slate-600">
                                 {{ $item->tgl_bayar->format('d/m/Y') }}
                             </td>
-                            <td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                                {{ $item->bulan_dibayar }} {{ $item->tahun_dibayar }}
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $item->spp?->badgeClass() }}">
+                                        {{ $item->spp?->kategori ?? 'SPP' }}
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-900">
+                                        {{ $item->namaPos() }}
+                                    </span>
+                                </div>
                             </td>
-                            <td class="py-3.5 px-4 font-bold text-emerald-700 dark:text-emerald-400">
+                            <td class="py-3.5 px-4 font-bold text-emerald-700">
                                 {{ $item->formattedJumlahBayar() }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-300">
+                            <td class="py-3.5 px-4 text-xs text-slate-600">
                                 {{ $item->metode_pembayaran }}
                             </td>
-                            <td class="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-300">
+                            <td class="py-3.5 px-4 text-xs text-slate-600">
                                 {{ $item->user?->name ?? '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
-                                <a href="{{ route('portal.kuitansi', $item->id) }}" target="_blank" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-prism-50 dark:bg-prism-500/15 hover:bg-prism-100 dark:hover:bg-prism-500/25 text-prism-700 dark:text-prism-300 border border-prism-200/80 dark:border-prism-400/25 transition">
+                                <a href="{{ route('portal.kuitansi', $item->id) }}" target="_blank" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
                                     Cetak Kuitansi
                                 </a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+                            <td colspan="8" class="py-8 text-center text-slate-400 text-sm">
                                 Belum ada riwayat transaksi pembayaran SPP yang tercatat.
                             </td>
                         </tr>
@@ -73,7 +80,7 @@
         </div>
 
         @if($pembayarans->hasPages())
-            <div class="p-4 border-t border-slate-100 dark:border-white/10">
+            <div class="p-4 border-t border-slate-100">
                 {{ $pembayarans->links() }}
             </div>
         @endif
