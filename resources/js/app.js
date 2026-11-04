@@ -3,8 +3,6 @@
  * Mobile navigation drawer & accessible dropdown management
  */
 
-import 'flowbite';
-
 document.addEventListener('click', (event) => {
     const openDrawerBtn = event.target.closest('[data-sidebar-open]');
     if (openDrawerBtn) {
