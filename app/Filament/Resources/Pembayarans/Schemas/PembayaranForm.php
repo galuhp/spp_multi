@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Pembayarans\Schemas;
 
-use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
@@ -25,7 +24,7 @@ class PembayaranForm
                 Radio::make('cara_pilih')
                     ->label('Cara Memilih Siswa')
                     ->options([
-                        'bertingkat' => 'Bertingkat (Jurusan → Kelas)',
+                        'bertingkat' => 'Bertingkat (Kelas)',
                         'cari' => 'Cari Nama / NISN',
                     ])
                     ->default('bertingkat')
@@ -35,30 +34,26 @@ class PembayaranForm
                     ->afterStateUpdated(fn (Set $set) => $set('siswa_id', null))
                     ->columnSpanFull(),
 
-                Select::make('jurusan_id')
-                    ->label('Kompetensi Keahlian (Jurusan)')
-                    ->options(fn (): array => Jurusan::query()->orderBy('nama')->pluck('nama', 'id')->all())
-                    ->searchable()
-                    ->live()
-                    ->dehydrated(false)
-                    ->visible(fn (Get $get): bool => ($get('cara_pilih') ?? 'bertingkat') === 'bertingkat')
-                    ->afterStateUpdated(fn (Set $set) => $set('kelas_id', null)),
-
                 Select::make('kelas_id')
                     ->label('Kelas')
-                    ->options(fn (Get $get): array => blank($get('jurusan_id'))
-                        ? []
-                        : Kelas::query()
-                            ->where('jurusan_id', $get('jurusan_id'))
-                            ->orderBy('tingkat')
-                            ->orderBy('nama_kelas')
-                            ->pluck('nama_kelas', 'id')
-                            ->all())
+                    ->options(fn (): array => Kelas::query()
+                        ->with(['tahunAjaran', 'jurusan'])
+                        ->orderByDesc('tahun_ajaran_id')
+                        ->orderBy('tingkat')
+                        ->orderBy('nama_kelas')
+                        ->get()
+                        ->mapWithKeys(fn (Kelas $kelas): array => [
+                            $kelas->id => trim(
+                                ($kelas->tahunAjaran?->nama ? $kelas->tahunAjaran->nama.' — ' : '')
+                                .$kelas->nama_kelas
+                                .($kelas->jurusan?->kode ? ' — '.$kelas->jurusan->kode : '')
+                            ),
+                        ])
+                        ->all())
                     ->searchable()
                     ->live()
                     ->dehydrated(false)
                     ->visible(fn (Get $get): bool => ($get('cara_pilih') ?? 'bertingkat') === 'bertingkat')
-                    ->disabled(fn (Get $get): bool => blank($get('jurusan_id')))
                     ->afterStateUpdated(fn (Set $set) => $set('siswa_id', null)),
 
                 Select::make('siswa_id')
@@ -96,7 +91,7 @@ class PembayaranForm
                     ->disabled(fn (Get $get): bool => ($get('cara_pilih') ?? 'bertingkat') === 'bertingkat' && blank($get('kelas_id')))
                     ->helperText(fn (Get $get): string => ($get('cara_pilih') ?? 'bertingkat') === 'cari'
                         ? 'Ketik nama atau NISN untuk mencari siswa.'
-                        : 'Pilih jurusan dan kelas terlebih dahulu.'),
+                        : 'Pilih kelas terlebih dahulu.'),
 
                 Radio::make('jenis_transaksi')
                     ->label('Jenis Pembayaran')

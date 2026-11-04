@@ -22,7 +22,6 @@ class EditPembayaran extends EditRecord
         $siswa = Siswa::with('kelas')->find($data['siswa_id'] ?? null);
 
         $data['cara_pilih'] = 'bertingkat';
-        $data['jurusan_id'] = $siswa?->kelas?->jurusan_id;
         $data['kelas_id'] = $siswa?->kelas_id;
 
         return $data;

@@ -94,12 +94,10 @@ class PembayaranCascadeTest extends TestCase
         ]);
     }
 
-    public function test_jurusan_kelas_dan_siswa_berurutan_pada_form_pembayaran(): void
+    public function test_kelas_dan_siswa_berurutan_pada_form_pembayaran(): void
     {
         Livewire::test(CreatePembayaran::class)
             ->assertFormFieldDisabled('siswa_id')
-            ->fillForm(['jurusan_id' => $this->rpl->id])
-            ->assertFormFieldEnabled('kelas_id')
             ->fillForm(['kelas_id' => $this->kelasRpl->id])
             ->assertFormFieldEnabled('siswa_id')
             ->fillForm([
@@ -124,7 +122,6 @@ class PembayaranCascadeTest extends TestCase
     {
         Livewire::test(CreatePembayaran::class)
             ->fillForm(['cara_pilih' => 'cari'])
-            ->assertFormFieldHidden('jurusan_id')
             ->assertFormFieldHidden('kelas_id')
             ->assertFormFieldEnabled('siswa_id')
             ->fillForm([
