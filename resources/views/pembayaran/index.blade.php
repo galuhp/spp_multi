@@ -10,10 +10,9 @@
             <h3 class="text-xl font-bold text-slate-900">Riwayat Transaksi SPP</h3>
             <p class="text-xs text-slate-500 mt-1">Daftar seluruh penerimaan pembayaran SPP siswa sekolah</p>
         </div>
-        <a href="{{ route('pembayaran.create') }}" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition shadow-sm inline-flex items-center gap-2 self-start">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            + Entri Pembayaran Baru
-        </a>
+        <x-ui.button as="a" href="{{ route('pembayaran.create') }}" variant="primary" icon="plus" class="self-start">
+            Entri Pembayaran Baru
+        </x-ui.button>
     </div>
 
     <!-- Filter Card -->
@@ -45,9 +44,7 @@
                 <input type="date" name="tgl_akhir" value="{{ $tglAkhir }}" title="Tanggal Akhir"
                     class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
 
-                <button type="submit" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-sm shrink-0">
-                    Filter
-                </button>
+                <x-ui.button type="submit" variant="primary" size="sm" class="shrink-0">Filter</x-ui.button>
 
                 @if($search || $tglAwal || $tglAkhir || $kategori)
                     <a href="{{ route('pembayaran.index') }}" class="px-2.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition shrink-0">

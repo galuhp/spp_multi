@@ -6,15 +6,15 @@
 @section('content')
 <div class="space-y-6">
     @if(! $siswa)
-        <div class="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800">
+        <x-ui.alerts variant="warning" icon="exclamation-triangle">
             <h4 class="font-bold text-base">Profil Siswa Belum Tertaut</h4>
             <p class="text-sm mt-1">Akun Anda belum ditautkan ke data siswa sekolah. Silakan hubungi bagian tata usaha / petugas SPP.</p>
-        </div>
+        </x-ui.alerts>
     @else
         <!-- Siswa Profile Card -->
-        <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <x-ui.card class="!max-w-none !p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div class="flex items-center gap-4">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-black text-2xl shadow-md">
+                <div class="w-16 h-16 rounded-2xl bg-zinc-900 text-white flex items-center justify-center font-black text-2xl shadow-md">
                     {{ strtoupper(substr($siswa->nama, 0, 2)) }}
                 </div>
                 <div>
@@ -40,7 +40,7 @@
                     <div class="text-[11px] text-slate-400">{{ $riwayatPembayaran->count() }} bulan terbayar</div>
                 </div>
             </div>
-        </div>
+        </x-ui.card>
 
         <!-- Monthly Payment Status Grid -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
@@ -120,9 +120,9 @@
                                 <td class="py-3.5 px-4 text-xs">{{ $trx->metode_pembayaran }}</td>
                                 <td class="py-3.5 px-4 text-xs text-slate-600">{{ $trx->user?->name ?? '-' }}</td>
                                 <td class="py-3.5 px-4 text-center">
-                                    <a href="{{ route('portal.kuitansi', $trx->id) }}" target="_blank" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
+                                    <x-ui.button as="a" href="{{ route('portal.kuitansi', $trx->id) }}" target="_blank" variant="outline" size="sm">
                                         Cetak Kuitansi
-                                    </a>
+                                    </x-ui.button>
                                 </td>
                             </tr>
                         @empty
