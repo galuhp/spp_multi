@@ -15,6 +15,11 @@ class CreatePembayaran extends CreateRecord
 {
     protected static string $resource = PembayaranResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Entri Pembayaran';
+    }
+
     public function mount(): void
     {
         parent::mount();

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\EntriPembayaran;
 use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
 use App\Models\Jurusan;
 use App\Models\Kelas;
@@ -140,5 +141,11 @@ class PembayaranCascadeTest extends TestCase
             'bulan_dibayar' => 'Agustus',
             'tahun_dibayar' => 2027,
         ]);
+    }
+
+    public function test_menu_entri_pembayaran_mengarah_ke_form_create(): void
+    {
+        $this->get(EntriPembayaran::getUrl())
+            ->assertRedirect(CreatePembayaran::getUrl());
     }
 }
