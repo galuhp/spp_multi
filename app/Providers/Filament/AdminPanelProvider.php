@@ -42,10 +42,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->profile()
             ->navigationGroups([
-                'Kesiswaan',
-                'Master Data',
                 'Transaksi SPP',
                 'Portal Siswa',
+                'Kesiswaan',
+                'Master Data',
                 'Pengaturan & Akses',
             ])
             ->sidebarCollapsibleOnDesktop()
