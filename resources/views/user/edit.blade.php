@@ -5,13 +5,13 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 sm:p-8">
-        <div class="flex items-center justify-between pb-5 mb-5 border-b border-slate-100">
+    <x-ui.card class="!max-w-none !p-6 sm:!p-8">
+        <div class="flex items-center justify-between pb-5 mb-5 border-b border-zinc-200">
             <div>
-                <h3 class="font-bold text-slate-900 text-lg">Form Ubah Data Pengguna</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Perbarui profil atau hak akses akun pengguna</p>
+                <h3 class="font-bold text-zinc-900 text-lg">Form Ubah Data Pengguna</h3>
+                <p class="text-xs text-zinc-500 mt-0.5">Perbarui profil atau hak akses akun pengguna</p>
             </div>
-            <a href="{{ route('user.index') }}" class="text-xs font-semibold text-slate-600 hover:text-slate-900">
+            <a href="{{ route('user.index') }}" class="text-xs font-semibold text-zinc-600 hover:text-zinc-900">
                 &larr; Kembali
             </a>
         </div>
@@ -21,48 +21,43 @@
             @method('PUT')
 
             <div>
-                <label for="name" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                <label for="name" class="block text-sm font-medium text-zinc-700 mb-1.5">
                     Nama Lengkap <span class="text-rose-500">*</span>
                 </label>
-                <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" required
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                <x-ui.input id="name" name="name" value="{{ old('name', $user->name) }}" required />
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label for="username" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                    <label for="username" class="block text-sm font-medium text-zinc-700 mb-1.5">
                         Username / NISN <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" id="username" name="username" value="{{ old('username', $user->username) }}" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <x-ui.input id="username" name="username" value="{{ old('username', $user->username) }}" required />
                 </div>
 
                 <div>
-                    <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                    <label for="email" class="block text-sm font-medium text-zinc-700 mb-1.5">
                         Alamat Email (Opsional)
                     </label>
-                    <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <x-ui.input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" />
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                    <label for="password" class="block text-sm font-medium text-zinc-700 mb-1.5">
                         Kata Sandi Baru
                     </label>
-                    <input type="password" id="password" name="password"
-                        placeholder="Kosongkan jika tidak diubah"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                    <p class="text-[11px] text-slate-400 mt-1">Isi hanya jika ingin mengganti kata sandi.</p>
+                    <x-ui.input id="password" name="password" type="password" placeholder="Kosongkan jika tidak diubah" />
+                    <p class="text-[11px] text-zinc-400 mt-1">Isi hanya jika ingin mengganti kata sandi.</p>
                 </div>
 
                 <div>
-                    <label for="role" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                    <label for="role" class="block text-sm font-medium text-zinc-700 mb-1.5">
                         Hak Akses / Peran <span class="text-rose-500">*</span>
                     </label>
                     <select id="role" name="role" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                        class="w-full min-h-10 px-3 rounded-field border border-zinc-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400">
                         @foreach($roles as $r)
                             <option value="{{ $r->value }}" {{ old('role', $user->role->value) == $r->value ? 'selected' : '' }}>
                                 {{ $r->label() }}
@@ -72,15 +67,11 @@
                 </div>
             </div>
 
-            <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
-                <a href="{{ route('user.index') }}" class="px-4 py-2.5 rounded-xl text-slate-700 bg-slate-100 hover:bg-slate-200 text-xs font-semibold transition">
-                    Batal
-                </a>
-                <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition shadow-sm">
-                    Simpan Perubahan
-                </button>
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-200">
+                <x-ui.button as="a" href="{{ route('user.index') }}" variant="secondary">Batal</x-ui.button>
+                <x-ui.button type="submit" variant="primary">Simpan Perubahan</x-ui.button>
             </div>
         </form>
-    </div>
+    </x-ui.card>
 </div>
 @endsection
