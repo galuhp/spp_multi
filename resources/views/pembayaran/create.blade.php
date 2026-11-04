@@ -147,7 +147,7 @@
         <div class="bg-white rounded-xl border border-zinc-200 shadow-xs p-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-200">
                 <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 text-white flex items-center justify-center font-bold shadow-sm">
+                    <div class="w-11 h-11 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold shadow-sm">
                         {{ strtoupper(substr($selectedSiswa->nama, 0, 2)) }}
                     </div>
                     <div>

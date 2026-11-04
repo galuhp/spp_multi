@@ -19,7 +19,7 @@
     <div class="w-full max-w-xl my-8 space-y-5">
         <!-- School Brand Header -->
         <div class="text-center">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white font-black text-xl shadow-md mx-auto mb-3">
+            <div class="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center text-white font-black text-xl shadow-md mx-auto mb-3">
                 S
             </div>
             <h1 class="text-lg sm:text-xl font-black text-zinc-900 uppercase tracking-wide">{{ $sekolah->nama_sekolah }}</h1>
@@ -33,7 +33,7 @@
 
             <!-- Receipt Verification Card -->
             <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-                <div class="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 no-print"></div>
+                <div class="h-1.5 w-full bg-emerald-500 no-print"></div>
 
                 <div class="p-5 sm:p-7 space-y-6">
                     <!-- Verified Banner -->
@@ -169,7 +169,7 @@
         @else
             <!-- Invalid / Unverified Receipt Card -->
             <div class="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-                <div class="h-1.5 w-full bg-gradient-to-r from-rose-500 via-red-500 to-amber-500"></div>
+                <div class="h-1.5 w-full bg-rose-500"></div>
 
                 <div class="p-6 sm:p-8 text-center space-y-4">
                     <div class="w-14 h-14 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">

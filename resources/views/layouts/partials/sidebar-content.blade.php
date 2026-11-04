@@ -1,6 +1,6 @@
 <div class="p-5 flex items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-950/40">
     <div class="flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white font-black text-xl shadow-md shadow-indigo-500/20 shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-white font-black text-xl shadow-md shrink-0">
             S
         </div>
         <div class="min-w-0">
