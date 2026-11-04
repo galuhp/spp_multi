@@ -22,6 +22,9 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
+// Flowbite UI preview (sementara, untuk evaluasi)
+Route::get('/flowbite-demo', fn () => view('flowbite-demo'))->name('flowbite.demo');
+
 // Public Digital Receipt Verification (QR Code Scan)
 Route::get('/bukti/{kode}/{token}', [BuktiPembayaranController::class, 'show'])
     ->name('bukti.pembayaran');
