@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\ImportSiswaStaging;
+use App\Models\RolePermission;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
 use App\Support\ImporSiswa\ImporSiswaService;
@@ -53,7 +54,9 @@ class ImporSiswa extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::KESISWAAN);
     }
 
     public function mount(): void

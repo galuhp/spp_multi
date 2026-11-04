@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Kelas;
 use App\Models\ProsesKelasBatch;
+use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\TahunAjaran;
 use App\Support\KenaikanKelas\ProsesKelasService;
@@ -50,7 +51,9 @@ class KelulusanSiswa extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::KESISWAAN);
     }
 
     public function mount(): void

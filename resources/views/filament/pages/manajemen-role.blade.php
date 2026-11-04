@@ -5,15 +5,7 @@
 
     @php
         $users = $this->users;
-        $permissions = [
-            'Dashboard' => ['admin' => true, 'petugas' => true, 'siswa' => true],
-            'Transaksi SPP' => ['admin' => true, 'petugas' => true, 'siswa' => false],
-            'Portal Siswa' => ['admin' => true, 'petugas' => true, 'siswa' => true],
-            'Kesiswaan' => ['admin' => true, 'petugas' => true, 'siswa' => false],
-            'Master Data' => ['admin' => true, 'petugas' => true, 'siswa' => false],
-            'Pengaturan & Akses' => ['admin' => true, 'petugas' => false, 'siswa' => false],
-            'Manajemen Role' => ['admin' => true, 'petugas' => false, 'siswa' => false],
-        ];
+        $modulAkses = \App\Models\RolePermission::AVAILABLE;
     @endphp
 
     <div class="space-y-5">
@@ -35,34 +27,48 @@
         </div>
 
         <div class="rounded-xl border border-zinc-200 bg-white p-5">
-            <h3 class="text-base font-semibold text-zinc-900">Matriks Hak Akses</h3>
-            <p class="mt-0.5 text-xs text-zinc-500">Ringkasan modul yang tersedia untuk setiap role.</p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h3 class="text-base font-semibold text-zinc-900">Matriks Hak Akses</h3>
+                    <p class="mt-0.5 text-xs text-zinc-500">Centang modul yang boleh diakses tiap role. Manajemen Role tetap khusus Administrator.</p>
+                </div>
+                <button type="button" wire:click="simpanAkses"
+                    class="rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white hover:bg-zinc-800">
+                    Simpan Hak Akses
+                </button>
+            </div>
 
             <div class="mt-4 overflow-x-auto">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-zinc-50 text-xs uppercase text-zinc-600">
                         <tr>
                             <th class="px-3 py-2">Modul</th>
-                            <th class="px-3 py-2 text-center">Administrator</th>
-                            <th class="px-3 py-2 text-center">Petugas</th>
-                            <th class="px-3 py-2 text-center">Siswa</th>
+                            @foreach (\App\Enums\UserRole::cases() as $role)
+                                <th class="px-3 py-2 text-center">{{ $role->label() }}</th>
+                            @endforeach
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100">
-                        @foreach ($permissions as $modul => $akses)
+                        @foreach ($modulAkses as $kunci => $label)
                             <tr>
-                                <td class="px-3 py-2 font-medium text-zinc-800">{{ $modul }}</td>
-                                @foreach (['admin', 'petugas', 'siswa'] as $role)
+                                <td class="px-3 py-2 font-medium text-zinc-800">{{ $label }}</td>
+                                @foreach (\App\Enums\UserRole::cases() as $role)
                                     <td class="px-3 py-2 text-center">
-                                        @if ($akses[$role])
-                                            <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Boleh</span>
-                                        @else
-                                            <span class="inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">Tidak</span>
-                                        @endif
+                                        <input type="checkbox" wire:model="akses.{{ $role->value }}.{{ $kunci }}"
+                                            class="size-4 rounded border-zinc-300 accent-zinc-900">
                                     </td>
                                 @endforeach
                             </tr>
                         @endforeach
+                        <tr class="bg-zinc-50">
+                            <td class="px-3 py-2 font-medium text-zinc-800">Manajemen Role</td>
+                            @foreach (\App\Enums\UserRole::cases() as $role)
+                                <td class="px-3 py-2 text-center">
+                                    <input type="checkbox" disabled @checked($role === \App\Enums\UserRole::Admin)
+                                        class="size-4 rounded border-zinc-300 accent-zinc-900">
+                                </td>
+                            @endforeach
+                        </tr>
                     </tbody>
                 </table>
             </div>

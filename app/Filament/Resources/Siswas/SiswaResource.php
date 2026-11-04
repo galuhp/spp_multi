@@ -7,6 +7,7 @@ use App\Filament\Resources\Siswas\Pages\EditSiswa;
 use App\Filament\Resources\Siswas\Pages\ListSiswas;
 use App\Filament\Resources\Siswas\Schemas\SiswaForm;
 use App\Filament\Resources\Siswas\Tables\SiswasTable;
+use App\Models\RolePermission;
 use App\Models\Siswa;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -33,7 +34,9 @@ class SiswaResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::KESISWAAN);
     }
 
     public static function form(Schema $schema): Schema

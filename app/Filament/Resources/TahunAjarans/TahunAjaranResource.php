@@ -7,6 +7,7 @@ use App\Filament\Resources\TahunAjarans\Pages\EditTahunAjaran;
 use App\Filament\Resources\TahunAjarans\Pages\ListTahunAjarans;
 use App\Filament\Resources\TahunAjarans\Schemas\TahunAjaranForm;
 use App\Filament\Resources\TahunAjarans\Tables\TahunAjaransTable;
+use App\Models\RolePermission;
 use App\Models\TahunAjaran;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -34,22 +35,30 @@ class TahunAjaranResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function form(Schema $schema): Schema

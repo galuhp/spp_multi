@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\RolePermission;
 use App\Models\Spp;
 use BackedEnum;
 use Carbon\Carbon;
@@ -39,7 +40,9 @@ class LaporanPembayaran extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
     public function mount(): void

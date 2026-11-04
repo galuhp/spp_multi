@@ -9,6 +9,7 @@ use App\Filament\Resources\Jurusans\RelationManagers\KelasRelationManager;
 use App\Filament\Resources\Jurusans\Schemas\JurusanForm;
 use App\Filament\Resources\Jurusans\Tables\JurusansTable;
 use App\Models\Jurusan;
+use App\Models\RolePermission;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -35,22 +36,30 @@ class JurusanResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function form(Schema $schema): Schema

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
 use BackedEnum;
@@ -27,6 +28,17 @@ class TagihanSiswa extends Page
     protected string $view = 'filament.pages.tagihan-siswa';
 
     public ?int $selectedSiswaId = null;
+
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        if ($user?->isSiswa()) {
+            return true;
+        }
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::PORTAL_SISWA);
+    }
 
     public string $cara_pilih = 'cari';
 

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\LogAktivitas;
 use App\Models\ProfilSekolah;
+use App\Models\RolePermission;
 use BackedEnum;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -33,7 +34,9 @@ class ProfilSekolahSettings extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        $user = auth()->user();
+
+        return $user?->isAdmin() && RolePermission::allowed($user->role, RolePermission::PENGATURAN_AKSES);
     }
 
     public function mount(): void

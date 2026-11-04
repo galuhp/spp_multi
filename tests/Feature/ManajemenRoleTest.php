@@ -62,4 +62,26 @@ class ManajemenRoleTest extends TestCase
 
         $this->assertSame(UserRole::Admin, $admin->fresh()->role);
     }
+
+    public function test_admin_dapat_mengubah_matriks_akses_role(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $petugas = User::factory()->create(['role' => UserRole::Petugas]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ManajemenRole::class)
+            ->set('akses.petugas.kesiswaan', false)
+            ->call('simpanAkses')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseMissing('role_permissions', [
+            'role' => 'petugas',
+            'permission' => 'kesiswaan',
+        ]);
+
+        $this->actingAs($petugas)
+            ->get('/admin/siswas')
+            ->assertForbidden();
+    }
 }

@@ -7,6 +7,7 @@ use App\Filament\Resources\Pembayarans\Pages\ListPembayarans;
 use App\Filament\Resources\Pembayarans\Schemas\PembayaranForm;
 use App\Filament\Resources\Pembayarans\Tables\PembayaransTable;
 use App\Models\Pembayaran;
+use App\Models\RolePermission;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -31,9 +32,18 @@ class PembayaranResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+    }
+
     public static function canCreate(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
     /**

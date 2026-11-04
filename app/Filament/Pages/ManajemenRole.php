@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Models\LogAktivitas;
+use App\Models\RolePermission;
 use App\Models\User;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -28,6 +29,57 @@ class ManajemenRole extends Page
     protected string $view = 'filament.pages.manajemen-role';
 
     public string $cari = '';
+
+    /**
+     * @var array<string, array<string, bool>>
+     */
+    public array $akses = [];
+
+    public function mount(): void
+    {
+        foreach (UserRole::cases() as $role) {
+            foreach (array_keys(RolePermission::AVAILABLE) as $permission) {
+                $this->akses[$role->value][$permission] = RolePermission::allowed($role, $permission);
+            }
+        }
+    }
+
+    public function simpanAkses(): void
+    {
+        if (! auth()->user()?->isAdmin()) {
+            abort(403);
+        }
+
+        $sebelum = [];
+
+        foreach (UserRole::cases() as $role) {
+            $sebelum[$role->value] = RolePermission::forRole($role);
+
+            $dipilih = array_keys(array_filter(
+                $this->akses[$role->value] ?? [],
+                fn ($nilai): bool => (bool) $nilai,
+            ));
+
+            RolePermission::syncRole($role, $dipilih);
+        }
+
+        LogAktivitas::catat(
+            'role_permission.diubah',
+            'Hak akses per role diperbarui.',
+            null,
+            [
+                'sebelum' => $sebelum,
+                'sesudah' => $this->akses,
+                'diubah_oleh' => auth()->id(),
+            ]
+        );
+
+        Notification::make()
+            ->title('Hak akses disimpan')
+            ->body('Matriks akses role berhasil diperbarui.')
+            ->success()
+            ->send();
+    }
 
     public static function canAccess(): bool
     {

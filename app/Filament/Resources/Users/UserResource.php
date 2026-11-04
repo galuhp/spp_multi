@@ -7,6 +7,7 @@ use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
+use App\Models\RolePermission;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -33,7 +34,9 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        $user = auth()->user();
+
+        return $user?->isAdmin() && RolePermission::allowed($user->role, RolePermission::PENGATURAN_AKSES);
     }
 
     public static function form(Schema $schema): Schema

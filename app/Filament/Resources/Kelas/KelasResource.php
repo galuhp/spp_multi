@@ -8,6 +8,7 @@ use App\Filament\Resources\Kelas\Pages\ListKelas;
 use App\Filament\Resources\Kelas\Schemas\KelasForm;
 use App\Filament\Resources\Kelas\Tables\KelasTable;
 use App\Models\Kelas;
+use App\Models\RolePermission;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -34,22 +35,30 @@ class KelasResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function canDelete(Model $record): bool
     {
-        return auth()->user()?->isStaff() ?? false;
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
     }
 
     public static function form(Schema $schema): Schema

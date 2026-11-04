@@ -5,6 +5,7 @@ namespace App\Filament\Resources\LogAktivitas;
 use App\Filament\Resources\LogAktivitas\Pages\ListLogAktivitas;
 use App\Filament\Resources\LogAktivitas\Tables\LogAktivitasTable;
 use App\Models\LogAktivitas;
+use App\Models\RolePermission;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -35,7 +36,9 @@ class LogAktivitasResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        $user = auth()->user();
+
+        return $user?->isAdmin() && RolePermission::allowed($user->role, RolePermission::PENGATURAN_AKSES);
     }
 
     public static function form(Schema $schema): Schema
