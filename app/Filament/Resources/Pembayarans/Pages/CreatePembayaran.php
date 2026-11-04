@@ -25,6 +25,7 @@ class CreatePembayaran extends CreateRecord
             $siswa = Siswa::with('kelas')->find($siswaId);
 
             $this->form->fill([
+                'cara_pilih' => 'bertingkat',
                 'jurusan_id' => $siswa?->kelas?->jurusan_id,
                 'kelas_id' => $siswa?->kelas_id,
                 'siswa_id' => (int) $siswaId,
