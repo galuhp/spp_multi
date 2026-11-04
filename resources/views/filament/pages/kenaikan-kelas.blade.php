@@ -124,7 +124,7 @@
                 </div>
 
                 <div class="mt-4 flex flex-wrap items-center gap-2">
-                    @if (auth()->user()?->isAdmin())
+                    @if (auth()->user()?->isStaff())
                         <button type="button" wire:click="pratinjau"
                             class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
                             Pratinjau
@@ -138,7 +138,7 @@
                             </button>
                         @endif
                     @else
-                        <p class="text-xs text-zinc-500">Hanya Administrator yang dapat menyimpan proses kenaikan kelas.</p>
+                        <p class="text-xs text-zinc-500">Hanya staf yang dapat menyimpan proses kenaikan kelas.</p>
                     @endif
                 </div>
             </div>
@@ -199,7 +199,7 @@
                                 </td>
                                 <td class="px-3 py-2 text-xs text-zinc-500">{{ $batch->created_at?->format('d/m/Y H:i') }}</td>
                                 <td class="px-3 py-2">
-                                    @if (auth()->user()?->isAdmin() && $service->bisaDibatalkan($batch))
+                                    @if (auth()->user()?->isStaff() && $service->bisaDibatalkan($batch))
                                         <button type="button" wire:click="batalkan({{ $batch->id }})"
                                             wire:confirm="Batalkan batch #{{ $batch->id }}? Riwayat kelas baru akan dihapus dan status lama dipulihkan."
                                             class="rounded-lg border border-rose-300 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50">

@@ -101,7 +101,7 @@ class ProsesKelasService
         array $keputusan,
         int $userId,
     ): array {
-        $this->pastikanAdmin();
+        $this->pastikanStaf();
 
         if ($tahunAjaranAsalId === $tahunAjaranTujuanId) {
             throw new RuntimeException('Tahun ajaran asal dan tujuan tidak boleh sama.');
@@ -265,7 +265,7 @@ class ProsesKelasService
         string $tanggalLulus,
         int $userId,
     ): array {
-        $this->pastikanAdmin();
+        $this->pastikanStaf();
 
         $kelas = Kelas::query()->findOrFail($kelasId);
 
@@ -350,7 +350,7 @@ class ProsesKelasService
      */
     public function batalkan(ProsesKelasBatch $batch): array
     {
-        $this->pastikanAdmin();
+        $this->pastikanStaf();
 
         if ($batch->status === ProsesKelasBatch::STATUS_DIBATALKAN) {
             return ['berhasil' => false, 'alasan' => 'Batch ini sudah dibatalkan.'];
@@ -421,7 +421,7 @@ class ProsesKelasService
      */
     public function keluarkanDariArsip(Siswa $siswa, string $alasan): void
     {
-        $this->pastikanAdmin();
+        $this->pastikanStaf();
 
         RiwayatKelas::query()
             ->where('siswa_id', $siswa->id)
@@ -499,10 +499,10 @@ class ProsesKelasService
     /**
      * Only administrators may run mass class processes.
      */
-    protected function pastikanAdmin(): void
+    protected function pastikanStaf(): void
     {
-        if (! auth()->user()?->isAdmin()) {
-            throw new RuntimeException('Hanya Administrator yang dapat menjalankan proses ini.');
+        if (! auth()->user()?->isStaff()) {
+            throw new RuntimeException('Hanya staf yang dapat menjalankan proses ini.');
         }
     }
 }

@@ -273,7 +273,7 @@ class KenaikanKelas extends Page
 
     public function eksekusi(): void
     {
-        if (! auth()->user()?->isAdmin()) {
+        if (! auth()->user()?->isStaff()) {
             abort(403);
         }
 
@@ -313,7 +313,7 @@ class KenaikanKelas extends Page
 
     public function batalkan(int $batchId): void
     {
-        if (! auth()->user()?->isAdmin()) {
+        if (! auth()->user()?->isStaff()) {
             abort(403);
         }
 

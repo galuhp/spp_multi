@@ -115,7 +115,7 @@
                 </div>
 
                 <div class="mt-4 flex flex-wrap items-center gap-2">
-                    @if (auth()->user()?->isAdmin())
+                    @if (auth()->user()?->isStaff())
                         <button type="button" wire:click="pratinjau"
                             class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
                             Pratinjau
@@ -129,7 +129,7 @@
                             </button>
                         @endif
                     @else
-                        <p class="text-xs text-zinc-500">Hanya Administrator yang dapat menyimpan kelulusan.</p>
+                        <p class="text-xs text-zinc-500">Hanya staf yang dapat menyimpan kelulusan.</p>
                     @endif
                 </div>
             </div>

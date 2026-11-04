@@ -19,7 +19,6 @@ use App\Models\User;
 use App\Support\KenaikanKelas\ProsesKelasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use RuntimeException;
 use Tests\TestCase;
 
 class ProsesKelasTest extends TestCase
@@ -282,7 +281,7 @@ class ProsesKelasTest extends TestCase
             ->assertSee('Budi Santoso');
     }
 
-    public function test_petugas_tidak_dapat_menjalankan_kenaikan_kelas(): void
+    public function test_petugas_dapat_menjalankan_kenaikan_kelas(): void
     {
         $petugas = User::factory()->create(['role' => UserRole::Petugas]);
         $this->actingAs($petugas);
@@ -291,9 +290,7 @@ class ProsesKelasTest extends TestCase
         $kelasTujuan = $this->buatKelas('11', $this->tujuan, 'XI RPL 1');
         $siswa = $this->buatSiswa($kelasAsal);
 
-        $this->expectException(RuntimeException::class);
-
-        $this->service->naikKelas(
+        $hasil = $this->service->naikKelas(
             $this->asal->id,
             $this->tujuan->id,
             $kelasAsal->id,
@@ -305,6 +302,8 @@ class ProsesKelasTest extends TestCase
             ],
             $petugas->id,
         );
+
+        $this->assertSame(1, $hasil['diproses']);
     }
 
     public function test_batalkan_batch_ditolak_jika_sudah_ada_pembayaran(): void

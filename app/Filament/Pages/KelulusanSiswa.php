@@ -153,7 +153,7 @@ class KelulusanSiswa extends Page
 
     public function eksekusi(): void
     {
-        if (! auth()->user()?->isAdmin()) {
+        if (! auth()->user()?->isStaff()) {
             abort(403);
         }
 

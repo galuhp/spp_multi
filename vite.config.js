@@ -17,6 +17,7 @@ export default defineConfig({
                 'resources/css/demo-sheaf.css',
                 'resources/css/proses-kelas.css',
                 'resources/css/tagihan-siswa.css',
+                'resources/css/manajemen-role.css',
                 'resources/js/app.js',
                 'resources/js/demo-preline.js',
             ],
