@@ -65,6 +65,7 @@
                     <th class="py-2 px-2 border-r border-zinc-300">NISN</th>
                     <th class="py-2 px-2 border-r border-zinc-300">Kelas</th>
                     <th class="py-2 px-2 border-r border-zinc-300">Pos Pembayaran</th>
+                    <th class="py-2 px-2 border-r border-zinc-300">Sumber</th>
                     <th class="py-2 px-2 border-r border-zinc-300 text-right">Nominal</th>
                     <th class="py-2 px-2 border-r border-zinc-300">Metode</th>
                     <th class="py-2 px-2">Petugas Kasir</th>
@@ -82,13 +83,20 @@
                         <td class="py-2 px-2 border-r border-zinc-200">
                             <strong>{{ $item->spp?->kategori ?? 'SPP' }}</strong> &bull; {{ $item->namaPos() }}
                         </td>
+                        <td class="py-2 px-2 border-r border-zinc-200">
+                            @if($item->gabungan_id)
+                                Gabungan {{ $item->gabungan?->kode }}
+                            @else
+                                Loket
+                            @endif
+                        </td>
                         <td class="py-2 px-2 border-r border-zinc-200 text-right font-semibold">{{ $item->formattedJumlahBayar() }}</td>
                         <td class="py-2 px-2 border-r border-zinc-200">{{ $item->metode_pembayaran }}</td>
                         <td class="py-2 px-2">{{ $item->user?->name ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="py-6 text-center text-zinc-400">
+                        <td colspan="11" class="py-6 text-center text-zinc-400">
                             Tidak ada transaksi pembayaran pada filter periode ini.
                         </td>
                     </tr>
@@ -96,7 +104,7 @@
             </tbody>
             <tfoot>
                 <tr class="border-t-2 border-black font-bold bg-zinc-50 text-xs">
-                    <td colspan="7" class="py-2.5 px-3 border-r border-zinc-300 text-right uppercase">
+                    <td colspan="8" class="py-2.5 px-3 border-r border-zinc-300 text-right uppercase">
                         Total Penerimaan:
                     </td>
                     <td class="py-2.5 px-3 border-r border-zinc-300 text-right text-sm">

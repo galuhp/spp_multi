@@ -164,6 +164,7 @@ class TagihanSiswa extends Page
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
 
         $riwayatPembayaran = $siswa->pembayarans()
+            ->whereNull('void_at')
             ->with(['user', 'spp'])
             ->get();
 

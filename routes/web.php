@@ -9,6 +9,7 @@ use App\Http\Controllers\KelasController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LogAktivitasController;
 use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\PembayaranGabunganController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ProfilSekolahController;
 use App\Http\Controllers\SiswaController;
@@ -70,6 +71,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/pembayaran', [PembayaranController::class, 'store'])->name('pembayaran.store');
         Route::get('/pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
         Route::get('/pembayaran/{pembayaran}/cetak', [PembayaranController::class, 'cetak'])->name('pembayaran.cetak');
+
+        // Cetak Pembayaran Massal
+        Route::get('/pembayaran/gabungan/{gabungan}/kuitansi', [PembayaranGabunganController::class, 'kuitansi'])->name('pembayaran.gabungan.kuitansi');
+        Route::get('/pembayaran/gabungan/{gabungan}/rekap', [PembayaranGabunganController::class, 'rekap'])->name('pembayaran.gabungan.rekap');
+        Route::get('/pembayaran/gabungan-template', [PembayaranGabunganController::class, 'template'])->name('pembayaran.gabungan.template');
+        Route::get('/pembayaran/gabungan/{gabungan}/error', [PembayaranGabunganController::class, 'unduhError'])->name('pembayaran.gabungan.error');
 
         // Laporan & Rekap Pembayaran
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');

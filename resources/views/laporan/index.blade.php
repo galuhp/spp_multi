@@ -118,6 +118,7 @@
                         <th class="py-3 px-4">NISN</th>
                         <th class="py-3 px-4">Kelas</th>
                         <th class="py-3 px-4">Pos Pembayaran</th>
+                        <th class="py-3 px-4">Sumber</th>
                         <th class="py-3 px-4 text-right">Jumlah Bayar</th>
                         <th class="py-3 px-4">Metode</th>
                         <th class="py-3 px-4">Petugas</th>
@@ -152,6 +153,14 @@
                                     <span>{{ $item->namaPos() }}</span>
                                 </span>
                             </td>
+                            <td class="py-3 px-4 text-xs">
+                                @if($item->gabungan_id)
+                                    <span class="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 font-semibold text-zinc-700">Gabungan</span>
+                                    <span class="block font-mono text-[10px] text-zinc-500">{{ $item->gabungan?->kode }}</span>
+                                @else
+                                    <span class="text-zinc-500">Loket</span>
+                                @endif
+                            </td>
                             <td class="py-3 px-4 font-bold text-right text-zinc-900">
                                 {{ $item->formattedJumlahBayar() }}
                             </td>
@@ -164,7 +173,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="py-8 text-center text-zinc-400 text-sm">
+                            <td colspan="11" class="py-8 text-center text-zinc-400 text-sm">
                                 Tidak ada data penerimaan pembayaran pada periode dan filter yang dipilih.
                             </td>
                         </tr>

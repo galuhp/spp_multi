@@ -144,7 +144,7 @@ class Siswa extends Model
      */
     public function totalDibayar(): int
     {
-        return (int) $this->pembayarans()->sum('jumlah_bayar');
+        return (int) $this->pembayarans()->whereNull('void_at')->sum('jumlah_bayar');
     }
 
     /**
@@ -153,6 +153,7 @@ class Siswa extends Model
     public function sudahBayar(string $bulan, int $tahun): bool
     {
         return $this->pembayarans()
+            ->whereNull('void_at')
             ->where('bulan_dibayar', $bulan)
             ->where('tahun_dibayar', $tahun)
             ->exists();

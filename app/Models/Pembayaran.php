@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\Pembayaran\NomorKuitansiService;
 use App\Support\QrCodeSvg;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +22,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'jumlah_bayar',
     'metode_pembayaran',
     'catatan',
+    'gabungan_id',
+    'gabungan_baris_id',
+    'void_oleh',
+    'void_alasan',
+    'void_at',
 ])]
 class Pembayaran extends Model
 {
@@ -66,7 +73,21 @@ class Pembayaran extends Model
             'tgl_bayar' => 'date',
             'tahun_dibayar' => 'integer',
             'jumlah_bayar' => 'integer',
+            'void_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Only payments that have not been voided.
+     */
+    public function scopeTidakVoid(Builder $query): Builder
+    {
+        return $query->whereNull('void_at');
+    }
+
+    public function isVoid(): bool
+    {
+        return $this->void_at !== null;
     }
 
     /**
@@ -74,20 +95,7 @@ class Pembayaran extends Model
      */
     public static function generateKodeTransaksi(): string
     {
-        $prefix = 'SPP-'.date('Ymd').'-';
-        $latest = static::query()
-            ->where('kode_transaksi', 'like', $prefix.'%')
-            ->latest('id')
-            ->first();
-
-        if ($latest) {
-            $lastNumber = (int) substr($latest->kode_transaksi, -4);
-            $nextNumber = str_pad((string) ($lastNumber + 1), 4, '0', STR_PAD_LEFT);
-        } else {
-            $nextNumber = '0001';
-        }
-
-        return $prefix.$nextNumber;
+        return app(NomorKuitansiService::class)->berikutnya();
     }
 
     /**
@@ -112,6 +120,30 @@ class Pembayaran extends Model
     public function spp(): BelongsTo
     {
         return $this->belongsTo(Spp::class);
+    }
+
+    /**
+     * Mass payment batch that produced this payment.
+     */
+    public function gabungan(): BelongsTo
+    {
+        return $this->belongsTo(PembayaranGabungan::class, 'gabungan_id');
+    }
+
+    /**
+     * Mass payment line that produced this payment.
+     */
+    public function gabunganBaris(): BelongsTo
+    {
+        return $this->belongsTo(PembayaranGabunganBaris::class, 'gabungan_baris_id');
+    }
+
+    /**
+     * User who voided this payment.
+     */
+    public function pemberiVoid(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'void_oleh');
     }
 
     /**
