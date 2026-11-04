@@ -2,12 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Collection;
 use UnitEnum;
 
 class TagihanSiswa extends Page
@@ -26,6 +28,12 @@ class TagihanSiswa extends Page
 
     public ?int $selectedSiswaId = null;
 
+    public string $cara_pilih = 'cari';
+
+    public ?int $kelas_id = null;
+
+    public string $cari = '';
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -34,8 +42,87 @@ class TagihanSiswa extends Page
             $siswa = $user->siswa ?? Siswa::where('nisn', $user->username)->first();
             $this->selectedSiswaId = $siswa?->id;
         } else {
-            $this->selectedSiswaId = Siswa::orderBy('nama')->value('id');
+            $this->selectedSiswaId = Siswa::query()->tanpaArsip()->orderBy('nama')->value('id');
         }
+    }
+
+    public function updatedCaraPilih(): void
+    {
+        $this->kelas_id = null;
+        $this->cari = '';
+        $this->selectedSiswaId = null;
+    }
+
+    public function updatedKelasId(): void
+    {
+        $this->selectedSiswaId = $this->kelas_id
+            ? Siswa::query()->where('kelas_id', $this->kelas_id)->tanpaArsip()->orderBy('nama')->value('id')
+            : null;
+    }
+
+    public function pilihSiswa(int $siswaId): void
+    {
+        $siswa = Siswa::query()->tanpaArsip()->find($siswaId);
+
+        if ($siswa) {
+            $this->selectedSiswaId = $siswa->id;
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getKelasOptionsProperty(): array
+    {
+        return Kelas::query()
+            ->with(['tahunAjaran', 'jurusan'])
+            ->orderByDesc('tahun_ajaran_id')
+            ->orderBy('tingkat')
+            ->orderBy('nama_kelas')
+            ->get()
+            ->mapWithKeys(fn (Kelas $kelas): array => [
+                $kelas->id => trim(($kelas->tahunAjaran?->nama ? $kelas->tahunAjaran->nama.' — ' : '').$kelas->nama_kelas),
+            ])
+            ->all();
+    }
+
+    /**
+     * Students shown by the active selection method.
+     *
+     * @return Collection<int, Siswa>
+     */
+    public function getSiswaHasilProperty(): Collection
+    {
+        if ($this->cara_pilih === 'kelas') {
+            if (! $this->kelas_id) {
+                return collect();
+            }
+
+            return Siswa::query()
+                ->with('kelas')
+                ->where('kelas_id', $this->kelas_id)
+                ->tanpaArsip()
+                ->orderBy('nama')
+                ->get();
+        }
+
+        $kataKunci = trim($this->cari);
+
+        if (mb_strlen($kataKunci) < 2) {
+            return collect();
+        }
+
+        return Siswa::query()
+            ->with('kelas')
+            ->tanpaArsip()
+            ->where(function ($query) use ($kataKunci): void {
+                $query->where('nama', 'like', "%{$kataKunci}%")
+                    ->orWhere('nisn', 'like', "%{$kataKunci}%")
+                    ->orWhere('nis', 'like', "%{$kataKunci}%");
+            })
+            ->orderBy('nama')
+            ->limit(20)
+            ->get();
     }
 
     public function getSiswaProperty(): ?Siswa

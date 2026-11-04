@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Filament\Pages\KelulusanSiswa;
 use App\Filament\Pages\KenaikanKelas;
+use App\Filament\Pages\TagihanSiswa;
 use App\Filament\Resources\Siswas\Pages\ListSiswas;
 use App\Models\Jurusan;
 use App\Models\Kelas;
@@ -247,6 +248,38 @@ class ProsesKelasTest extends TestCase
     {
         $this->get(KenaikanKelas::getUrl())->assertOk();
         $this->get(KelulusanSiswa::getUrl())->assertOk();
+    }
+
+    public function test_tagihan_siswa_mendukung_pencarian_nama_dan_filter_kelas(): void
+    {
+        $kelas = $this->buatKelas('12', $this->asal, 'XII RPL 1');
+
+        $siswa = $this->buatSiswa($kelas, [
+            'nama' => 'Budi Santoso',
+            'nisn' => '5555555555',
+            'nis' => '55555555',
+        ]);
+
+        $this->buatSiswa($kelas, [
+            'nama' => 'Alumni Arsip',
+            'nisn' => '6666666666',
+            'nis' => '66666666',
+            'status' => 'lulus',
+            'is_archived' => true,
+            'archived_at' => now(),
+            'tanggal_lulus' => '2028-06-20',
+        ]);
+
+        Livewire::test(TagihanSiswa::class)
+            ->assertSet('cara_pilih', 'cari')
+            ->set('cari', 'Budi')
+            ->assertSee('Budi Santoso')
+            ->set('cari', 'Alumni')
+            ->assertDontSee('Alumni Arsip')
+            ->set('cara_pilih', 'kelas')
+            ->set('kelas_id', $kelas->id)
+            ->assertSet('selectedSiswaId', $siswa->id)
+            ->assertSee('Budi Santoso');
     }
 
     public function test_petugas_tidak_dapat_menjalankan_kenaikan_kelas(): void
