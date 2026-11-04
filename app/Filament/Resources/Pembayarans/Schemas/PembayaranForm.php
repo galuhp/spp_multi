@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Pembayarans\Schemas;
 
+use App\Models\Jurusan;
+use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
@@ -10,6 +12,8 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class PembayaranForm
@@ -18,14 +22,48 @@ class PembayaranForm
     {
         return $schema
             ->components([
+                Select::make('jurusan_id')
+                    ->label('Kompetensi Keahlian (Jurusan)')
+                    ->options(fn (): array => Jurusan::query()->orderBy('nama')->pluck('nama', 'id')->all())
+                    ->searchable()
+                    ->live()
+                    ->dehydrated(false)
+                    ->afterStateUpdated(fn (Set $set) => $set('kelas_id', null)),
+
+                Select::make('kelas_id')
+                    ->label('Kelas')
+                    ->options(fn (Get $get): array => blank($get('jurusan_id'))
+                        ? []
+                        : Kelas::query()
+                            ->where('jurusan_id', $get('jurusan_id'))
+                            ->orderBy('tingkat')
+                            ->orderBy('nama_kelas')
+                            ->pluck('nama_kelas', 'id')
+                            ->all())
+                    ->searchable()
+                    ->live()
+                    ->dehydrated(false)
+                    ->disabled(fn (Get $get): bool => blank($get('jurusan_id')))
+                    ->afterStateUpdated(fn (Set $set) => $set('siswa_id', null)),
+
                 Select::make('siswa_id')
                     ->label('Pilih Siswa')
-                    ->options(fn () => Siswa::with('kelas')->tanpaArsip()->get()->mapWithKeys(function ($s) {
-                        return [$s->id => "{$s->nama} (NISN: {$s->nisn} - {$s->kelas?->nama_kelas})"];
-                    }))
+                    ->options(fn (Get $get): array => blank($get('kelas_id'))
+                        ? []
+                        : Siswa::query()
+                            ->where('kelas_id', $get('kelas_id'))
+                            ->tanpaArsip()
+                            ->orderBy('nama')
+                            ->get()
+                            ->mapWithKeys(fn (Siswa $s): array => [
+                                $s->id => "{$s->nama} (NISN: {$s->nisn})",
+                            ])
+                            ->all())
                     ->searchable()
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->disabled(fn (Get $get): bool => blank($get('kelas_id')))
+                    ->helperText('Pilih jurusan dan kelas terlebih dahulu.'),
 
                 Radio::make('jenis_transaksi')
                     ->label('Jenis Pembayaran')

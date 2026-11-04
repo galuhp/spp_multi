@@ -22,7 +22,11 @@ class CreatePembayaran extends CreateRecord
         // Support prefilling siswa_id from query string
         $siswaId = request()->query('siswa_id');
         if ($siswaId) {
+            $siswa = Siswa::with('kelas')->find($siswaId);
+
             $this->form->fill([
+                'jurusan_id' => $siswa?->kelas?->jurusan_id,
+                'kelas_id' => $siswa?->kelas_id,
                 'siswa_id' => (int) $siswaId,
                 'jenis_transaksi' => 'spp',
                 'tgl_bayar' => now()->format('Y-m-d'),
