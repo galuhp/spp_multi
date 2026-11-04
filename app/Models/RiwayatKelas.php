@@ -7,10 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['siswa_id', 'kelas_id', 'tahun_ajaran_id'])]
+#[Fillable(['siswa_id', 'kelas_id', 'tahun_ajaran_id', 'status', 'batch_id'])]
 class RiwayatKelas extends Model
 {
     use HasFactory;
+
+    public const STATUS_AKTIF = 'aktif';
+
+    public const STATUS_NAIK = 'naik';
+
+    public const STATUS_TINGGAL = 'tinggal';
+
+    public const STATUS_LULUS = 'lulus';
 
     protected $table = 'riwayat_kelas';
 
@@ -36,5 +44,13 @@ class RiwayatKelas extends Model
     public function tahunAjaran(): BelongsTo
     {
         return $this->belongsTo(TahunAjaran::class);
+    }
+
+    /**
+     * Batch that produced this history row.
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(ProsesKelasBatch::class, 'batch_id');
     }
 }

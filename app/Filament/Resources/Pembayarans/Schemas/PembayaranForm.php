@@ -20,7 +20,7 @@ class PembayaranForm
             ->components([
                 Select::make('siswa_id')
                     ->label('Pilih Siswa')
-                    ->options(fn () => Siswa::with('kelas')->get()->mapWithKeys(function ($s) {
+                    ->options(fn () => Siswa::with('kelas')->tanpaArsip()->get()->mapWithKeys(function ($s) {
                         return [$s->id => "{$s->nama} (NISN: {$s->nisn} - {$s->kelas?->nama_kelas})"];
                     }))
                     ->searchable()

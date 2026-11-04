@@ -3,13 +3,33 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['user_id', 'kelas_id', 'spp_id', 'nisn', 'nik', 'nis', 'nama', 'tempat_lahir', 'tanggal_lahir', 'agama', 'jenis_kelamin', 'alamat', 'tanggal_masuk', 'status', 'no_telp'])]
+#[Fillable([
+    'user_id',
+    'kelas_id',
+    'spp_id',
+    'nisn',
+    'nik',
+    'nis',
+    'nama',
+    'tempat_lahir',
+    'tanggal_lahir',
+    'agama',
+    'jenis_kelamin',
+    'alamat',
+    'tanggal_masuk',
+    'status',
+    'no_telp',
+    'is_archived',
+    'archived_at',
+    'tanggal_lulus',
+])]
 class Siswa extends Model
 {
     use HasFactory;
@@ -24,7 +44,51 @@ class Siswa extends Model
         return [
             'tanggal_lahir' => 'date',
             'tanggal_masuk' => 'date',
+            'is_archived' => 'boolean',
+            'archived_at' => 'datetime',
+            'tanggal_lulus' => 'date',
         ];
+    }
+
+    /**
+     * Only students that are active and not archived.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeAktif(Builder $query): Builder
+    {
+        return $query->where('is_archived', false)->where('status', 'aktif');
+    }
+
+    /**
+     * Exclude archived students.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeTanpaArsip(Builder $query): Builder
+    {
+        return $query->where('is_archived', false);
+    }
+
+    /**
+     * Only archived students.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeArsip(Builder $query): Builder
+    {
+        return $query->where('is_archived', true);
+    }
+
+    /**
+     * Determine whether this student is archived.
+     */
+    public function isArchived(): bool
+    {
+        return (bool) $this->is_archived;
     }
 
     /**

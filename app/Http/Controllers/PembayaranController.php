@@ -7,6 +7,7 @@ use App\Models\LogAktivitas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
+use App\Models\TahunAjaran;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -79,6 +80,8 @@ class PembayaranController extends Controller
         $nonSppTarifs = collect();
         $siswaId = $request->query('siswa_id');
         $kelasId = $request->query('kelas_id');
+        $sertakanArsip = $request->boolean('sertakan_arsip');
+        $tunggakanTahunLalu = 0;
 
         if ($siswaId) {
             $selectedSiswa = Siswa::with(['kelas.jurusan', 'spp', 'pembayarans.spp'])->find($siswaId);
@@ -102,6 +105,13 @@ class PembayaranController extends Controller
                             'jatuh_tempo' => in_array($bulan, $dueMonths, true),
                         ];
                     }
+                }
+
+                $tahunAjaranAktif = TahunAjaran::query()->where('aktif', true)->value('nama');
+                $tarifTahunAjaran = $selectedSiswa->spp?->tahun_ajaran;
+
+                if ($tarifTahunAjaran && $tahunAjaranAktif && $tarifTahunAjaran !== $tahunAjaranAktif) {
+                    $tunggakanTahunLalu = count($unpaidMonths) * ($selectedSiswa->spp?->nominal ?? 0);
                 }
 
                 // Retrieve all non-SPP tariffs applicable to this student's year or academic year
@@ -142,6 +152,7 @@ class PembayaranController extends Controller
         if ($kelasId) {
             $siswaKelas = Siswa::with(['spp', 'pembayarans:id,siswa_id,bulan_dibayar,tahun_dibayar'])
                 ->where('kelas_id', $kelasId)
+                ->when(! $sertakanArsip, fn ($query) => $query->where('is_archived', false))
                 ->orderBy('nama')
                 ->get()
                 ->each(function (Siswa $siswa) {
@@ -159,6 +170,8 @@ class PembayaranController extends Controller
             'selectedSiswa' => $selectedSiswa,
             'unpaidMonths' => $unpaidMonths,
             'nonSppTarifs' => $nonSppTarifs,
+            'sertakanArsip' => $sertakanArsip,
+            'tunggakanTahunLalu' => $tunggakanTahunLalu,
         ]);
     }
 

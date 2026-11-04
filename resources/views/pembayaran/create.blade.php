@@ -44,10 +44,17 @@
                 <span>Siswa <strong class="text-zinc-900">{{ $selectedSiswa->nama }}</strong></span>
             </div>
             <div class="flex items-center gap-3 font-semibold">
-                <a href="{{ route('pembayaran.create', ['kelas_id' => $kelasId]) }}" class="text-zinc-900 hover:underline">Ganti siswa</a>
+                <a href="{{ route('pembayaran.create', array_filter(['kelas_id' => $kelasId, 'sertakan_arsip' => $sertakanArsip ? 1 : null])) }}" class="text-zinc-900 hover:underline">Ganti siswa</a>
                 <a href="{{ route('pembayaran.create') }}" class="text-zinc-500 hover:text-zinc-800">Ganti kelas</a>
             </div>
         </div>
+
+        @if($tunggakanTahunLalu > 0)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                <strong>Tunggakan tahun ajaran sebelumnya:</strong> Rp {{ number_format($tunggakanTahunLalu, 0, ',', '.') }}.
+                Tagihan lama tetap tercatat dan dapat dibayar di loket ini.
+            </div>
+        @endif
     @else
         <!-- Step 1: choose class -->
         <div class="bg-white rounded-xl border border-zinc-200 shadow-xs p-5">
@@ -58,7 +65,7 @@
                     <div class="text-[11px] font-semibold text-zinc-400 mb-1.5">Kelas {{ $tingkat }}</div>
                     <div class="flex flex-wrap gap-2">
                         @foreach($kelasGroup as $k)
-                            <a href="{{ route('pembayaran.create', ['kelas_id' => $k->id]) }}"
+                            <a href="{{ route('pembayaran.create', array_filter(['kelas_id' => $k->id, 'sertakan_arsip' => $sertakanArsip ? 1 : null])) }}"
                                 class="px-3.5 py-2 rounded-xl border text-xs font-semibold transition
                                 {{ $kelasId === $k->id ? 'bg-zinc-900 text-white shadow-sm border-transparent' : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-100/70' }}">
                                 {{ $k->nama_kelas }}
@@ -89,6 +96,14 @@
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
+                        <form method="GET" action="{{ route('pembayaran.create') }}" class="flex items-center gap-1.5 text-xs text-zinc-600">
+                            <input type="hidden" name="kelas_id" value="{{ $kelasId }}">
+                            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                                <input type="checkbox" name="sertakan_arsip" value="1" @checked($sertakanArsip) onchange="this.form.submit()"
+                                    class="size-3.5 rounded border-zinc-300 accent-zinc-900">
+                                Sertakan arsip
+                            </label>
+                        </form>
                         <label class="flex items-center gap-1.5 text-xs text-zinc-600 cursor-pointer select-none">
                             <input type="checkbox" id="only-arrears" class="w-3.5 h-3.5 rounded border-zinc-300">
                             Hanya yang menunggak
@@ -107,12 +122,17 @@
                                 $lunasSemua = $s->jumlah_dibayar >= 12;
                                 $punyaTunggakan = $s->jumlah_tunggakan > 0;
                             @endphp
-                            <a href="{{ route('pembayaran.create', ['siswa_id' => $s->id]) }}"
+                            <a href="{{ route('pembayaran.create', array_filter(['siswa_id' => $s->id, 'sertakan_arsip' => $sertakanArsip ? 1 : null])) }}"
                                 data-search="{{ strtolower($s->nama . ' ' . $s->nisn . ' ' . $s->nis) }}"
                                 data-arrears="{{ $punyaTunggakan ? 1 : 0 }}"
                                 class="siswa-item p-3 rounded-xl border border-zinc-200 bg-zinc-50/50 hover:border-zinc-400 hover:bg-zinc-100/40 flex items-center justify-between gap-3 transition">
                                 <div class="min-w-0">
-                                    <div class="font-bold text-sm text-zinc-900 truncate">{{ $s->nama }}</div>
+                                    <div class="font-bold text-sm text-zinc-900 truncate">
+                                        {{ $s->nama }}
+                                        @if($s->is_archived)
+                                            <span class="ml-1 rounded-full bg-zinc-200 px-1.5 py-0.5 text-[9px] font-bold uppercase text-zinc-700">Arsip</span>
+                                        @endif
+                                    </div>
                                     <div class="text-[11px] text-zinc-400 font-mono">NISN {{ $s->nisn }}</div>
                                 </div>
                                 <div class="text-right shrink-0">
