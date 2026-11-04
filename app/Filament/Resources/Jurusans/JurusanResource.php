@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Jurusans;
 use App\Filament\Resources\Jurusans\Pages\CreateJurusan;
 use App\Filament\Resources\Jurusans\Pages\EditJurusan;
 use App\Filament\Resources\Jurusans\Pages\ListJurusans;
+use App\Filament\Resources\Jurusans\RelationManagers\KelasRelationManager;
 use App\Filament\Resources\Jurusans\Schemas\JurusanForm;
 use App\Filament\Resources\Jurusans\Tables\JurusansTable;
 use App\Models\Jurusan;
@@ -49,7 +50,7 @@ class JurusanResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            KelasRelationManager::class,
         ];
     }
 
