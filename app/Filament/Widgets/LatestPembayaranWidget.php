@@ -51,7 +51,7 @@ class LatestPembayaranWidget extends TableWidget
                 TextColumn::make('bulan_dibayar')
                     ->label('Periode / Ket.')
                     ->formatStateUsing(function (Pembayaran $record): string {
-                        if ($record->spp?->isSppBulanan()) {
+                        if ($record->spp?->isBulanan()) {
                             return $record->bulan_dibayar.' '.$record->tahun_dibayar;
                         }
 

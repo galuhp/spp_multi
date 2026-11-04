@@ -44,6 +44,14 @@ class Spp extends Model
     }
 
     /**
+     * Alias for isBulanan (backwards compatibility).
+     */
+    public function isSppBulanan(): bool
+    {
+        return $this->isBulanan();
+    }
+
+    /**
      * Determine if this tariff is a one-off / installment fee.
      */
     public function isSekaliBayar(): bool
