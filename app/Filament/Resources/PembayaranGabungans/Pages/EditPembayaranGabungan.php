@@ -31,6 +31,26 @@ class EditPembayaranGabungan extends EditRecord
         $service = app(PembayaranMassalService::class);
 
         return [
+            Action::make('muatSiswaKelas')
+                ->label('Muat Siswa Kelas')
+                ->icon('heroicon-o-users')
+                ->color('gray')
+                ->visible(fn (): bool => $this->record->isDraft()
+                    && $this->record->sumber === PembayaranGabungan::SUMBER_SETORAN_KELAS
+                    && $this->record->kelas_id)
+                ->requiresConfirmation()
+                ->action(function (): void {
+                    $jumlah = app(PembayaranMassalService::class)->muatSiswaKelas($this->record);
+
+                    Notification::make()
+                        ->title('Siswa kelas dimuat')
+                        ->body("{$jumlah} siswa ditambahkan. Isi jumlah atau keluarkan siswa yang tidak ikut.")
+                        ->success()
+                        ->send();
+
+                    $this->record->refresh();
+                }),
+
             Action::make('posting')
                 ->label('Posting')
                 ->icon('heroicon-o-check-circle')

@@ -6,7 +6,9 @@ use App\Models\PembayaranGabunganBaris;
 use App\Models\Siswa;
 use App\Support\PembayaranMassal\PembayaranMassalService;
 use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -220,6 +222,13 @@ class BarisRelationManager extends RelationManager
                     }),
                 DeleteAction::make()
                     ->visible(fn (): bool => $this->getOwnerRecord()->isDraft()),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('Keluarkan dari gabungan')
+                        ->visible(fn (): bool => $this->getOwnerRecord()->isDraft()),
+                ]),
             ]);
     }
 }

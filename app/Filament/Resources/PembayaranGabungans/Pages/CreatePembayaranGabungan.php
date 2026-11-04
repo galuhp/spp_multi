@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PembayaranGabungans\Pages;
 
 use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
 use App\Models\PembayaranGabungan;
+use App\Support\PembayaranMassal\PembayaranMassalService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -25,7 +26,13 @@ class CreatePembayaranGabungan extends CreateRecord
         $data['dibuat_oleh'] = auth()->id();
         $data['total_diterima'] = (int) ($data['total_diterima'] ?? 0);
 
-        return PembayaranGabungan::query()->create($data);
+        $record = PembayaranGabungan::query()->create($data);
+
+        if ($record->sumber === PembayaranGabungan::SUMBER_SETORAN_KELAS) {
+            app(PembayaranMassalService::class)->muatSiswaKelas($record);
+        }
+
+        return $record;
     }
 
     protected function getRedirectUrl(): string

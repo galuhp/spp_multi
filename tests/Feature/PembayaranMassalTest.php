@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\PembayaranGabungans\Pages\CreatePembayaranGabungan;
 use App\Filament\Resources\PembayaranGabungans\Pages\EditPembayaranGabungan;
 use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
 use App\Models\Jurusan;
@@ -287,6 +288,33 @@ class PembayaranMassalTest extends TestCase
         $this->get(PembayaranGabunganResource::getUrl('index'))->assertOk();
         $this->get(PembayaranGabunganResource::getUrl('create'))->assertOk();
         $this->get(PembayaranGabunganResource::getUrl('edit', ['record' => $gabungan]))->assertOk();
+    }
+
+    public function test_setoran_kelas_otomatis_memuat_siswa_kelas(): void
+    {
+        $this->buatSiswa(['nama' => 'Siti Aminah', 'nisn' => '0098765432', 'nis' => '00987654']);
+
+        Livewire::test(CreatePembayaranGabungan::class)
+            ->fillForm([
+                'tanggal' => '2027-07-10',
+                'sumber' => PembayaranGabungan::SUMBER_SETORAN_KELAS,
+                'metode' => PembayaranGabungan::METODE_TUNAI,
+                'kelas_id' => $this->kelas->id,
+                'total_diterima' => 0,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $gabungan = PembayaranGabungan::query()->latest('id')->firstOrFail();
+
+        $this->assertSame(2, $gabungan->baris()->count());
+        $this->assertSame(0, (int) $gabungan->baris()->sum('jumlah'));
+        $this->assertSame(
+            2,
+            $gabungan->baris()->where('status_validasi', PembayaranGabunganBaris::STATUS_ERROR)->count()
+        );
+
+        $this->assertSame(0, $this->service->muatSiswaKelas($gabungan));
     }
 
     /**

@@ -378,6 +378,41 @@ class PembayaranMassalService
         return ['berhasil' => true, 'pesan' => null];
     }
 
+    /**
+     * Populate a class collection batch with all active students in the class.
+     *
+     * Students are added with amount 0 and an error message so the officer can
+     * remove those not participating and fill the amounts.
+     */
+    public function muatSiswaKelas(PembayaranGabungan $gabungan): int
+    {
+        $this->pastikanDraft($gabungan);
+
+        if ($gabungan->sumber !== PembayaranGabungan::SUMBER_SETORAN_KELAS || ! $gabungan->kelas_id) {
+            return 0;
+        }
+
+        $sudahAda = $gabungan->baris()->whereNotNull('siswa_id')->pluck('siswa_id')->all();
+
+        $siswa = Siswa::query()
+            ->where('kelas_id', $gabungan->kelas_id)
+            ->aktif()
+            ->whereNotIn('id', $sudahAda)
+            ->orderBy('nama')
+            ->get();
+
+        foreach ($siswa as $item) {
+            $gabungan->baris()->create([
+                'siswa_id' => $item->id,
+                'jumlah' => 0,
+                'status_validasi' => PembayaranGabunganBaris::STATUS_ERROR,
+                'pesan' => 'Isi jumlah pembayaran untuk siswa ini atau keluarkan dari gabungan.',
+            ]);
+        }
+
+        return $siswa->count();
+    }
+
     protected function pastikanDraft(PembayaranGabungan $gabungan): void
     {
         if (! $gabungan->isDraft()) {
