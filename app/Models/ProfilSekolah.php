@@ -50,7 +50,7 @@ class ProfilSekolah extends Model
                 'kode_pos' => '40123',
                 'no_telp' => '(022) 1234567',
                 'email' => 'info@smknegericontoh.sch.id',
-                'website' => 'www.smknegericontoh.sch.id',
+                'website' => 'https://www.smknegericontoh.sch.id',
                 'nama_kepala_sekolah' => 'Drs. H. Rahmat Hidayat, M.M.Pd.',
                 'nip_kepala_sekolah' => '19700101 199503 1 001',
             ]);

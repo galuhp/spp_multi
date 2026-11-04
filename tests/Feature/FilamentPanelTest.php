@@ -129,9 +129,9 @@ class FilamentPanelTest extends TestCase
 
     public function test_siswa_can_access_tagihan_page(): void
     {
-        $jurusan = Jurusan::create(['nama_jurusan' => 'RPL', 'kode' => 'RPL']);
-        $kelas = Kelas::create(['nama_kelas' => 'XII RPL 1', 'jurusan_id' => $jurusan->id]);
-        $spp = Spp::create(['kategori' => Spp::KATEGORI_SPP, 'nama_tarif' => 'SPP', 'tahun' => 2026, 'nominal' => 250000]);
+        $jurusan = Jurusan::create(['nama' => 'RPL', 'kode' => 'RPL']);
+        $kelas = Kelas::create(['nama_kelas' => 'XII RPL 1', 'tingkat' => 'XII', 'jurusan_id' => $jurusan->id]);
+        $spp = Spp::create(['kategori' => Spp::KATEGORI_SPP, 'nama_tarif' => 'SPP', 'tahun' => 2026, 'tahun_ajaran' => '2026/2027', 'nominal' => 250000]);
 
         $siswaUser = User::factory()->create([
             'username' => '0012345678',

@@ -95,7 +95,8 @@ class ProfilSekolahSettings extends Page
                                     ->email(),
                                 TextInput::make('website')
                                     ->label('Website Sekolah')
-                                    ->url(),
+                                    ->url()
+                                    ->nullable(),
                             ]),
                     ]),
                 Section::make('Pejabat Penandatangan')
