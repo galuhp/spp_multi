@@ -10,10 +10,9 @@
             <h3 class="text-xl font-bold text-slate-900">Daftar Siswa</h3>
             <p class="text-xs text-slate-500 mt-1">Kelola data siswa, penempatan rombel kelas, dan penetapan tarif SPP</p>
         </div>
-        <a href="{{ route('siswa.create') }}" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm inline-flex items-center gap-2 self-start">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        <x-ui.button as="a" href="{{ route('siswa.create') }}" variant="primary" icon="user-plus" class="self-start">
             Tambah Siswa Baru
-        </a>
+        </x-ui.button>
     </div>
 
     <!-- Search & Filter Card -->

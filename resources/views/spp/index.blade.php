@@ -10,10 +10,9 @@
             <h3 class="text-xl font-bold text-slate-900">Tarif & Kategori Pembayaran</h3>
             <p class="text-xs text-slate-500 mt-1">Kelola standar besaran iuran SPP bulanan serta pos tarif lainnya (uang gedung, seragam, dll.)</p>
         </div>
-        <a href="{{ route('spp.create') }}" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm inline-flex items-center gap-2 self-start">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <x-ui.button as="a" href="{{ route('spp.create') }}" variant="primary" icon="plus" class="self-start">
             Tambah Tarif Baru
-        </a>
+        </x-ui.button>
     </div>
 
     <!-- Category Filter Pills -->

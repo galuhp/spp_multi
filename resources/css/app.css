@@ -1,6 +1,8 @@
+@import './theme.css';
 @import 'tailwindcss';
-@source '../../vendor/pushery/wirekit/resources/views/**/*.blade.php';
 
+@source '../../vendor/pushery/wirekit/resources/views/**/*.blade.php';
+@source '../views/components/ui';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
@@ -8,3 +10,5 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+@custom-variant dark (&:where(.dark, .dark *));

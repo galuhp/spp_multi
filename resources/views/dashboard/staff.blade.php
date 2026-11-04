@@ -6,15 +6,15 @@
 @section('content')
 <div class="space-y-6">
     <!-- Welcome Banner -->
-    <div class="p-6 rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="p-6 rounded-xl bg-zinc-900 text-white shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
             <h3 class="text-xl font-bold tracking-tight">Selamat Datang, {{ auth()->user()->name }}!</h3>
-            <p class="text-indigo-100 text-sm mt-1">Anda masuk sebagai <strong>{{ auth()->user()->role->label() }}</strong>. Kelola transaksi pembayaran dan data siswa dengan mudah.</p>
+            <p class="text-zinc-300 text-sm mt-1">Anda masuk sebagai <strong>{{ auth()->user()->role->label() }}</strong>. Kelola transaksi pembayaran dan data siswa dengan mudah.</p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('pembayaran.create') }}" class="px-4 py-2.5 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 font-semibold text-sm transition shadow-sm shrink-0">
-                + Entri Pembayaran SPP
-            </a>
+            <x-ui.button as="a" href="{{ route('pembayaran.create') }}" variant="secondary" icon="plus" class="shrink-0">
+                Entri Pembayaran SPP
+            </x-ui.button>
         </div>
     </div>
 

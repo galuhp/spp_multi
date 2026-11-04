@@ -3,6 +3,11 @@
  * Mobile navigation drawer & accessible dropdown management
  */
 
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+Alpine.start();
+
 document.addEventListener('click', (event) => {
     const openDrawerBtn = event.target.closest('[data-sidebar-open]');
     if (openDrawerBtn) {

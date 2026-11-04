@@ -151,27 +151,27 @@
             <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 <!-- Flash Notification Messages -->
                 @if(session('success'))
-                    <div class="no-print mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start gap-3 shadow-xs">
-                        <svg class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div class="text-sm font-medium">{{ session('success') }}</div>
+                    <div class="no-print mb-6">
+                        <x-ui.alerts variant="success" icon="check-circle">{{ session('success') }}</x-ui.alerts>
                     </div>
                 @endif
 
                 @if(session('error'))
-                    <div class="no-print mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 shadow-xs">
-                        <svg class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div class="text-sm font-medium">{{ session('error') }}</div>
+                    <div class="no-print mb-6">
+                        <x-ui.alerts variant="error" icon="x-circle">{{ session('error') }}</x-ui.alerts>
                     </div>
                 @endif
 
                 @if($errors->any())
-                    <div class="no-print mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 shadow-xs">
-                        <div class="text-sm font-semibold mb-1">Periksa kembali data masukan Anda:</div>
-                        <ul class="list-disc list-inside text-xs space-y-0.5 text-amber-700">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
+                    <div class="no-print mb-6">
+                        <x-ui.alerts variant="warning" icon="exclamation-triangle">
+                            <div class="text-sm font-semibold mb-1">Periksa kembali data masukan Anda:</div>
+                            <ul class="list-disc list-inside text-xs space-y-0.5">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </x-ui.alerts>
                     </div>
                 @endif
 
