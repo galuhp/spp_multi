@@ -69,12 +69,6 @@
     margin-top: 0;
 }
 
-@media (min-width: 640px) {
-    .pembayaran-jenis-cards.fi-fo-checkbox-list-options {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
 .pembayaran-jenis-cards .fi-fo-checkbox-list-option-ctn {
     padding-top: 0;
     break-inside: avoid;

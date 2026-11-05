@@ -107,7 +107,7 @@ class PembayaranCascadeTest extends TestCase
             ->assertFormFieldEnabled('siswa_id')
             ->fillForm([
                 'siswa_id' => $this->siswaRpl->id,
-                'jenis_transaksi' => ['spp'],
+                'bayar_spp' => ['spp'],
                 'bulan_dibayar' => ['Juli'],
                 'tgl_bayar' => '2027-07-10',
                 'metode_pembayaran' => 'Tunai',
@@ -131,7 +131,7 @@ class PembayaranCascadeTest extends TestCase
             ->assertFormFieldEnabled('siswa_id')
             ->fillForm([
                 'siswa_id' => $this->siswaTkj->id,
-                'jenis_transaksi' => ['spp'],
+                'bayar_spp' => ['spp'],
                 'bulan_dibayar' => ['Agustus'],
                 'tgl_bayar' => '2027-08-10',
                 'metode_pembayaran' => 'Transfer Bank',
@@ -161,7 +161,8 @@ class PembayaranCascadeTest extends TestCase
             ->fillForm([
                 'kelas_id' => $this->kelasRpl->id,
                 'siswa_id' => $this->siswaRpl->id,
-                'jenis_transaksi' => ['spp', 'non_spp'],
+                'bayar_spp' => ['spp'],
+                'bayar_non_spp' => ['non_spp'],
                 'bulan_dibayar' => ['Juli'],
                 'non_spp_ids' => [$gedung->id],
                 'tgl_bayar' => '2027-07-10',
@@ -196,13 +197,13 @@ class PembayaranCascadeTest extends TestCase
         Livewire::test(CreatePembayaran::class)
             ->fillForm([
                 'cara_pilih' => 'cari',
-                'jenis_transaksi' => [],
+                'bayar_spp' => [],
             ])
             ->fillForm([
                 'siswa_id' => $this->siswaRpl->id,
             ])
             ->assertFormSet([
-                'jenis_transaksi' => ['spp'],
+                'bayar_spp' => ['spp'],
             ]);
     }
 
@@ -232,7 +233,8 @@ class PembayaranCascadeTest extends TestCase
             ->fillForm([
                 'cara_pilih' => 'cari',
                 'siswa_id' => $this->siswaRpl->id,
-                'jenis_transaksi' => ['non_spp'],
+                'bayar_spp' => [],
+                'bayar_non_spp' => ['non_spp'],
             ])
             ->assertSee('Uang Gedung X')
             ->assertDontSee('Uang Gedung XI');

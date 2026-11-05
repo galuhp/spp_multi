@@ -33,7 +33,8 @@ class CreatePembayaran extends CreateRecord
                 'cara_pilih' => 'cari',
                 'kelas_id' => $siswa?->kelas_id,
                 'siswa_id' => (int) $siswaId,
-                'jenis_transaksi' => ['spp'],
+                'bayar_spp' => ['spp'],
+                'bayar_non_spp' => [],
                 'tgl_bayar' => now()->format('Y-m-d'),
                 'metode_pembayaran' => 'Tunai',
             ]);
@@ -42,9 +43,8 @@ class CreatePembayaran extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        $jenis = array_values(array_unique((array) ($data['jenis_transaksi'] ?? [])));
-        $pilihSpp = in_array('spp', $jenis, true);
-        $pilihNonSpp = in_array('non_spp', $jenis, true);
+        $pilihSpp = in_array('spp', (array) ($data['bayar_spp'] ?? []), true);
+        $pilihNonSpp = in_array('non_spp', (array) ($data['bayar_non_spp'] ?? []), true);
 
         if (! $pilihSpp && ! $pilihNonSpp) {
             $this->tolak('Pilih minimal satu jenis pembayaran.');

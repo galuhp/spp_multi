@@ -99,13 +99,8 @@ class PembayaranForm
                                     return;
                                 }
 
-                                $jenis = (array) $get('jenis_transaksi');
-
-                                if (! in_array('spp', $jenis, true)) {
-                                    $jenis[] = 'spp';
-                                    $set('jenis_transaksi', array_values(array_unique($jenis)));
-                                }
-
+                                $set('bayar_spp', ['spp']);
+                                $set('bayar_non_spp', []);
                                 $set('bulan_dibayar', []);
                                 $set('non_spp_ids', []);
                             })
@@ -120,20 +115,17 @@ class PembayaranForm
                     ->columns(2)
                     ->columnSpanFull()
                     ->components([
-                        CheckboxList::make('jenis_transaksi')
+                        CheckboxList::make('bayar_spp')
                             ->label('Jenis Pembayaran')
                             ->options([
                                 'spp' => 'Iuran SPP Bulanan',
-                                'non_spp' => 'Biaya Lainnya (Uang Gedung, Seragam, Praktik, dll.)',
                             ])
                             ->descriptions([
                                 'spp' => 'Iuran bulanan untuk satu atau beberapa bulan.',
-                                'non_spp' => 'Uang gedung, seragam, praktik, ujian, dan biaya lainnya.',
                             ])
                             ->extraAttributes(['class' => 'pembayaran-jenis-cards'])
                             ->default(['spp'])
-                            ->columns(2)
-                            ->required()
+                            ->columns(1)
                             ->live()
                             ->columnSpanFull(),
 
@@ -168,8 +160,22 @@ class PembayaranForm
                             })
                             ->columns(3)
                             ->columnSpanFull()
-                            ->visible(fn (Get $get): bool => in_array('spp', (array) $get('jenis_transaksi'), true))
-                            ->required(fn (Get $get): bool => in_array('spp', (array) $get('jenis_transaksi'), true)),
+                            ->visible(fn (Get $get): bool => in_array('spp', (array) $get('bayar_spp'), true))
+                            ->required(fn (Get $get): bool => in_array('spp', (array) $get('bayar_spp'), true)),
+
+                        CheckboxList::make('bayar_non_spp')
+                            ->hiddenLabel()
+                            ->options([
+                                'non_spp' => 'Biaya Lainnya (Uang Gedung, Seragam, Praktik, dll.)',
+                            ])
+                            ->descriptions([
+                                'non_spp' => 'Uang gedung, seragam, praktik, ujian, dan biaya lainnya.',
+                            ])
+                            ->extraAttributes(['class' => 'pembayaran-jenis-cards'])
+                            ->default([])
+                            ->columns(1)
+                            ->live()
+                            ->columnSpanFull(),
 
                         CheckboxList::make('non_spp_ids')
                             ->label('Pilih Biaya Lainnya')
@@ -215,8 +221,8 @@ class PembayaranForm
                                     ->all();
                             })
                             ->columns(1)
-                            ->visible(fn (Get $get): bool => in_array('non_spp', (array) $get('jenis_transaksi'), true))
-                            ->required(fn (Get $get): bool => in_array('non_spp', (array) $get('jenis_transaksi'), true))
+                            ->visible(fn (Get $get): bool => in_array('non_spp', (array) $get('bayar_non_spp'), true))
+                            ->required(fn (Get $get): bool => in_array('non_spp', (array) $get('bayar_non_spp'), true))
                             ->helperText('Centang biaya lain yang akan dibayar. Nominal yang disimpan adalah sisa tagihan penuh.')
                             ->columnSpanFull(),
                     ]),
