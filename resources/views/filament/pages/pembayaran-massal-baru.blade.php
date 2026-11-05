@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
                 <label class="pm-choice pm-choice-compact">
                     <input type="radio" wire:model.live="mode" value="kompetensi">
                     <span class="min-w-0">
