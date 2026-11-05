@@ -1,3 +1,43 @@
+# Daftar Tabel Database
+
+Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian per-tabel ada di bawah (bagian "Rincian Tabel").
+
+## Tabel Aplikasi
+
+| No | Nama Tabel | Kegunaan |
+|----|------------|----------|
+| 1 | `users` | Akun pengguna aplikasi (admin, petugas, siswa) untuk login. Menyimpan nama, username, email, password, dan role |
+| 2 | `password_reset_tokens` | Token permintaan reset password berdasarkan email |
+| 3 | `sessions` | Sesi login aktif (payload sesi, IP address, user agent) |
+| 4 | `jurusans` | Master jurusan/kompetensi keahlian (kode, nama, deskripsi) |
+| 5 | `kelas` | Master kelas per jurusan (tingkat 10/11/12) dengan tahun ajaran berlaku |
+| 6 | `tahun_ajarans` | Master tahun ajaran (nama, tanggal mulai/selesai, penanda ajaran aktif) |
+| 7 | `siswas` | Data induk siswa: identitas (NISN, NIS, NIK), kelahiran, kontak, status, dan arsip/lulus; terhubung ke user login, kelas, dan tarif SPP |
+| 8 | `wali` | Data orang tua/wali per siswa (nama ayah, ibu, wali, dan nomor HP) |
+| 9 | `riwayat_kelas` | Riwayat penempatan kelas siswa per tahun ajaran, termasuk hasil proses naik kelas/kelulusan (status, batch) |
+| 10 | `spps` | Master tarif dan kategori pembayaran: SPP bulanan maupun biaya non-SPP (uang gedung, seragam, praktik, ujian) |
+| 11 | `pembayarans` | Transaksi pembayaran SPP/non-SPP per siswa (kode transaksi, bulan/tahun dibayar, jumlah, metode), termasuk relasi ke setoran gabungan dan status void |
+| 12 | `pembayaran_gabungan` | Header setoran gabungan (setoran per kelas, transfer bank, catatan manual) dengan status draft → memproses → diposting → void |
+| 13 | `pembayaran_gabungan_baris` | Rincian tiap baris setoran gabungan: siswa, jumlah, alokasi ke tagihan, validasi, dan peta ke transaksi `pembayarans` |
+| 14 | `nomor_kuitansi_urutan` | Counter nomor kuitansi per seri dan tahun, agar nomor kuitansi berurutan dan unik |
+| 15 | `import_siswa_staging` | Area penampung (staging) hasil impor Excel siswa sebelum dipromosikan ke `siswas`: data mentah per baris, status validasi, dan penanda timpa/simpan |
+| 16 | `proses_kelas_batch` | Catatan batch proses kenaikan kelas dan kelulusan: tahun ajaran asal/tujuan, jumlah siswa, status, dan petugas pelaksana |
+| 17 | `profil_sekolahs` | Identitas sekolah (nama, NPSN, alamat, kepala sekolah) untuk kop dokumen/laporan |
+| 18 | `role_permissions` | Matriks hak akses menu per role (dashboard, transaksi SPP, portal siswa, kesiswaan, master data, pengaturan akses) |
+| 19 | `log_aktivitas` | Log/audit trail aktivitas pengguna: aksi, subjek yang diubah, deskripsi, data tambahan, dan IP address |
+
+## Tabel Framework (bawaan Laravel)
+
+| Nama Tabel | Kegunaan |
+|------------|----------|
+| `cache` | Penyimpanan cache aplikasi (driver database) |
+| `cache_locks` | Lock atomik untuk cache (mencegah race condition) |
+| `jobs` | Antrean pekerjaan (queue) yang menunggu dieksekusi |
+| `job_batches` | Informasi batch antrean pekerjaan |
+| `failed_jobs` | Pekerjaan antrean yang gagal dieksekusi |
+
+---
+
 # Rincian Tabel `spps`
 
 Tabel `spps` menyimpan **master tarif dan kategori pembayaran** sekolah, baik SPP bulanan maupun biaya non-SPP (uang gedung, seragam, praktik, ujian, dan biaya kegiatan lain).
