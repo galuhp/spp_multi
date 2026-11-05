@@ -42,6 +42,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): View => view('filament.partials.pembayaran-form-styles'),
             )
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): View => view('filament.partials.pembayaran-form-scripts'),
+            )
             ->brandName('E-SPP SEKOLAH')
             ->colors([
                 'primary' => Color::Indigo,
