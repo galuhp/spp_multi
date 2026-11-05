@@ -67,24 +67,26 @@ class SppForm
                 Select::make('tingkat')
                     ->label('Tingkat Berlaku')
                     ->options(Spp::TINGKAT_LIST)
-                    ->visible(fn (Get $get): bool => $get('kategori') === Spp::KATEGORI_SPP)
                     ->required(fn (Get $get): bool => $get('kategori') === Spp::KATEGORI_SPP)
                     ->unique(
                         ignoreRecord: true,
                         modifyRuleUsing: function (Unique $rule, Get $get): Unique {
-                            if ($get('kategori') !== Spp::KATEGORI_SPP) {
+                            $kategori = $get('kategori');
+                            $tingkat = $get('tingkat');
+
+                            if ($kategori !== Spp::KATEGORI_SPP && blank($tingkat)) {
                                 return $rule->where('kategori', '__non_spp__');
                             }
 
                             return $rule
-                                ->where('kategori', Spp::KATEGORI_SPP)
+                                ->where('kategori', $kategori)
                                 ->where('tahun_ajaran', $get('tahun_ajaran'));
                         },
                     )
                     ->validationMessages([
-                        'unique' => 'Tarif SPP untuk tingkat ini sudah ada pada tahun ajaran tersebut.',
+                        'unique' => 'Tarif untuk kategori dan tingkat ini sudah ada pada tahun ajaran tersebut.',
                     ])
-                    ->helperText('Satu tarif SPP per tingkat per tahun ajaran.'),
+                    ->helperText('Wajib untuk SPP. Untuk biaya lain, isi jika hanya berlaku untuk tingkat tertentu; kosongkan untuk semua tingkat.'),
 
                 TextInput::make('nominal')
                     ->label('Besaran Nominal Tarif')

@@ -44,15 +44,6 @@ class Spp extends Model
     /**
      * Non-SPP tariffs never have a class level.
      */
-    protected static function booted(): void
-    {
-        static::saving(function (Spp $spp): void {
-            if (filled($spp->kategori) && $spp->kategori !== self::KATEGORI_SPP) {
-                $spp->tingkat = null;
-            }
-        });
-    }
-
     public static function normalisasiTingkat(?string $tingkat): ?string
     {
         $tingkat = mb_strtoupper(trim((string) $tingkat));
@@ -147,7 +138,7 @@ class Spp extends Model
     {
         $label = $this->nama ?: $this->kategori;
 
-        if ($this->kategori === self::KATEGORI_SPP && filled($this->tingkat)) {
+        if (filled($this->tingkat)) {
             $label .= ' Tingkat '.self::labelTingkat($this->tingkat);
         }
 

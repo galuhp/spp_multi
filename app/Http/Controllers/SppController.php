@@ -105,10 +105,6 @@ class SppController extends Controller
             'nominal.min' => 'Nominal minimal Rp 1.000.',
         ]);
 
-        if ($kategori !== Spp::KATEGORI_SPP) {
-            $validated['tingkat'] = null;
-        }
-
         $spp = Spp::create($validated);
 
         LogAktivitas::catat('spp.dibuat', "Tarif {$spp->kategori} ({$spp->namaLengkap()}) dibuat ({$spp->formattedNominal()})", $spp, $validated);
@@ -181,10 +177,6 @@ class SppController extends Controller
             'tingkat.in' => 'Tingkat harus X, XI, atau XII.',
             'nominal.required' => 'Besaran nominal tarif wajib diisi.',
         ]);
-
-        if ($kategori !== Spp::KATEGORI_SPP) {
-            $validated['tingkat'] = null;
-        }
 
         $sebelum = $spp->only(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'tingkat', 'nominal', 'keterangan']);
 

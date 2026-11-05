@@ -154,7 +154,7 @@ class PembayaranCascadeTest extends TestCase
             'nama' => 'Uang Gedung',
             'tahun' => 2028,
             'tahun_ajaran' => '2027/2028',
-            'nominal' => 1000000,
+            'nominal' => 400000,
         ]);
 
         Livewire::test(CreatePembayaran::class)
@@ -163,9 +163,7 @@ class PembayaranCascadeTest extends TestCase
                 'siswa_id' => $this->siswaRpl->id,
                 'jenis_transaksi' => ['spp', 'non_spp'],
                 'bulan_dibayar' => ['Juli'],
-                'non_spp_items' => [
-                    ['spp_id' => $gedung->id, 'jumlah_bayar' => 400000],
-                ],
+                'non_spp_ids' => [$gedung->id],
                 'tgl_bayar' => '2027-07-10',
                 'metode_pembayaran' => 'Tunai',
             ])
@@ -190,6 +188,58 @@ class PembayaranCascadeTest extends TestCase
             'spp_id' => $gedung->id,
             'bulan_dibayar' => null,
             'jumlah_bayar' => 400000,
+        ]);
+    }
+
+    public function test_memilih_siswa_otomatis_mencentang_spp(): void
+    {
+        Livewire::test(CreatePembayaran::class)
+            ->fillForm([
+                'cara_pilih' => 'cari',
+                'jenis_transaksi' => [],
+            ])
+            ->fillForm([
+                'siswa_id' => $this->siswaRpl->id,
+            ])
+            ->assertFormSet([
+                'jenis_transaksi' => ['spp'],
+            ]);
+    }
+
+    public function test_biaya_lain_disaring_sesuai_tingkat_siswa(): void
+    {
+        $gedungX = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Uang Gedung X',
+            'tahun' => 2028,
+            'tahun_ajaran' => '2027/2028',
+            'tingkat' => '10',
+            'nominal' => 500000,
+        ]);
+
+        Spp::query()->create([
+            'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Uang Gedung XI',
+            'tahun' => 2028,
+            'tahun_ajaran' => '2027/2028',
+            'tingkat' => '11',
+            'nominal' => 600000,
+        ]);
+
+        Livewire::test(CreatePembayaran::class)
+            ->fillForm([
+                'cara_pilih' => 'cari',
+                'siswa_id' => $this->siswaRpl->id,
+                'jenis_transaksi' => ['non_spp'],
+            ])
+            ->assertSee('Uang Gedung X')
+            ->assertDontSee('Uang Gedung XI');
+
+        $this->assertDatabaseHas('spps', [
+            'id' => $gedungX->id,
+            'tingkat' => '10',
         ]);
     }
 

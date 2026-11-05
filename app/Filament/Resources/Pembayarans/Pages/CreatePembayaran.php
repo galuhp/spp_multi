@@ -80,21 +80,20 @@ class CreatePembayaran extends CreateRecord
             }
         }
 
-        $nonSppItems = collect($pilihNonSpp ? ($data['non_spp_items'] ?? []) : [])
-            ->filter(fn ($item): bool => filled($item['spp_id'] ?? null));
+        $nonSppIds = collect($pilihNonSpp ? ($data['non_spp_ids'] ?? []) : [])
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
 
-        if ($pilihNonSpp && $nonSppItems->isEmpty()) {
+        if ($pilihNonSpp && $nonSppIds->isEmpty()) {
             $this->tolak('Pilih minimal satu pos biaya lainnya.');
-        }
-
-        if ($nonSppItems->pluck('spp_id')->duplicates()->isNotEmpty()) {
-            $this->tolak('Pos biaya tidak boleh dipilih lebih dari sekali.');
         }
 
         $validatedNonSpp = [];
 
-        foreach ($nonSppItems as $item) {
-            $tarif = Spp::find($item['spp_id']);
+        foreach ($nonSppIds as $tarifId) {
+            $tarif = Spp::find($tarifId);
 
             if (! $tarif || $tarif->kategori === Spp::KATEGORI_SPP) {
                 $this->tolak('Pos biaya yang dipilih tidak valid.');
@@ -102,17 +101,12 @@ class CreatePembayaran extends CreateRecord
 
             $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
             $sisa = max(0, (int) $tarif->nominal - $dibayar);
-            $jumlah = (int) ($item['jumlah_bayar'] ?? 0);
 
             if ($sisa <= 0) {
                 $this->tolak("Tagihan {$tarif->kategori} sudah lunas.");
             }
 
-            if ($jumlah <= 0 || $jumlah > $sisa) {
-                $this->tolak("Nominal {$tarif->kategori} melebihi sisa tagihan (Rp ".number_format($sisa, 0, ',', '.').').');
-            }
-
-            $validatedNonSpp[] = ['tarif' => $tarif, 'jumlah' => $jumlah];
+            $validatedNonSpp[] = ['tarif' => $tarif, 'jumlah' => $sisa];
         }
 
         $created = [];
