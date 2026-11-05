@@ -14,10 +14,11 @@ class AuthTest extends TestCase
 
     public function test_login_screen_can_be_rendered(): void
     {
-        $response = $this->get('/login');
+        $this->get('/login')->assertRedirect('/admin/login');
 
-        $response->assertStatus(200);
-        $response->assertSee('Sistem Pembayaran SPP');
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertSee('Username / NISN');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void

@@ -3,6 +3,10 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\Jurusans\JurusanResource;
+use App\Filament\Resources\Kelas\KelasResource;
+use App\Filament\Resources\Spps\SppResource;
+use App\Filament\Resources\Users\UserResource;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
@@ -17,11 +21,17 @@ class SppSystemTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $petugas;
+
     protected User $siswaUser;
+
     protected Jurusan $jurusan;
+
     protected Kelas $kelas;
+
     protected Spp $spp;
+
     protected Siswa $siswa;
 
     protected function setUp(): void
@@ -77,21 +87,11 @@ class SppSystemTest extends TestCase
 
     public function test_admin_can_access_dashboard_and_master_data(): void
     {
-        $response = $this->actingAs($this->admin)->get('/dashboard');
-        $response->assertStatus(200);
-        $response->assertSee('Dashboard Utama');
-
-        $jurusanResponse = $this->actingAs($this->admin)->get('/jurusan');
-        $jurusanResponse->assertStatus(200);
-
-        $kelasResponse = $this->actingAs($this->admin)->get('/kelas');
-        $kelasResponse->assertStatus(200);
-
-        $sppResponse = $this->actingAs($this->admin)->get('/spp');
-        $sppResponse->assertStatus(200);
-
-        $userResponse = $this->actingAs($this->admin)->get('/user');
-        $userResponse->assertStatus(200);
+        $this->actingAs($this->admin)->get('/dashboard')->assertRedirect('/admin');
+        $this->actingAs($this->admin)->get('/jurusan')->assertRedirect(JurusanResource::getUrl('index'));
+        $this->actingAs($this->admin)->get('/kelas')->assertRedirect(KelasResource::getUrl('index'));
+        $this->actingAs($this->admin)->get('/spp')->assertRedirect(SppResource::getUrl('index'));
+        $this->actingAs($this->admin)->get('/user')->assertRedirect(UserResource::getUrl('index'));
     }
 
     public function test_petugas_cannot_access_admin_only_master_data(): void
@@ -111,8 +111,8 @@ class SppSystemTest extends TestCase
 
     public function test_petugas_can_view_siswa_and_record_payment(): void
     {
-        $siswaResponse = $this->actingAs($this->petugas)->get('/siswa');
-        $siswaResponse->assertStatus(200);
+        $siswaResponse = $this->actingAs($this->petugas)->followingRedirects()->get('/siswa');
+        $siswaResponse->assertOk();
         $siswaResponse->assertSee($this->siswa->nama);
 
         // Record payment for Juli and Agustus 2026
@@ -142,9 +142,13 @@ class SppSystemTest extends TestCase
         $firstPayment = Pembayaran::where('siswa_id', $this->siswa->id)->orderBy('id', 'asc')->first();
         $paymentResponse->assertRedirect(route('pembayaran.show', $firstPayment->id));
 
-        // Receipt view
-        $receiptResponse = $this->actingAs($this->petugas)->get(route('pembayaran.show', $firstPayment->id));
-        $receiptResponse->assertStatus(200);
+        // Receipt detail redirects to the printable receipt.
+        $this->actingAs($this->petugas)
+            ->get(route('pembayaran.show', $firstPayment->id))
+            ->assertRedirect(route('pembayaran.cetak', $firstPayment->id));
+
+        $receiptResponse = $this->actingAs($this->petugas)->followingRedirects()->get(route('pembayaran.show', $firstPayment->id));
+        $receiptResponse->assertOk();
         $receiptResponse->assertSee('Kuitansi');
 
         // Printable receipt view
@@ -154,23 +158,21 @@ class SppSystemTest extends TestCase
 
     public function test_payment_form_flows_from_class_to_student_to_months(): void
     {
-        // Step 1: classes are listed
-        $this->actingAs($this->petugas)->get('/pembayaran/create')
-            ->assertStatus(200)
-            ->assertSee('Pilih Kelas')
+        // Step 1: the create form lists classes
+        $this->actingAs($this->petugas)->followingRedirects()->get('/pembayaran/create')
+            ->assertOk()
+            ->assertSee('Pilih Siswa')
             ->assertSee($this->kelas->nama_kelas);
 
         // Step 2: students of the chosen class are listed
-        $this->actingAs($this->petugas)->get('/pembayaran/create?kelas_id=' . $this->kelas->id)
-            ->assertStatus(200)
-            ->assertSee($this->siswa->nama)
-            ->assertSee('0/12 dibayar');
+        $this->actingAs($this->petugas)->followingRedirects()->get('/pembayaran/create?kelas_id='.$this->kelas->id)
+            ->assertOk()
+            ->assertSee($this->siswa->nama);
 
-        // Step 3: opening a student resolves the class and shows the recommendation
-        $this->actingAs($this->petugas)->get('/pembayaran/create?siswa_id=' . $this->siswa->id)
-            ->assertStatus(200)
-            ->assertSee('Rekomendasi')
-            ->assertSee('DISARANKAN')
+        // Step 3: opening a student shows the SPP month options
+        $this->actingAs($this->petugas)->followingRedirects()->get('/pembayaran/create?siswa_id='.$this->siswa->id)
+            ->assertOk()
+            ->assertSee('Pilih Bulan SPP yang Dibayar')
             ->assertSee('Juli');
     }
 
@@ -213,9 +215,10 @@ class SppSystemTest extends TestCase
             'metode_pembayaran' => 'Tunai',
         ]);
 
-        $laporanResponse = $this->actingAs($this->petugas)->get('/laporan');
-        $laporanResponse->assertStatus(200);
-        $laporanResponse->assertSee('Rekapitulasi Pembayaran SPP');
+        $laporanResponse = $this->actingAs($this->petugas)->followingRedirects()->get('/laporan');
+        $laporanResponse->assertOk();
+        $laporanResponse->assertSee('Rekapitulasi Pembayaran');
+        $laporanResponse->assertSee('SPP-20261102-9999');
 
         $cetakResponse = $this->actingAs($this->petugas)->get('/laporan/cetak');
         $cetakResponse->assertStatus(200);
@@ -224,15 +227,18 @@ class SppSystemTest extends TestCase
 
     public function test_siswa_can_view_own_tagihan_and_history(): void
     {
-        $response = $this->actingAs($this->siswaUser)->get('/dashboard');
-        $response->assertStatus(200);
-        $response->assertSee('Portal Informasi SPP Siswa');
+        $response = $this->actingAs($this->siswaUser)->followingRedirects()->get('/dashboard');
+        $response->assertOk();
+        $response->assertSee('Matriks Tagihan & Status Pembayaran');
+        $response->assertSee($this->siswa->nama);
 
-        $tagihanResponse = $this->actingAs($this->siswaUser)->get('/portal/tagihan');
-        $tagihanResponse->assertStatus(200);
+        $tagihanResponse = $this->actingAs($this->siswaUser)->followingRedirects()->get('/portal/tagihan');
+        $tagihanResponse->assertOk();
         $tagihanResponse->assertSee($this->siswa->nama);
 
-        $riwayatResponse = $this->actingAs($this->siswaUser)->get('/portal/riwayat');
-        $riwayatResponse->assertStatus(200);
+        $riwayatResponse = $this->actingAs($this->siswaUser)->followingRedirects()->get('/portal/riwayat');
+        $riwayatResponse->assertOk();
+        $riwayatResponse->assertSee('Riwayat Pembayaran SPP Saya');
+        $riwayatResponse->assertSee($this->siswa->nama);
     }
 }

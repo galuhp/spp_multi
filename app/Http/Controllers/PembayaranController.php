@@ -347,16 +347,11 @@ class PembayaranController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Redirect the legacy receipt detail page to the printable receipt.
      */
-    public function show(Pembayaran $pembayaran): View
+    public function show(Pembayaran $pembayaran): RedirectResponse
     {
-        $pembayaran->load(['siswa.kelas.jurusan', 'user', 'spp']);
-
-        return view('pembayaran.show', [
-            'pembayaran' => $pembayaran,
-            'relatedPayments' => $pembayaran->relatedBatchPayments(),
-        ]);
+        return redirect()->route('pembayaran.cetak', $pembayaran);
     }
 
     /**

@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\Kelas\KelasResource;
 use App\Filament\Resources\Kelas\Pages\CreateKelas;
+use App\Filament\Resources\Kelas\Pages\EditKelas;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\TahunAjaran;
@@ -114,9 +116,11 @@ class KelasTest extends TestCase
     public function test_form_kelas_menampilkan_pilihan_tahun_ajaran(): void
     {
         $this->get(route('kelas.create'))
-            ->assertOk()
-            ->assertSee('Tahun Ajaran')
-            ->assertSee('2027/2028');
+            ->assertRedirect(KelasResource::getUrl('create'));
+
+        Livewire::test(CreateKelas::class)
+            ->assertFormFieldExists('tahun_ajaran_id')
+            ->assertFormFieldExists('nama_kelas');
     }
 
     public function test_form_ubah_kelas_menampilkan_tahun_ajaran_terpilih(): void
@@ -129,9 +133,13 @@ class KelasTest extends TestCase
         ]);
 
         $this->get(route('kelas.edit', $kelas->id))
-            ->assertOk()
-            ->assertSee('2027/2028')
-            ->assertSee('X RPL 9');
+            ->assertRedirect(KelasResource::getUrl('edit', ['record' => $kelas]));
+
+        Livewire::test(EditKelas::class, ['record' => $kelas->id])
+            ->assertFormSet([
+                'tahun_ajaran_id' => $this->tahunAjaran->id,
+                'nama_kelas' => 'X RPL 9',
+            ]);
     }
 
     public function test_form_tambah_kelas_filament_dapat_dibuka(): void

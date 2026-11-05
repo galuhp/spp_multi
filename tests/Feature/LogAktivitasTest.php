@@ -121,7 +121,7 @@ class LogAktivitasTest extends TestCase
 
     public function test_only_admin_can_view_activity_log(): void
     {
-        $this->actingAs($this->admin)->get('/log-aktivitas')->assertStatus(200)->assertSee('Log Aktivitas');
+        $this->actingAs($this->admin)->followingRedirects()->get('/log-aktivitas')->assertOk()->assertSee('Log Aktivitas');
         $this->actingAs($this->petugas)->get('/log-aktivitas')->assertStatus(403);
     }
 }

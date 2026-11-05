@@ -11,6 +11,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -38,6 +39,16 @@ class PembayaranForm
                             ->live()
                             ->dehydrated(false)
                             ->afterStateUpdated(fn (Set $set) => $set('siswa_id', null))
+                            ->columnSpanFull(),
+
+                        Toggle::make('sertakan_arsip')
+                            ->label('Sertakan siswa arsip')
+                            ->helperText('Tampilkan siswa yang sudah lulus/diarsipkan untuk pembayaran susulan.')
+                            ->default(false)
+                            ->live()
+                            ->dehydrated(false)
+                            ->afterStateUpdated(fn (Set $set) => $set('siswa_id', null))
+                            ->visible(fn (Get $get): bool => ($get('cara_pilih') ?? 'cari') === 'bertingkat')
                             ->columnSpanFull(),
 
                         Select::make('kelas_id')
@@ -68,7 +79,7 @@ class PembayaranForm
                                 if (($get('cara_pilih') ?? 'bertingkat') === 'cari') {
                                     return Siswa::query()
                                         ->with('kelas')
-                                        ->tanpaArsip()
+                                        ->when(! $get('sertakan_arsip'), fn ($query) => $query->tanpaArsip())
                                         ->orderBy('nama')
                                         ->get()
                                         ->mapWithKeys(fn (Siswa $s): array => [
@@ -83,7 +94,7 @@ class PembayaranForm
 
                                 return Siswa::query()
                                     ->where('kelas_id', $get('kelas_id'))
-                                    ->tanpaArsip()
+                                    ->when(! $get('sertakan_arsip'), fn ($query) => $query->tanpaArsip())
                                     ->orderBy('nama')
                                     ->get()
                                     ->mapWithKeys(fn (Siswa $s): array => [

@@ -1,0 +1,7 @@
+@import './theme.css';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@source '../views/components/ui';
+@source '../views/filament/pages/riwayat-pembayaran-siswa.blade.php';
+@source '../../app/Models/Spp.php';

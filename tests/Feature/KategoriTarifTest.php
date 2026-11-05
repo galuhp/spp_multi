@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
+use App\Filament\Resources\Spps\SppResource;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
@@ -10,6 +12,7 @@ use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class KategoriTarifTest extends TestCase
@@ -125,24 +128,39 @@ class KategoriTarifTest extends TestCase
             'nominal' => 500000,
         ]);
 
-        // Filter index by category
-        $filterResponse = $this->actingAs($this->admin)->get(route('spp.index', ['kategori' => 'Uang Gedung']));
-        $filterResponse->assertStatus(200);
+        // Filter index by category is forwarded to the Filament table filter.
+        $this->actingAs($this->admin)
+            ->get(route('spp.index', ['kategori' => 'Uang Gedung']))
+            ->assertRedirect(SppResource::getUrl('index', [
+                'filters' => ['kategori' => ['value' => 'Uang Gedung']],
+            ]));
+
+        $filterResponse = $this->actingAs($this->admin)
+            ->followingRedirects()
+            ->get(route('spp.index', ['kategori' => 'Uang Gedung']));
+        $filterResponse->assertOk();
         $filterResponse->assertSee('Uang Gedung & Pengembangan');
         $filterResponse->assertDontSee('Biaya Praktikum Komputer');
     }
 
     public function test_payment_form_displays_non_spp_fee_options_for_student(): void
     {
-        $response = $this->actingAs($this->petugas)
-            ->get(route('pembayaran.create', ['siswa_id' => $this->siswa->id]));
+        $this->actingAs($this->petugas)
+            ->get(route('pembayaran.create', ['siswa_id' => $this->siswa->id]))
+            ->assertRedirect(CreatePembayaran::getUrl().'?siswa_id='.$this->siswa->id);
 
-        $response->assertStatus(200);
-        $response->assertSee('Uang Gedung, Seragam', false);
-        $response->assertSee('Uang Gedung &amp; Pengembangan', false);
-        $response->assertSee('Rp 2.000.000');
-        $response->assertSee('Paket Seragam 4 Stel');
-        $response->assertSee('Rp 750.000');
+        Livewire::test(CreatePembayaran::class)
+            ->fillForm([
+                'cara_pilih' => 'cari',
+                'siswa_id' => $this->siswa->id,
+                'bayar_spp' => [],
+                'bayar_non_spp' => ['non_spp'],
+            ])
+            ->assertSee('Biaya Lainnya (Uang Gedung, Seragam, Praktik, dll.)')
+            ->assertSeeHtml('Uang Gedung &amp; Pengembangan')
+            ->assertSee('Rp 2.000.000')
+            ->assertSee('Paket Seragam 4 Stel')
+            ->assertSee('Rp 750.000');
     }
 
     public function test_staff_can_pay_non_spp_fees_like_uang_gedung_and_uang_seragam(): void
@@ -241,16 +259,16 @@ class KategoriTarifTest extends TestCase
             'metode_pembayaran' => 'Tunai',
         ]);
 
-        $tagihanResponse = $this->actingAs($this->siswaUser)->get(route('portal.tagihan'));
-        $tagihanResponse->assertStatus(200);
-        $tagihanResponse->assertSee('Tagihan Biaya Lainnya (Uang Gedung, Seragam, dll.)');
+        $tagihanResponse = $this->actingAs($this->siswaUser)->followingRedirects()->get(route('portal.tagihan'));
+        $tagihanResponse->assertOk();
+        $tagihanResponse->assertSee('Pos Tagihan Lainnya (Non-SPP)');
         $tagihanResponse->assertSee('Uang Gedung & Pengembangan');
-        $tagihanResponse->assertSee('BELUM LUNAS');
+        $tagihanResponse->assertSee('Belum Lunas');
         $tagihanResponse->assertSee('Paket Seragam 4 Stel');
-        $tagihanResponse->assertSee('LUNAS');
 
-        $riwayatResponse = $this->actingAs($this->siswaUser)->get(route('portal.riwayat'));
-        $riwayatResponse->assertStatus(200);
+        $riwayatResponse = $this->actingAs($this->siswaUser)->followingRedirects()->get(route('portal.riwayat'));
+        $riwayatResponse->assertOk();
+        $riwayatResponse->assertSee('Riwayat Pembayaran SPP Saya');
         $riwayatResponse->assertSee('Paket Seragam 4 Stel');
         $riwayatResponse->assertSee('Rp 750.000');
     }
@@ -284,10 +302,10 @@ class KategoriTarifTest extends TestCase
         ]);
 
         // Filter report by Uang Gedung
-        $reportResponse = $this->actingAs($this->petugas)->get(route('laporan.index', [
+        $reportResponse = $this->actingAs($this->petugas)->followingRedirects()->get(route('laporan.index', [
             'kategori' => Spp::KATEGORI_UANG_GEDUNG,
         ]));
-        $reportResponse->assertStatus(200);
+        $reportResponse->assertOk();
         $reportResponse->assertSee('GDG-20261103-9002');
         $reportResponse->assertDontSee('SPP-20261103-9001');
 

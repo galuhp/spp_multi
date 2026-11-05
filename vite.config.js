@@ -17,6 +17,7 @@ export default defineConfig({
                 'resources/css/demo-sheaf.css',
                 'resources/css/proses-kelas.css',
                 'resources/css/tagihan-siswa.css',
+                'resources/css/riwayat-pembayaran-siswa.css',
                 'resources/css/manajemen-role.css',
                 'resources/css/pembayaran-massal.css',
                 'resources/css/laporan-pembayaran.css',

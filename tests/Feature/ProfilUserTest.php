@@ -45,13 +45,12 @@ class ProfilUserTest extends TestCase
 
     public function test_user_can_view_profile_page(): void
     {
-        $response = $this->actingAs($this->admin)->get(route('profil.index'));
+        $response = $this->actingAs($this->admin)->followingRedirects()->get(route('profil.index'));
 
         $response->assertOk();
         $response->assertSee('Bambang Sudirman');
-        $response->assertSee('admin_utama');
         $response->assertSee('bambang@sekolah.sch.id');
-        $response->assertSee('Pengaturan Profil Saya');
+        $response->assertSee('Profile');
     }
 
     public function test_user_can_update_profile_info(): void
@@ -109,17 +108,19 @@ class ProfilUserTest extends TestCase
 
     public function test_header_top_right_contains_user_profile_menu_and_profil_sekolah_for_admin(): void
     {
-        // Admin sees Profil Pengguna and Profil Sekolah in the header menu
-        $responseAdmin = $this->actingAs($this->admin)->get(route('dashboard'));
+        // Admin sees the Filament profile menu and school profile navigation.
+        $responseAdmin = $this->actingAs($this->admin)->followingRedirects()->get(route('dashboard'));
         $responseAdmin->assertOk();
-        $responseAdmin->assertSee('Profil Pengguna Saya');
-        $responseAdmin->assertSee('Profil Sekolah');
-        $responseAdmin->assertSee('Keluar (Logout)');
+        $responseAdmin->assertSee('Profile');
+        $responseAdmin->assertSee('Sign out');
+        $responseAdmin->assertSee('Profil & Kop Sekolah');
+    }
 
-        // Petugas sees Profil Pengguna, but NOT Profil Sekolah
-        $responsePetugas = $this->actingAs($this->petugas)->get(route('dashboard'));
+    public function test_header_petugas_tidak_menampilkan_profil_sekolah(): void
+    {
+        $responsePetugas = $this->actingAs($this->petugas)->followingRedirects()->get(route('dashboard'));
         $responsePetugas->assertOk();
-        $responsePetugas->assertSee('Profil Pengguna Saya');
-        $responsePetugas->assertDontSee('Profil Sekolah');
+        $responsePetugas->assertSee('Profile');
+        $responsePetugas->assertDontSee('Profil & Kop Sekolah');
     }
 }

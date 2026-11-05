@@ -109,10 +109,10 @@ class ProfilSekolahTest extends TestCase
     {
         $profil = ProfilSekolah::current();
 
-        $response = $this->actingAs($this->admin)->get(route('sekolah.edit'));
+        $response = $this->actingAs($this->admin)->followingRedirects()->get(route('sekolah.edit'));
 
         $response->assertOk();
-        $response->assertSee('Pengaturan Profil Sekolah');
+        $response->assertSee('Profil Sekolah & Kop Surat');
         $response->assertSee($profil->nama_sekolah);
         $response->assertSee($profil->nama_kepala_sekolah);
     }
@@ -174,8 +174,12 @@ class ProfilSekolahTest extends TestCase
         $responseCetak->assertSee('(022) 5556677');
         $responseCetak->assertSee('Cimahi');
 
-        // 2. Kuitansi Show
-        $responseShow = $this->actingAs($this->admin)->get(route('pembayaran.show', $this->pembayaran->id));
+        // 2. Kuitansi Show redirects to the printable receipt
+        $this->actingAs($this->admin)
+            ->get(route('pembayaran.show', $this->pembayaran->id))
+            ->assertRedirect(route('pembayaran.cetak', $this->pembayaran->id));
+
+        $responseShow = $this->actingAs($this->admin)->followingRedirects()->get(route('pembayaran.show', $this->pembayaran->id));
         $responseShow->assertOk();
         $responseShow->assertSee('SMK TELKOM INFORMATIKA');
 

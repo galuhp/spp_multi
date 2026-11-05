@@ -47,8 +47,17 @@ class LaporanPembayaran extends Page
 
     public function mount(): void
     {
-        $this->tgl_awal = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->tgl_akhir = Carbon::now()->format('Y-m-d');
+        $this->tgl_awal = request()->filled('tgl_awal')
+            ? (string) request()->query('tgl_awal')
+            : Carbon::now()->startOfMonth()->format('Y-m-d');
+
+        $this->tgl_akhir = request()->filled('tgl_akhir')
+            ? (string) request()->query('tgl_akhir')
+            : Carbon::now()->format('Y-m-d');
+
+        $this->kategori = request()->filled('kategori') ? (string) request()->query('kategori') : null;
+        $this->kelas_id = request()->filled('kelas_id') ? (string) request()->query('kelas_id') : null;
+        $this->metode_pembayaran = request()->filled('metode_pembayaran') ? (string) request()->query('metode_pembayaran') : null;
     }
 
     public function resetFilter(): void

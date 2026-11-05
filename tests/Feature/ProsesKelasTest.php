@@ -213,12 +213,14 @@ class ProsesKelasTest extends TestCase
             'tanggal_lulus' => '2028-06-20',
         ]);
 
-        $this->get(route('pembayaran.create', ['kelas_id' => $kelas->id]))
+        $this->followingRedirects()
+            ->get(route('pembayaran.create', ['kelas_id' => $kelas->id]))
             ->assertOk()
             ->assertSee($aktif->nama)
             ->assertDontSee($arsip->nama);
 
-        $this->get(route('pembayaran.create', ['kelas_id' => $kelas->id, 'sertakan_arsip' => 1]))
+        $this->followingRedirects()
+            ->get(route('pembayaran.create', ['kelas_id' => $kelas->id, 'sertakan_arsip' => 1]))
             ->assertOk()
             ->assertSee($arsip->nama);
     }

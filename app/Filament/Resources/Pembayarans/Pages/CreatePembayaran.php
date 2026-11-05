@@ -24,8 +24,9 @@ class CreatePembayaran extends CreateRecord
     {
         parent::mount();
 
-        // Support prefilling siswa_id from query string
         $siswaId = request()->query('siswa_id');
+        $kelasId = request()->query('kelas_id');
+
         if ($siswaId) {
             $siswa = Siswa::with('kelas')->find($siswaId);
 
@@ -33,6 +34,21 @@ class CreatePembayaran extends CreateRecord
                 'cara_pilih' => 'cari',
                 'kelas_id' => $siswa?->kelas_id,
                 'siswa_id' => (int) $siswaId,
+                'sertakan_arsip' => false,
+                'bayar_spp' => ['spp'],
+                'bayar_non_spp' => [],
+                'tgl_bayar' => now()->format('Y-m-d'),
+                'metode_pembayaran' => 'Tunai',
+            ]);
+
+            return;
+        }
+
+        if ($kelasId) {
+            $this->form->fill([
+                'cara_pilih' => 'bertingkat',
+                'kelas_id' => (int) $kelasId,
+                'sertakan_arsip' => request()->boolean('sertakan_arsip'),
                 'bayar_spp' => ['spp'],
                 'bayar_non_spp' => [],
                 'tgl_bayar' => now()->format('Y-m-d'),
