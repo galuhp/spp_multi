@@ -52,7 +52,7 @@ class AdminPanelProvider extends PanelProvider
                 'Pengaturan & Akses',
             ])
             ->navigationItems([
-                NavigationItem::make('Buat Baru')
+                NavigationItem::make('Entry Pembayaran Gabungan')
                     ->key('buat-pembayaran-massal')
                     ->group('Transaksi SPP')
                     ->parentItem(PembayaranGabunganResource::class)
