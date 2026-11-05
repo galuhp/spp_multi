@@ -16,29 +16,31 @@
     <div class="space-y-5">
         {{-- Step 1: mode --}}
         <section class="pm-step">
-            <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                <div class="flex flex-col justify-center">
+            <div class="pm-step-header">
+                <div>
                     <h3 class="pm-step-title">
                         Pilih Dasar Pengelompokan
                     </h3>
                     <p class="mt-1 text-xs text-gray-500">Tentukan apakah kelas dipilih berdasarkan kompetensi keahlian atau tingkat kelas.</p>
                 </div>
+            </div>
 
-                <label class="pm-choice pm-choice-compact">
+            <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                <label class="pm-choice">
                     <input type="radio" wire:model.live="mode" value="kompetensi">
                     <span class="min-w-0">
-                        <span class="block text-[13px] font-semibold text-gray-900">Kompetensi Keahlian</span>
-                        <span class="mt-0.5 block text-[11px] leading-4 text-gray-500">
+                        <span class="block text-sm font-semibold text-gray-900">Kompetensi Keahlian</span>
+                        <span class="mt-1 block text-xs text-gray-500">
                             Tampilkan semua kelas dalam satu kompetensi keahlian, dari semua tingkat.
                         </span>
                     </span>
                 </label>
 
-                <label class="pm-choice pm-choice-compact">
+                <label class="pm-choice">
                     <input type="radio" wire:model.live="mode" value="tingkat">
                     <span class="min-w-0">
-                        <span class="block text-[13px] font-semibold text-gray-900">Tingkat Kelas</span>
-                        <span class="mt-0.5 block text-[11px] leading-4 text-gray-500">
+                        <span class="block text-sm font-semibold text-gray-900">Tingkat Kelas</span>
+                        <span class="mt-1 block text-xs text-gray-500">
                             Tampilkan semua kelas pada satu tingkat, dari semua kompetensi keahlian.
                         </span>
                     </span>
