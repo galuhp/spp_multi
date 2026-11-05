@@ -45,6 +45,19 @@ class PembayaranGabunganResource extends Resource
         return static::canViewAny();
     }
 
+    /**
+     * Keep the history menu inactive while the separate create page is open.
+     *
+     * @return array<int, string>
+     */
+    public static function getNavigationItemActiveRoutePattern(): string|array
+    {
+        return [
+            static::getRouteBaseName().'.index',
+            static::getRouteBaseName().'.edit',
+        ];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return PembayaranGabunganForm::configure($schema);

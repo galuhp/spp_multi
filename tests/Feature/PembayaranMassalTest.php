@@ -292,6 +292,30 @@ class PembayaranMassalTest extends TestCase
         $this->get(PembayaranGabunganResource::getUrl('edit', ['record' => $gabungan]))->assertOk();
     }
 
+    public function test_menu_history_pembayaran_gabungan_tidak_aktif_di_halaman_create(): void
+    {
+        $response = $this->get(PembayaranGabunganResource::getUrl('create'));
+        $response->assertOk();
+
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($dom);
+
+        $activeItems = $xpath->query(
+            "//li[contains(concat(' ', normalize-space(@class), ' '), ' fi-sidebar-item ')"
+            ." and contains(concat(' ', normalize-space(@class), ' '), ' fi-active ')]"
+            ."//a[contains(normalize-space(.), 'Pembayaran Gabungan')]"
+        );
+
+        $activeLabels = [];
+        foreach ($activeItems as $activeItem) {
+            $activeLabels[] = trim((string) preg_replace('/\s+/', ' ', $activeItem->textContent));
+        }
+
+        $this->assertContains('Entry Pembayaran Gabungan', $activeLabels);
+        $this->assertNotContains('History Pembayaran Gabungan', $activeLabels);
+    }
+
     public function test_relation_manager_menampilkan_alokasi_tanpa_error(): void
     {
         $gabungan = $this->buatGabungan();
