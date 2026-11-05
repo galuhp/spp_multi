@@ -33,11 +33,6 @@ class PembayaranGabunganResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    /**
-     * Menu Pembayaran Massal disembunyikan; pembayaran per siswa tetap tersedia.
-     */
-    protected static bool $shouldRegisterNavigation = false;
-
     public static function canViewAny(): bool
     {
         $user = auth()->user();

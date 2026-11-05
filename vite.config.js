@@ -18,6 +18,7 @@ export default defineConfig({
                 'resources/css/proses-kelas.css',
                 'resources/css/tagihan-siswa.css',
                 'resources/css/manajemen-role.css',
+                'resources/css/pembayaran-massal.css',
                 'resources/js/app.js',
                 'resources/js/demo-preline.js',
             ],

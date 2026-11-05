@@ -294,19 +294,12 @@ class PembayaranMassalTest extends TestCase
     {
         $this->buatSiswa(['nama' => 'Siti Aminah', 'nisn' => '0098765432', 'nis' => '00987654']);
 
-        Livewire::test(CreatePembayaranGabungan::class)
-            ->fillForm([
-                'tanggal' => '2027-07-10',
-                'sumber' => PembayaranGabungan::SUMBER_SETORAN_KELAS,
-                'metode' => PembayaranGabungan::METODE_TUNAI,
-                'kelas_id' => $this->kelas->id,
-                'total_diterima' => 0,
-            ])
-            ->call('create')
-            ->assertHasNoFormErrors();
+        $gabungan = $this->buatGabungan([
+            'sumber' => PembayaranGabungan::SUMBER_SETORAN_KELAS,
+            'kelas_id' => $this->kelas->id,
+        ]);
 
-        $gabungan = PembayaranGabungan::query()->latest('id')->firstOrFail();
-
+        $this->assertSame(2, $this->service->muatSiswaKelas($gabungan));
         $this->assertSame(2, $gabungan->baris()->count());
         $this->assertSame(0, (int) $gabungan->baris()->sum('jumlah'));
         $this->assertSame(
@@ -314,7 +307,67 @@ class PembayaranMassalTest extends TestCase
             $gabungan->baris()->where('status_validasi', PembayaranGabunganBaris::STATUS_ERROR)->count()
         );
 
-        $this->assertSame(0, $this->service->muatSiswaKelas($gabungan));
+        $this->assertSame(0, $this->service->muatSiswaKelas($gabungan->fresh()));
+    }
+
+    public function test_wizard_pembayaran_massal_memuat_siswa_dan_membuat_pembayaran(): void
+    {
+        $kedua = $this->buatSiswa(['nama' => 'Siti Aminah', 'nisn' => '0098765432', 'nis' => '00987654']);
+
+        Livewire::test(CreatePembayaranGabungan::class)
+            ->assertSet('mode', 'kompetensi')
+            ->set('jurusan_id', $this->jurusan->id)
+            ->set('kelas_id', $this->kelas->id)
+            ->assertSet('siswa_ids', [$this->siswa->id, $kedua->id])
+            ->set('bulan', ['Juli'])
+            ->call('simpan')
+            ->assertRedirectContains('/pembayaran/gabungan/');
+
+        $gabungan = PembayaranGabungan::query()->latest('id')->firstOrFail();
+
+        $this->assertSame(PembayaranGabungan::STATUS_DIPOSTING, $gabungan->status);
+        $this->assertSame(2, $gabungan->baris()->count());
+        $this->assertSame(500000, (int) $gabungan->total_diterima);
+        $this->assertSame(2, Pembayaran::query()->where('gabungan_id', $gabungan->id)->count());
+        $this->assertSame(250000, (int) Pembayaran::query()->where('siswa_id', $kedua->id)->sum('jumlah_bayar'));
+
+        $this->get(route('pembayaran.gabungan.kuitansi', $gabungan))
+            ->assertOk()
+            ->assertSee($this->siswa->nama)
+            ->assertSee('Juli');
+        $this->get(route('pembayaran.gabungan.rekap', $gabungan))
+            ->assertOk()
+            ->assertSee('REKAP PEMBAYARAN MASSAL');
+    }
+
+    public function test_wizard_melewati_bulan_yang_sudah_lunas(): void
+    {
+        $this->buatSiswa(['nama' => 'Siti Aminah', 'nisn' => '0098765432', 'nis' => '00987654']);
+
+        Pembayaran::query()->create([
+            'kode_transaksi' => 'SPP-TEST-LUNAS',
+            'user_id' => $this->admin->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => now()->format('Y-m-d'),
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2027,
+            'jumlah_bayar' => 250000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        Livewire::test(CreatePembayaranGabungan::class)
+            ->set('jurusan_id', $this->jurusan->id)
+            ->set('kelas_id', $this->kelas->id)
+            ->set('bulan', ['Juli'])
+            ->call('simpan')
+            ->assertRedirectContains('/pembayaran/gabungan/');
+
+        $gabungan = PembayaranGabungan::query()->latest('id')->firstOrFail();
+
+        $this->assertSame(1, $gabungan->baris()->count());
+        $this->assertSame(250000, (int) $gabungan->total_diterima);
+        $this->assertSame(1, Pembayaran::query()->where('gabungan_id', $gabungan->id)->count());
     }
 
     /**

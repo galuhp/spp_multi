@@ -25,6 +25,12 @@
         </button>
     </div>
 
+    @if (session('massal_info'))
+        <div class="no-print max-w-2xl mx-auto mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+            {{ session('massal_info') }}
+        </div>
+    @endif
+
     @foreach($groups as $group)
         @php
             $pembayaran = $group['payments']->first();
@@ -36,5 +42,15 @@
             'sekolah' => $sekolah,
         ])
     @endforeach
+
+    @if (request()->boolean('auto'))
+        <script>
+            window.addEventListener('load', function () {
+                window.setTimeout(function () {
+                    window.print();
+                }, 400);
+            });
+        </script>
+    @endif
 </body>
 </html>
