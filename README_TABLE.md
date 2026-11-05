@@ -1,6 +1,6 @@
 # Daftar Tabel Database
 
-Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian per-tabel ada di bawah (bagian "Rincian Tabel").
+Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian tabel `spps` ada di bagian bawah dokumen.
 
 ## Tabel Aplikasi
 
@@ -15,8 +15,8 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | 7 | `siswas` | Data induk siswa: identitas (NISN, NIS, NIK), kelahiran, kontak, status, dan arsip/lulus; terhubung ke user login, kelas, dan tarif SPP |
 | 8 | `wali` | Data orang tua/wali per siswa (nama ayah, ibu, wali, dan nomor HP) |
 | 9 | `riwayat_kelas` | Riwayat penempatan kelas siswa per tahun ajaran, termasuk hasil proses naik kelas/kelulusan (status, batch) |
-| 10 | `spps` | Master tarif dan kategori pembayaran: SPP bulanan per tingkat (X/XI/XII) maupun biaya non-SPP (uang gedung, seragam, praktik, ujian) |
-| 11 | `pembayarans` | Transaksi pembayaran SPP/non-SPP per siswa (kode transaksi, bulan/tahun dibayar, jumlah, metode), termasuk relasi ke setoran gabungan dan status void |
+| 10 | `spps` | Master tarif dan kategori pembayaran: SPP bulanan per tingkat (X/XI/XII) serta biaya non-SPP (uang gedung, seragam, praktik, ujian) dengan tingkat opsional |
+| 11 | `pembayarans` | Transaksi pembayaran SPP/non-SPP per baris; beberapa baris dapat berbagi satu kode kuitansi (SPP multi-bulan atau gabungan SPP + biaya lain), termasuk relasi ke setoran gabungan dan status void |
 | 12 | `pembayaran_gabungan` | Header setoran gabungan (setoran per kelas, transfer bank, catatan manual) dengan status draft → memproses → diposting → void |
 | 13 | `pembayaran_gabungan_baris` | Rincian tiap baris setoran gabungan: siswa, jumlah, alokasi ke tagihan, validasi, dan peta ke transaksi `pembayarans` |
 | 14 | `nomor_kuitansi_urutan` | Counter nomor kuitansi per seri dan tahun, agar nomor kuitansi berurutan dan unik |
@@ -35,6 +35,9 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | `jobs` | Antrean pekerjaan (queue) yang menunggu dieksekusi |
 | `job_batches` | Informasi batch antrean pekerjaan |
 | `failed_jobs` | Pekerjaan antrean yang gagal dieksekusi |
+| `migrations` | Catatan migrasi database yang sudah dijalankan |
+
+Total saat ini: **19 tabel aplikasi + 6 tabel framework = 25 tabel**.
 
 ---
 
@@ -58,7 +61,7 @@ Tabel `spps` menyimpan **master tarif dan kategori pembayaran** sekolah, baik SP
 | `nama` | varchar(100) | ya | `null` | Label khusus tarif. Contoh: `DSP Angkatan 2026`, `Seragam Lengkap 4 Stel` |
 | `tahun` | integer | tidak | — | Tahun referensi tarif. Pemetaan bulan memakai `tahun_ajaran` |
 | `tahun_ajaran` | varchar(20) | tidak | — | Tahun ajaran dalam format `YYYY/YYYY` (contoh: `2026/2027`) |
-| `tingkat` | varchar(5) | ya | `null` | Tingkat berlaku tarif SPP: `10` (X), `11` (XI), `12` (XII). `null` untuk non-SPP / data lama |
+| `tingkat` | varchar(5) | ya | `null` | Tingkat berlaku tarif: `10` (X), `11` (XI), `12` (XII). Wajib untuk SPP; opsional untuk non-SPP. `null` berarti berlaku untuk semua tingkat atau data lama |
 | `nominal` | integer | tidak | — | Nominal dalam Rupiah. Untuk `bulanan`: nominal per bulan. Untuk `sekali_bayar`: nominal total tagihan |
 | `keterangan` | varchar | ya | `null` | Keterangan tambahan |
 | `created_at` | datetime | ya | `null` | Waktu dibuat |
@@ -71,7 +74,7 @@ Tabel `spps` menyimpan **master tarif dan kategori pembayaran** sekolah, baik SP
 | `PRIMARY` | `id` | Primary key |
 | `spps_kategori_tahun_tingkat_unique` | `kategori`, `tahun_ajaran`, `tingkat` | Unique |
 
-Unique index memastikan hanya ada satu tarif SPP per tahun ajaran dan tingkat. Beberapa baris non-SPP dengan `tingkat = null` tetap diperbolehkan karena NULL dianggap berbeda oleh database.
+Unique index memastikan hanya ada satu tarif per kategori, tahun ajaran, dan tingkat. Beberapa baris non-SPP dengan `tingkat = null` tetap diperbolehkan karena NULL dianggap berbeda oleh database.
 
 ## Konstanta Model
 
@@ -118,7 +121,7 @@ Catatan:
 
 2. **Biaya non-SPP**
    - `kategori != 'SPP'`.
-   - `tingkat` selalu `null`.
+   - `tingkat` boleh `null` (berlaku semua tingkat) atau diisi jika biaya hanya berlaku untuk tingkat tertentu.
    - `tipe` umumnya `sekali_bayar`.
    - `nominal` adalah total kewajiban; pembayaran dapat penuh atau dicicil.
 
