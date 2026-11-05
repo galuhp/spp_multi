@@ -24,7 +24,7 @@ class LaporanPembayaran extends Page
 
     protected static ?string $title = 'Laporan & Rekapitulasi Pembayaran';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     protected string $view = 'filament.pages.laporan-pembayaran';
 
