@@ -36,6 +36,8 @@ class EntriPembayaranKasir extends Page
 
     public string $cari = '';
 
+    public string $tingkat = 'semua';
+
     public ?string $galat = null;
 
     public static function canAccess(): bool
@@ -55,6 +57,14 @@ class EntriPembayaranKasir extends Page
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function getTingkatOptionsProperty(): array
+    {
+        return ['semua' => 'Semua'] + Spp::TINGKAT_LIST;
+    }
+
+    /**
      * @return Collection<int, Siswa>
      */
     public function getSiswaHasilProperty(): Collection
@@ -68,6 +78,17 @@ class EntriPembayaranKasir extends Page
         return Siswa::query()
             ->with('kelas')
             ->aktif()
+            ->when($this->tingkat !== 'semua', function ($query): void {
+                $labelTingkat = Spp::labelTingkat($this->tingkat);
+
+                $query->whereHas('kelas', function ($kelasQuery) use ($labelTingkat): void {
+                    $kelasQuery->whereIn('tingkat', array_values(array_unique([
+                        $this->tingkat,
+                        $labelTingkat,
+                        mb_strtolower($labelTingkat),
+                    ])));
+                });
+            })
             ->where(function ($query) use ($kataKunci): void {
                 $query->where('nama', 'like', "%{$kataKunci}%")
                     ->orWhere('nisn', 'like', "%{$kataKunci}%")
@@ -76,6 +97,16 @@ class EntriPembayaranKasir extends Page
             ->orderBy('nama')
             ->limit(20)
             ->get();
+    }
+
+    public function pilihTingkat(string $tingkat): void
+    {
+        if (! array_key_exists($tingkat, $this->tingkatOptions)) {
+            return;
+        }
+
+        $this->tingkat = $tingkat;
+        $this->cari = '';
     }
 
     public function getSiswaProperty(): ?Siswa

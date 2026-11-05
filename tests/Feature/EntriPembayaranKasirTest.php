@@ -96,6 +96,57 @@ class EntriPembayaranKasirTest extends TestCase
             ->assertSee('Pilih Siswa');
     }
 
+    public function test_filter_tingkat_kelas_menyaring_hasil_pencarian_siswa(): void
+    {
+        $kelasXI = Kelas::query()->create([
+            'tahun_ajaran_id' => $this->tahunAjaran->id,
+            'jurusan_id' => $this->kelas->jurusan_id,
+            'nama_kelas' => 'XI RPL 1',
+            'tingkat' => '11',
+        ]);
+
+        $sppXI = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_SPP,
+            'tipe' => Spp::TIPE_BULANAN,
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '11',
+            'nominal' => 300000,
+        ]);
+
+        Siswa::query()->create([
+            'kelas_id' => $kelasXI->id,
+            'spp_id' => $sppXI->id,
+            'nisn' => '0071234562',
+            'nis' => '2026002',
+            'nama' => 'Budi Tingkat XI',
+            'jenis_kelamin' => 'L',
+            'status' => 'aktif',
+        ]);
+
+        Livewire::test(EntriPembayaranKasir::class)
+            ->assertSee('Tingkat Kelas')
+            ->assertSee('Semua')
+            ->set('cari', '007')
+            ->assertSee('Ahmad Rifai')
+            ->assertSee('Budi Tingkat XI')
+            ->call('pilihTingkat', '10')
+            ->assertSet('tingkat', '10')
+            ->assertSet('cari', '')
+            ->set('cari', '007')
+            ->assertSee('Ahmad Rifai')
+            ->assertDontSee('Budi Tingkat XI')
+            ->call('pilihTingkat', '11')
+            ->assertSet('cari', '')
+            ->set('cari', '007')
+            ->assertSee('Budi Tingkat XI')
+            ->assertDontSee('Ahmad Rifai')
+            ->call('pilihTingkat', 'semua')
+            ->set('cari', '007')
+            ->assertSee('Ahmad Rifai')
+            ->assertSee('Budi Tingkat XI');
+    }
+
     public function test_data_kasir_menampilkan_bulan_dan_biaya_lain_sesuai_tingkat(): void
     {
         $sppLain = Spp::query()->create([

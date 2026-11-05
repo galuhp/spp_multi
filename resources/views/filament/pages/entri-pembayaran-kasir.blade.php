@@ -35,14 +35,30 @@
                 <div class="flex flex-col gap-2">
                     <div>
                         <h2 class="text-sm font-semibold text-gray-950 dark:text-white">Pilih Siswa</h2>
-                        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Cari berdasarkan nama, NISN, atau NIS.</p>
+                        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Pilih tingkat kelas, lalu cari berdasarkan nama, NISN, atau NIS.</p>
+                    </div>
+
+                    <div class="mt-2">
+                        <p class="text-xs font-medium text-gray-600 dark:text-gray-300">Tingkat Kelas</p>
+                        <div class="mt-2 flex flex-wrap gap-2" role="group" aria-label="Filter tingkat kelas">
+                            @foreach ($this->tingkatOptions as $nilai => $label)
+                                <button type="button" wire:click="pilihTingkat('{{ $nilai }}')"
+                                    @class([
+                                        'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
+                                        'border-indigo-600 bg-indigo-600 text-white shadow-sm' => $tingkat === (string) $nilai,
+                                        'border-gray-300 bg-white text-gray-700 hover:border-indigo-400 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-indigo-500 dark:hover:text-indigo-400' => $tingkat !== (string) $nilai,
+                                    ])>
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div class="relative mt-2">
                         <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
                             <x-heroicon-o-magnifying-glass class="size-4" />
                         </span>
-                        <input type="search" wire:model.live.debounce.300ms="cari" autofocus
+                        <input type="search" wire:model.live.debounce.300ms="cari"
                             placeholder="Ketik nama atau NISN..."
                             class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                     </div>
