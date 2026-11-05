@@ -94,13 +94,6 @@ class PembayaransTable
                     ->url(fn (Pembayaran $record): string => route('pembayaran.cetak', $record->id))
                     ->openUrlInNewTab(),
 
-                Action::make('bukti_qr')
-                    ->label('QR Bukti')
-                    ->icon('heroicon-o-qr-code')
-                    ->color('success')
-                    ->url(fn (Pembayaran $record): string => $record->buktiUrl())
-                    ->openUrlInNewTab(),
-
                 DeleteAction::make()
                     ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false),
             ])
