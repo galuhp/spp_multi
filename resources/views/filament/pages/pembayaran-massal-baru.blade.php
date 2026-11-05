@@ -19,7 +19,6 @@
             <div class="pm-step-header">
                 <div>
                     <h3 class="pm-step-title">
-                        <span class="pm-step-number">1</span>
                         Pilih Dasar Pengelompokan
                     </h3>
                     <p class="mt-1 text-xs text-gray-500">Tentukan apakah kelas dipilih berdasarkan kompetensi keahlian atau tingkat kelas.</p>
@@ -30,7 +29,7 @@
                 <label class="pm-choice">
                     <input type="radio" wire:model.live="mode" value="kompetensi">
                     <span class="min-w-0">
-                        <span class="block text-sm font-semibold text-gray-900">A. Kompetensi Keahlian</span>
+                        <span class="block text-sm font-semibold text-gray-900">Kompetensi Keahlian</span>
                         <span class="mt-1 block text-xs text-gray-500">
                             Tampilkan semua kelas dalam satu kompetensi keahlian, dari semua tingkat.
                         </span>
@@ -40,7 +39,7 @@
                 <label class="pm-choice">
                     <input type="radio" wire:model.live="mode" value="tingkat">
                     <span class="min-w-0">
-                        <span class="block text-sm font-semibold text-gray-900">B. Tingkat Kelas</span>
+                        <span class="block text-sm font-semibold text-gray-900">Tingkat Kelas</span>
                         <span class="mt-1 block text-xs text-gray-500">
                             Tampilkan semua kelas pada satu tingkat, dari semua kompetensi keahlian.
                         </span>
@@ -54,7 +53,6 @@
             <div class="pm-step-header">
                 <div>
                     <h3 class="pm-step-title">
-                        <span class="pm-step-number">2</span>
                         {{ $modeKompetensi ? 'Pilih Kompetensi Keahlian' : 'Pilih Tingkat Kelas' }}
                     </h3>
                     <p class="mt-1 text-xs text-gray-500">
@@ -100,7 +98,6 @@
                 <div class="pm-step-header">
                     <div>
                         <h3 class="pm-step-title">
-                            <span class="pm-step-number">3</span>
                             Pilih Kelas
                         </h3>
                         <p class="mt-1 text-xs text-gray-500">Daftar siswa akan dimuat otomatis setelah kelas dipilih.</p>
@@ -137,7 +134,6 @@
                 <div class="pm-step-header">
                     <div>
                         <h3 class="pm-step-title">
-                            <span class="pm-step-number">4</span>
                             Pilih Siswa
                         </h3>
                         <p class="mt-1 text-xs text-gray-500">
