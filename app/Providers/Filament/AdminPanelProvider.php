@@ -3,16 +3,19 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
 use App\Filament\Widgets\LatestPembayaranWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -47,6 +50,17 @@ class AdminPanelProvider extends PanelProvider
                 'Kesiswaan',
                 'Master Data',
                 'Pengaturan & Akses',
+            ])
+            ->navigationItems([
+                NavigationItem::make('Buat Baru')
+                    ->key('buat-pembayaran-massal')
+                    ->group('Transaksi SPP')
+                    ->parentItem(PembayaranGabunganResource::class)
+                    ->icon(Heroicon::OutlinedPlusCircle)
+                    ->sort(1)
+                    ->url(fn (): string => PembayaranGabunganResource::getUrl('create'))
+                    ->visible(fn (): bool => PembayaranGabunganResource::canCreate())
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.pembayaran-gabungans.create')),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
