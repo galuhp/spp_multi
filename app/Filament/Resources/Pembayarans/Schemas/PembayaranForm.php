@@ -29,12 +29,12 @@ class PembayaranForm
                     ->columnSpanFull()
                     ->components([
                         Radio::make('cara_pilih')
-                            ->label('Cara Memilih Siswa')
+                            ->hiddenLabel()
                             ->options([
-                                'bertingkat' => 'Bertingkat (Kelas)',
                                 'cari' => 'Cari Nama / NISN',
+                                'bertingkat' => 'Bertingkat (Kelas)',
                             ])
-                            ->default('bertingkat')
+                            ->default('cari')
                             ->inline()
                             ->live()
                             ->dehydrated(false)

@@ -98,6 +98,10 @@ class PembayaranCascadeTest extends TestCase
     public function test_kelas_dan_siswa_berurutan_pada_form_pembayaran(): void
     {
         Livewire::test(CreatePembayaran::class)
+            ->assertFormSet(['cara_pilih' => 'cari'])
+            ->assertFormFieldHidden('kelas_id')
+            ->assertFormFieldEnabled('siswa_id')
+            ->fillForm(['cara_pilih' => 'bertingkat'])
             ->assertFormFieldDisabled('siswa_id')
             ->fillForm(['kelas_id' => $this->kelasRpl->id])
             ->assertFormFieldEnabled('siswa_id')
