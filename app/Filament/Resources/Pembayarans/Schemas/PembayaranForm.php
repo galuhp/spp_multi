@@ -9,6 +9,7 @@ use App\Models\Spp;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -105,7 +106,7 @@ class PembayaranForm
                     ->columns(2)
                     ->columnSpanFull()
                     ->components([
-                        Radio::make('jenis_transaksi')
+                        CheckboxList::make('jenis_transaksi')
                             ->label('Jenis Pembayaran')
                             ->options([
                                 'spp' => 'Iuran SPP Bulanan',
@@ -116,7 +117,8 @@ class PembayaranForm
                                 'non_spp' => 'Uang gedung, seragam, praktik, ujian, dan biaya lainnya.',
                             ])
                             ->extraAttributes(['class' => 'pembayaran-jenis-cards'])
-                            ->default('spp')
+                            ->default(['spp'])
+                            ->columns(2)
                             ->required()
                             ->live()
                             ->columnSpanFull(),
@@ -152,52 +154,81 @@ class PembayaranForm
                             })
                             ->columns(3)
                             ->columnSpanFull()
-                            ->visible(fn (callable $get) => $get('jenis_transaksi') === 'spp')
-                            ->required(fn (callable $get) => $get('jenis_transaksi') === 'spp'),
+                            ->visible(fn (Get $get): bool => in_array('spp', (array) $get('jenis_transaksi'), true))
+                            ->required(fn (Get $get): bool => in_array('spp', (array) $get('jenis_transaksi'), true)),
 
-                        Select::make('spp_id')
-                            ->label('Pilih Pos Tagihan Non-SPP')
-                            ->options(function (callable $get) {
-                                $siswaId = $get('siswa_id');
-                                if (! $siswaId) {
-                                    return [];
-                                }
+                        Repeater::make('non_spp_items')
+                            ->label('Rincian Biaya Lainnya')
+                            ->schema([
+                                Select::make('spp_id')
+                                    ->label('Pilih Pos Tagihan Non-SPP')
+                                    ->options(function (Get $get): array {
+                                        $siswaId = $get('../../siswa_id');
+                                        if (! $siswaId) {
+                                            return [];
+                                        }
 
-                                $siswa = Siswa::with('spp', 'pembayarans')->find($siswaId);
-                                if (! $siswa) {
-                                    return [];
-                                }
+                                        $siswa = Siswa::with('spp', 'pembayarans')->find($siswaId);
+                                        if (! $siswa) {
+                                            return [];
+                                        }
 
-                                $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
-                                $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
+                                        $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
+                                        $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
 
-                                return Spp::where('kategori', '!=', 'SPP')
-                                    ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
-                                        $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
-                                            ->orWhere('tahun_ajaran', $activeTahunAjaran);
+                                        return Spp::where('kategori', '!=', 'SPP')
+                                            ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
+                                                $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
+                                                    ->orWhere('tahun_ajaran', $activeTahunAjaran);
+                                            })
+                                            ->get()
+                                            ->mapWithKeys(function (Spp $tarif) use ($siswa) {
+                                                $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
+                                                $sisa = max(0, $tarif->nominal - $dibayar);
+                                                $status = $sisa <= 0 ? ' [LUNAS]' : ' [Sisa: Rp '.number_format($sisa, 0, ',', '.').']';
+
+                                                return [$tarif->id => "{$tarif->kategori} - {$tarif->nama} (Total: {$tarif->formattedNominal()}){$status}"];
+                                            })
+                                            ->all();
                                     })
-                                    ->get()
-                                    ->mapWithKeys(function ($tarif) use ($siswa) {
+                                    ->searchable()
+                                    ->required()
+                                    ->live(),
+
+                                TextInput::make('jumlah_bayar')
+                                    ->label('Nominal Dibayar (Rp)')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->minValue(1000)
+                                    ->step(5000)
+                                    ->required()
+                                    ->helperText(function (Get $get): string {
+                                        $siswaId = $get('../../siswa_id');
+                                        $tarifId = $get('spp_id');
+
+                                        if (! $siswaId || ! $tarifId) {
+                                            return 'Pilih pos tagihan terlebih dahulu.';
+                                        }
+
+                                        $siswa = Siswa::with('pembayarans')->find($siswaId);
+                                        $tarif = Spp::find($tarifId);
+
+                                        if (! $siswa || ! $tarif) {
+                                            return '';
+                                        }
+
                                         $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
-                                        $sisa = max(0, $tarif->nominal - $dibayar);
-                                        $status = $sisa <= 0 ? ' [LUNAS]' : ' [Sisa: Rp '.number_format($sisa, 0, ',', '.').']';
+                                        $sisa = max(0, (int) $tarif->nominal - $dibayar);
 
-                                        return [$tarif->id => "{$tarif->kategori} - {$tarif->nama} (Total: {$tarif->formattedNominal()}){$status}"];
-                                    });
-                            })
-                            ->visible(fn (callable $get) => $get('jenis_transaksi') === 'non_spp')
-                            ->required(fn (callable $get) => $get('jenis_transaksi') === 'non_spp')
-                            ->live(),
-
-                        TextInput::make('jumlah_bayar')
-                            ->label('Nominal yang Dibayar (Rp)')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->minValue(1000)
-                            ->step(5000)
-                            ->visible(fn (callable $get) => $get('jenis_transaksi') === 'non_spp')
-                            ->required(fn (callable $get) => $get('jenis_transaksi') === 'non_spp')
-                            ->helperText('Dapat dibayar lunas atau dicicil sesuai kemampuan.'),
+                                        return 'Sisa tagihan: Rp '.number_format($sisa, 0, ',', '.').'.';
+                                    }),
+                            ])
+                            ->columns(2)
+                            ->defaultItems(1)
+                            ->addActionLabel('Tambah Pos Biaya')
+                            ->visible(fn (Get $get): bool => in_array('non_spp', (array) $get('jenis_transaksi'), true))
+                            ->required(fn (Get $get): bool => in_array('non_spp', (array) $get('jenis_transaksi'), true))
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Pembayaran & Catatan')

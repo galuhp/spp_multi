@@ -5,6 +5,11 @@
     gap: 0.75rem;
 }
 
+/* Filament menaikkan grid radio dengan margin negatif; card butuh jarak normal dari label. */
+.pembayaran-jenis-cards.fi-fo-radio:not(.fi-inline).fi-grid-direction-col {
+    margin-top: 0;
+}
+
 @media (min-width: 640px) {
     .pembayaran-jenis-cards.fi-fo-radio {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -54,6 +59,95 @@
     font-size: 0.75rem;
     line-height: 1.25rem;
     color: #71717a;
+}
+
+/* CheckboxList (multi-select): SPP + biaya lainnya. */
+.pembayaran-jenis-cards.fi-fo-checkbox-list-options {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 0;
+}
+
+@media (min-width: 640px) {
+    .pembayaran-jenis-cards.fi-fo-checkbox-list-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.pembayaran-jenis-cards .fi-fo-checkbox-list-option-ctn {
+    padding-top: 0;
+    break-inside: avoid;
+}
+
+.pembayaran-jenis-cards .fi-fo-checkbox-list-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    height: 100%;
+    padding: 1rem;
+    border: 1px solid #e4e4e7;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.pembayaran-jenis-cards .fi-fo-checkbox-list-option:hover {
+    border-color: #a1a1aa;
+    background-color: #fafafa;
+}
+
+.pembayaran-jenis-cards .fi-fo-checkbox-list-option:has(input:checked) {
+    border-color: var(--primary-600, #4f46e5);
+    background-color: #eef2ff;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+.pembayaran-jenis-cards .fi-fo-checkbox-list-option .fi-checkbox-input {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    accent-color: var(--primary-600, #4f46e5);
+}
+
+.pembayaran-jenis-cards .fi-fo-checkbox-list-option-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: #18181b;
+}
+
+.pembayaran-jenis-cards .fi-fo-checkbox-list-option-description {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: #71717a;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-checkbox-list-option {
+    border-color: #3f3f46;
+    background-color: #18181b;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-checkbox-list-option:hover {
+    border-color: #71717a;
+    background-color: #27272a;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-checkbox-list-option:has(input:checked) {
+    border-color: var(--primary-400, #818cf8);
+    background-color: #1e1b4b;
+    box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-checkbox-list-option-label {
+    color: #fafafa;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-checkbox-list-option-description {
+    color: #a1a1aa;
 }
 
 .dark .pembayaran-jenis-cards .fi-fo-radio-label {

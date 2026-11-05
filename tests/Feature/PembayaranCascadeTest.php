@@ -8,6 +8,7 @@ use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
 use App\Filament\Resources\Pembayarans\PembayaranResource;
 use App\Models\Jurusan;
 use App\Models\Kelas;
+use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
@@ -102,7 +103,7 @@ class PembayaranCascadeTest extends TestCase
             ->assertFormFieldEnabled('siswa_id')
             ->fillForm([
                 'siswa_id' => $this->siswaRpl->id,
-                'jenis_transaksi' => 'spp',
+                'jenis_transaksi' => ['spp'],
                 'bulan_dibayar' => ['Juli'],
                 'tgl_bayar' => '2027-07-10',
                 'metode_pembayaran' => 'Tunai',
@@ -126,7 +127,7 @@ class PembayaranCascadeTest extends TestCase
             ->assertFormFieldEnabled('siswa_id')
             ->fillForm([
                 'siswa_id' => $this->siswaTkj->id,
-                'jenis_transaksi' => 'spp',
+                'jenis_transaksi' => ['spp'],
                 'bulan_dibayar' => ['Agustus'],
                 'tgl_bayar' => '2027-08-10',
                 'metode_pembayaran' => 'Transfer Bank',
@@ -138,6 +139,53 @@ class PembayaranCascadeTest extends TestCase
             'siswa_id' => $this->siswaTkj->id,
             'bulan_dibayar' => 'Agustus',
             'tahun_dibayar' => 2027,
+        ]);
+    }
+
+    public function test_siswa_dapat_membayar_spp_dan_biaya_lainnya_sekaligus(): void
+    {
+        $gedung = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Uang Gedung',
+            'tahun' => 2028,
+            'tahun_ajaran' => '2027/2028',
+            'nominal' => 1000000,
+        ]);
+
+        Livewire::test(CreatePembayaran::class)
+            ->fillForm([
+                'kelas_id' => $this->kelasRpl->id,
+                'siswa_id' => $this->siswaRpl->id,
+                'jenis_transaksi' => ['spp', 'non_spp'],
+                'bulan_dibayar' => ['Juli'],
+                'non_spp_items' => [
+                    ['spp_id' => $gedung->id, 'jumlah_bayar' => 400000],
+                ],
+                'tgl_bayar' => '2027-07-10',
+                'metode_pembayaran' => 'Tunai',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $rows = Pembayaran::query()
+            ->where('siswa_id', $this->siswaRpl->id)
+            ->orderBy('id')
+            ->get();
+
+        $this->assertCount(2, $rows);
+        $this->assertSame($rows[0]->kode_transaksi, $rows[1]->kode_transaksi);
+        $this->assertDatabaseHas('pembayarans', [
+            'siswa_id' => $this->siswaRpl->id,
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2027,
+            'jumlah_bayar' => 250000,
+        ]);
+        $this->assertDatabaseHas('pembayarans', [
+            'siswa_id' => $this->siswaRpl->id,
+            'spp_id' => $gedung->id,
+            'bulan_dibayar' => null,
+            'jumlah_bayar' => 400000,
         ]);
     }
 
