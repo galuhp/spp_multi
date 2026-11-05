@@ -22,7 +22,7 @@
                         <span class="pm-step-number">1</span>
                         Pilih Dasar Pengelompokan
                     </h3>
-                    <p class="mt-1 text-xs text-zinc-500">Tentukan apakah kelas dipilih berdasarkan kompetensi keahlian atau tingkat kelas.</p>
+                    <p class="mt-1 text-xs text-gray-500">Tentukan apakah kelas dipilih berdasarkan kompetensi keahlian atau tingkat kelas.</p>
                 </div>
             </div>
 
@@ -30,8 +30,8 @@
                 <label class="pm-choice">
                     <input type="radio" wire:model.live="mode" value="kompetensi">
                     <span class="min-w-0">
-                        <span class="block text-sm font-semibold text-zinc-900">A. Kompetensi Keahlian</span>
-                        <span class="mt-1 block text-xs text-zinc-500">
+                        <span class="block text-sm font-semibold text-gray-900">A. Kompetensi Keahlian</span>
+                        <span class="mt-1 block text-xs text-gray-500">
                             Tampilkan semua kelas dalam satu kompetensi keahlian, dari semua tingkat.
                         </span>
                     </span>
@@ -40,8 +40,8 @@
                 <label class="pm-choice">
                     <input type="radio" wire:model.live="mode" value="tingkat">
                     <span class="min-w-0">
-                        <span class="block text-sm font-semibold text-zinc-900">B. Tingkat Kelas</span>
-                        <span class="mt-1 block text-xs text-zinc-500">
+                        <span class="block text-sm font-semibold text-gray-900">B. Tingkat Kelas</span>
+                        <span class="mt-1 block text-xs text-gray-500">
                             Tampilkan semua kelas pada satu tingkat, dari semua kompetensi keahlian.
                         </span>
                     </span>
@@ -57,7 +57,7 @@
                         <span class="pm-step-number">2</span>
                         {{ $modeKompetensi ? 'Pilih Kompetensi Keahlian' : 'Pilih Tingkat Kelas' }}
                     </h3>
-                    <p class="mt-1 text-xs text-zinc-500">
+                    <p class="mt-1 text-xs text-gray-500">
                         {{ $modeKompetensi
                             ? 'Semua kelas pada kompetensi ini akan muncul pada langkah berikutnya.'
                             : 'Semua kelas pada tingkat ini akan muncul pada langkah berikutnya.' }}
@@ -71,12 +71,12 @@
                         <label class="pm-choice" wire:key="jurusan-{{ $jurusan->id }}">
                             <input type="radio" wire:model.live="jurusan_id" value="{{ $jurusan->id }}">
                             <span class="min-w-0">
-                                <span class="block text-sm font-semibold text-zinc-900">{{ $jurusan->nama }}</span>
-                                <span class="mt-0.5 block font-mono text-[11px] text-zinc-500">{{ $jurusan->kode }}</span>
+                                <span class="block text-sm font-semibold text-gray-900">{{ $jurusan->nama }}</span>
+                                <span class="mt-0.5 block font-mono text-[11px] text-gray-500">{{ $jurusan->kode }}</span>
                             </span>
                         </label>
                     @empty
-                        <p class="text-sm text-zinc-500">Belum ada data kompetensi keahlian.</p>
+                        <p class="text-sm text-gray-500">Belum ada data kompetensi keahlian.</p>
                     @endforelse
                 </div>
             @else
@@ -85,8 +85,8 @@
                         <label class="pm-choice" wire:key="tingkat-{{ $nilai }}">
                             <input type="radio" wire:model.live="tingkat" value="{{ $nilai }}">
                             <span class="min-w-0">
-                                <span class="block text-sm font-semibold text-zinc-900">{{ $label }}</span>
-                                <span class="mt-0.5 block text-[11px] text-zinc-500">Tingkat {{ $nilai }}</span>
+                                <span class="block text-sm font-semibold text-gray-900">{{ $label }}</span>
+                                <span class="mt-0.5 block text-[11px] text-gray-500">Tingkat {{ $nilai }}</span>
                             </span>
                         </label>
                     @endforeach
@@ -103,7 +103,7 @@
                             <span class="pm-step-number">3</span>
                             Pilih Kelas
                         </h3>
-                        <p class="mt-1 text-xs text-zinc-500">Daftar siswa akan dimuat otomatis setelah kelas dipilih.</p>
+                        <p class="mt-1 text-xs text-gray-500">Daftar siswa akan dimuat otomatis setelah kelas dipilih.</p>
                     </div>
                 </div>
 
@@ -112,20 +112,20 @@
                         <label class="pm-choice" wire:key="kelas-{{ $kelas->id }}">
                             <input type="radio" wire:model.live="kelas_id" value="{{ $kelas->id }}">
                             <span class="min-w-0">
-                                <span class="block text-sm font-semibold text-zinc-900">{{ $kelas->nama_kelas }}</span>
-                                <span class="mt-0.5 block text-xs text-zinc-500">{{ $kelas->jurusan?->nama ?? '-' }}</span>
+                                <span class="block text-sm font-semibold text-gray-900">{{ $kelas->nama_kelas }}</span>
+                                <span class="mt-0.5 block text-xs text-gray-500">{{ $kelas->jurusan?->nama ?? '-' }}</span>
                                 <span class="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                                    <span class="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600">
+                                    <span class="rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600">
                                         {{ $kelas->siswas_count }} siswa aktif
                                     </span>
                                     @if ($kelas->tahunAjaran)
-                                        <span class="text-zinc-400">{{ $kelas->tahunAjaran->nama }}</span>
+                                        <span class="text-gray-400">{{ $kelas->tahunAjaran->nama }}</span>
                                     @endif
                                 </span>
                             </span>
                         </label>
                     @empty
-                        <p class="text-sm text-zinc-500">Tidak ada kelas yang cocok dengan pilihan tersebut.</p>
+                        <p class="text-sm text-gray-500">Tidak ada kelas yang cocok dengan pilihan tersebut.</p>
                     @endforelse
                 </div>
             </section>
@@ -140,7 +140,7 @@
                             <span class="pm-step-number">4</span>
                             Pilih Siswa
                         </h3>
-                        <p class="mt-1 text-xs text-zinc-500">
+                        <p class="mt-1 text-xs text-gray-500">
                             {{ $kelasTerpilih->nama_kelas }}
                             @if ($kelasTerpilih->jurusan)
                                 &bull; {{ $kelasTerpilih->jurusan->nama }}
@@ -161,37 +161,37 @@
                     </div>
                 </div>
 
-                <div class="mt-4 overflow-x-auto rounded-xl border border-zinc-200">
+                <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
                     <table class="w-full text-left text-sm">
-                        <thead class="bg-zinc-50 text-[11px] uppercase tracking-wide text-zinc-500">
+                        <thead class="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-500">
                             <tr>
                                 <th class="w-12 px-3 py-2.5 text-center">
                                     <input type="checkbox"
                                         wire:click="toggleSemua"
                                         @checked($semuaTerpilih)
                                         title="Centang / kosongkan semua"
-                                        class="size-4 rounded border-zinc-300 accent-zinc-900">
+                                        class="size-4 rounded border-gray-300 accent-indigo-600">
                                 </th>
                                 <th class="px-3 py-2.5">NISN</th>
                                 <th class="px-3 py-2.5">Nama Siswa</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-100">
+                        <tbody class="divide-y divide-gray-100">
                             @forelse ($siswaList as $murid)
-                                <tr wire:key="siswa-{{ $murid->id }}" class="hover:bg-zinc-50">
+                                <tr wire:key="siswa-{{ $murid->id }}" class="hover:bg-gray-50">
                                     <td class="px-3 py-2.5 text-center">
                                         <input type="checkbox"
                                             wire:model.live="siswa_ids"
                                             value="{{ $murid->id }}"
                                             @checked(in_array($murid->id, $terpilih, true))
-                                            class="size-4 rounded border-zinc-300 accent-zinc-900">
+                                            class="size-4 rounded border-gray-300 accent-indigo-600">
                                     </td>
-                                    <td class="px-3 py-2.5 font-mono text-xs text-zinc-700">{{ $murid->nisn ?: '-' }}</td>
-                                    <td class="px-3 py-2.5 font-medium text-zinc-900">{{ $murid->nama }}</td>
+                                    <td class="px-3 py-2.5 font-mono text-xs text-gray-700">{{ $murid->nisn ?: '-' }}</td>
+                                    <td class="px-3 py-2.5 font-medium text-gray-900">{{ $murid->nama }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="px-3 py-8 text-center text-sm text-zinc-500">
+                                    <td colspan="3" class="px-3 py-8 text-center text-sm text-gray-500">
                                         Belum ada siswa aktif di kelas ini.
                                     </td>
                                 </tr>
@@ -200,9 +200,9 @@
                     </table>
                 </div>
 
-                <div class="mt-4 flex flex-col gap-3 border-t border-zinc-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-sm text-zinc-600">
-                        <strong class="text-zinc-900">{{ $jumlahTerpilih }}</strong>
+                <div class="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm text-gray-600">
+                        <strong class="text-gray-900">{{ $jumlahTerpilih }}</strong>
                         dari {{ $siswaList->count() }} siswa dipilih.
                     </p>
 
@@ -225,13 +225,13 @@
 
     {{-- Month selection modal --}}
     @if ($modal)
-        <div class="fixed inset-0 z-50 flex items-end justify-center bg-zinc-900/60 p-4 sm:items-center"
+        <div class="fixed inset-0 z-50 flex items-end justify-center bg-gray-900/60 p-4 sm:items-center"
             wire:key="modal-bulan" role="dialog" aria-modal="true" aria-labelledby="pm-modal-title">
             <div class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl">
-                <div class="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4">
+                <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
                     <div>
-                        <h3 id="pm-modal-title" class="text-base font-semibold text-zinc-900">Pilih Bulan Pembayaran</h3>
-                        <p class="mt-0.5 text-xs text-zinc-500">
+                        <h3 id="pm-modal-title" class="text-base font-semibold text-gray-900">Pilih Bulan Pembayaran</h3>
+                        <p class="mt-0.5 text-xs text-gray-500">
                             {{ $kelasTerpilih?->nama_kelas ? $kelasTerpilih->nama_kelas.' • ' : '' }}{{ $jumlahTerpilih }} siswa terpilih. Centang bulan SPP yang akan dibayar.
                         </p>
                     </div>
@@ -261,7 +261,7 @@
                         @endforeach
                     </div>
 
-                    <p class="text-[11px] leading-relaxed text-zinc-500">
+                    <p class="text-[11px] leading-relaxed text-gray-500">
                         Bulan yang sudah lunas untuk seorang siswa akan dilewati otomatis. Siswa yang seluruh bulannya sudah lunas tidak disertakan.
                     </p>
 
@@ -272,10 +272,10 @@
                     @endif
                 </div>
 
-                <div class="flex flex-col gap-4 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-4 border-t border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <div class="text-[11px] uppercase tracking-wide text-zinc-500">Estimasi Total</div>
-                        <div class="text-xl font-bold text-zinc-900">
+                        <div class="text-[11px] uppercase tracking-wide text-gray-500">Estimasi Total</div>
+                        <div class="text-xl font-bold text-gray-900">
                             Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
                         </div>
                     </div>
