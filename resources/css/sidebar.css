@@ -1,12 +1,12 @@
 /* Separators between menu groups in the Transaksi SPP sidebar group. */
-[data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(2),
-[data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(4) {
+[data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(3),
+[data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(5) {
     margin-bottom: 0.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--gray-200, #e4e4e7);
 }
 
-.dark [data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(2),
-.dark [data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(4) {
+.dark [data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(3),
+.dark [data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(5) {
     border-bottom-color: var(--gray-700, #3f3f46);
 }

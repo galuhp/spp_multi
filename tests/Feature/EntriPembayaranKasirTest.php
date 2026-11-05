@@ -1,0 +1,189 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Enums\UserRole;
+use App\Filament\Pages\EntriPembayaranKasir;
+use App\Models\Jurusan;
+use App\Models\Kelas;
+use App\Models\Pembayaran;
+use App\Models\Siswa;
+use App\Models\Spp;
+use App\Models\TahunAjaran;
+use App\Models\User;
+use App\Support\Pembayaran\PembayaranService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+class EntriPembayaranKasirTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $admin;
+
+    private TahunAjaran $tahunAjaran;
+
+    private Kelas $kelas;
+
+    private Spp $spp;
+
+    private Spp $uangGedung;
+
+    private Siswa $siswa;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->admin = User::factory()->create(['role' => UserRole::Admin]);
+        $this->actingAs($this->admin);
+
+        $this->tahunAjaran = TahunAjaran::query()->firstOrCreate(
+            ['nama' => '2026/2027'],
+            [
+                'tanggal_mulai' => '2026-07-01',
+                'tanggal_selesai' => '2027-06-30',
+                'aktif' => true,
+            ],
+        );
+
+        $jurusan = Jurusan::query()->create([
+            'kode' => 'RPL',
+            'nama' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        $this->kelas = Kelas::query()->create([
+            'tahun_ajaran_id' => $this->tahunAjaran->id,
+            'jurusan_id' => $jurusan->id,
+            'nama_kelas' => 'X RPL 1',
+            'tingkat' => '10',
+        ]);
+
+        $this->spp = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_SPP,
+            'tipe' => Spp::TIPE_BULANAN,
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 250000,
+        ]);
+
+        $this->uangGedung = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Uang Gedung',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'nominal' => 1000000,
+        ]);
+
+        $this->siswa = Siswa::query()->create([
+            'kelas_id' => $this->kelas->id,
+            'spp_id' => $this->spp->id,
+            'nisn' => '0071234561',
+            'nis' => '2026001',
+            'nama' => 'Ahmad Rifai',
+            'jenis_kelamin' => 'L',
+            'status' => 'aktif',
+        ]);
+    }
+
+    public function test_halaman_kasir_dapat_dibuka(): void
+    {
+        Livewire::test(EntriPembayaranKasir::class)
+            ->assertOk()
+            ->assertSee('Pilih Siswa');
+    }
+
+    public function test_data_kasir_menampilkan_bulan_dan_biaya_lain_sesuai_tingkat(): void
+    {
+        $sppLain = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_BIAYA_PRAKTIK,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Praktik Tingkat XI',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '11',
+            'nominal' => 300000,
+        ]);
+
+        $praktikX = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_BIAYA_UJIAN,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Ujian Tingkat X',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 200000,
+        ]);
+
+        $component = Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id);
+
+        $data = $component->instance()->kasirData;
+
+        $this->assertSame(250000, $data['tarif']);
+        $this->assertCount(12, $data['months']);
+        $this->assertCount(2, $data['non_spp']);
+        $this->assertEqualsCanonicalizing(
+            ["spp:{$this->uangGedung->id}", "spp:{$praktikX->id}"],
+            collect($data['non_spp'])->pluck('key')->all(),
+        );
+        $this->assertNotContains("spp:{$sppLain->id}", collect($data['non_spp'])->pluck('key')->all());
+    }
+
+    public function test_kasir_dapat_menyimpan_spp_dan_biaya_lain_dalam_satu_kuitansi(): void
+    {
+        $items = collect(app(PembayaranService::class)->tagihanTerbuka($this->siswa))->keyBy('key');
+        $bulanKey = "spp:{$this->spp->id}:Juli:2026";
+        $biayaKey = "spp:{$this->uangGedung->id}";
+
+        $this->assertTrue($items->has($bulanKey));
+        $this->assertTrue($items->has($biayaKey));
+
+        Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id)
+            ->call('simpan', [$bulanKey], [$biayaKey], 'Tunai', '2026-07-10', 'Kasir')
+            ->assertRedirectContains('/pembayaran/');
+
+        $rows = Pembayaran::query()
+            ->where('siswa_id', $this->siswa->id)
+            ->orderBy('id')
+            ->get();
+
+        $this->assertCount(2, $rows);
+        $this->assertSame($rows[0]->kode_transaksi, $rows[1]->kode_transaksi);
+        $this->assertDatabaseHas('pembayarans', [
+            'siswa_id' => $this->siswa->id,
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 250000,
+        ]);
+        $this->assertDatabaseHas('pembayarans', [
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->uangGedung->id,
+            'bulan_dibayar' => null,
+            'jumlah_bayar' => 1000000,
+        ]);
+    }
+
+    public function test_kasir_menolak_biaya_lain_tingkat_lain(): void
+    {
+        $praktikXI = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_BIAYA_PRAKTIK,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Praktik Tingkat XI',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '11',
+            'nominal' => 300000,
+        ]);
+
+        Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id)
+            ->call('simpan', [], ["spp:{$praktikXI->id}"], 'Tunai', '2026-07-10');
+
+        $this->assertSame(0, Pembayaran::query()->count());
+    }
+}

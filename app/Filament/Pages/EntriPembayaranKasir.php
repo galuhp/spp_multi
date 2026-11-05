@@ -1,0 +1,302 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use App\Models\Pembayaran;
+use App\Models\RolePermission;
+use App\Models\Siswa;
+use App\Models\Spp;
+use App\Support\Pembayaran\PembayaranService;
+use BackedEnum;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Throwable;
+use UnitEnum;
+
+class EntriPembayaranKasir extends Page
+{
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+
+    protected static UnitEnum|string|null $navigationGroup = 'Transaksi SPP';
+
+    protected static ?string $navigationLabel = 'Entry Pembayaran 2';
+
+    protected static ?string $title = 'Entry Pembayaran 2';
+
+    protected static ?string $slug = 'entry-pembayaran-2';
+
+    protected static ?int $navigationSort = 1;
+
+    protected string $view = 'filament.pages.entri-pembayaran-kasir';
+
+    public ?int $selectedSiswaId = null;
+
+    public string $cari = '';
+
+    public ?string $galat = null;
+
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+    }
+
+    public function mount(): void
+    {
+        $siswaId = request()->integer('siswa_id');
+
+        if ($siswaId && Siswa::query()->aktif()->whereKey($siswaId)->exists()) {
+            $this->selectedSiswaId = $siswaId;
+        }
+    }
+
+    /**
+     * @return Collection<int, Siswa>
+     */
+    public function getSiswaHasilProperty(): Collection
+    {
+        $kataKunci = trim($this->cari);
+
+        if (mb_strlen($kataKunci) < 2) {
+            return collect();
+        }
+
+        return Siswa::query()
+            ->with('kelas')
+            ->aktif()
+            ->where(function ($query) use ($kataKunci): void {
+                $query->where('nama', 'like', "%{$kataKunci}%")
+                    ->orWhere('nisn', 'like', "%{$kataKunci}%")
+                    ->orWhere('nis', 'like', "%{$kataKunci}%");
+            })
+            ->orderBy('nama')
+            ->limit(20)
+            ->get();
+    }
+
+    public function getSiswaProperty(): ?Siswa
+    {
+        if (! $this->selectedSiswaId) {
+            return null;
+        }
+
+        return Siswa::query()
+            ->with(['kelas.jurusan', 'spp', 'pembayarans'])
+            ->aktif()
+            ->find($this->selectedSiswaId);
+    }
+
+    /**
+     * Data for the Alpine cashier component.
+     *
+     * @return array<string, mixed>
+     */
+    public function getKasirDataProperty(): array
+    {
+        $siswa = $this->siswa;
+
+        if (! $siswa) {
+            return [
+                'tarif' => 0,
+                'months' => [],
+                'non_spp' => [],
+                'tanggal' => now()->toDateString(),
+            ];
+        }
+
+        $service = app(PembayaranService::class);
+        $items = collect($service->tagihanTerbuka($siswa))->keyBy('key');
+        $spp = $siswa->spp;
+        $tahunMulai = Pembayaran::tahunMulaiTarif($spp);
+        $nominal = (int) ($spp?->nominal ?? 0);
+
+        $tahunAjaranSekarang = now()->month >= 7 ? now()->year : now()->year - 1;
+        $indexSekarang = (now()->month + 5) % 12;
+
+        $months = [];
+
+        if ($spp?->isBulanan()) {
+            foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $index => $periode) {
+                $key = "spp:{$spp->id}:{$periode['bulan']}:{$periode['tahun']}";
+                $terbuka = $items->get($key);
+
+                if (! $terbuka) {
+                    $status = 'lunas';
+                } elseif ($tahunMulai < $tahunAjaranSekarang) {
+                    $status = 'tunggakan';
+                } elseif ($tahunMulai > $tahunAjaranSekarang) {
+                    $status = 'akan';
+                } elseif ($index < $indexSekarang) {
+                    $status = 'tunggakan';
+                } elseif ($index === $indexSekarang) {
+                    $status = 'berjalan';
+                } else {
+                    $status = 'akan';
+                }
+
+                $months[] = [
+                    'key' => $key,
+                    'bulan' => $periode['bulan'],
+                    'tahun' => $periode['tahun'],
+                    'nominal' => $terbuka ? (int) $terbuka['sisa'] : $nominal,
+                    'status' => $status,
+                ];
+            }
+        }
+
+        $nonSppItems = collect($items)->where('tipe', 'non_spp');
+        $tarifNonSpp = Spp::query()
+            ->whereIn('id', $nonSppItems->pluck('spp_id')->unique()->all())
+            ->get()
+            ->keyBy('id');
+        $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+
+        $nonSpp = $nonSppItems
+            ->filter(function (array $item) use ($tarifNonSpp, $tingkat): bool {
+                $tarif = $tarifNonSpp->get($item['spp_id']);
+                $tarifTingkat = Spp::normalisasiTingkat($tarif?->tingkat);
+
+                return $tarif !== null
+                    && ($tarifTingkat === null || $tarifTingkat === $tingkat);
+            })
+            ->map(function (array $item) use ($tarifNonSpp): array {
+                $tarif = $tarifNonSpp->get($item['spp_id']);
+
+                return [
+                    'key' => $item['key'],
+                    'nama' => $tarif?->kategori ?: ($item['label'] ?? 'Biaya Lainnya'),
+                    'deskripsi' => $tarif?->nama ?: 'Sisa tagihan tahun ajaran ini',
+                    'sisa' => (int) $item['sisa'],
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'tarif' => $nominal,
+            'months' => $months,
+            'non_spp' => $nonSpp,
+            'tanggal' => now()->toDateString(),
+        ];
+    }
+
+    public function pilihSiswa(int $siswaId): void
+    {
+        $siswa = Siswa::query()->aktif()->find($siswaId);
+
+        if (! $siswa) {
+            $this->galat = 'Siswa tidak ditemukan atau tidak aktif.';
+
+            return;
+        }
+
+        $this->selectedSiswaId = $siswa->id;
+        $this->cari = '';
+        $this->galat = null;
+    }
+
+    public function gantiSiswa(): void
+    {
+        $this->selectedSiswaId = null;
+        $this->cari = '';
+        $this->galat = null;
+    }
+
+    /**
+     * @param  array<int, string>  $bulanKeys
+     * @param  array<int, string>  $nonSppKeys
+     */
+    public function simpan(
+        array $bulanKeys = [],
+        array $nonSppKeys = [],
+        string $metode = 'Tunai',
+        ?string $tanggal = null,
+        ?string $catatan = null,
+    ): void {
+        $siswa = $this->siswa;
+
+        if (! $siswa) {
+            $this->tolak('Pilih siswa terlebih dahulu.');
+
+            return;
+        }
+
+        $items = collect(app(PembayaranService::class)->tagihanTerbuka($siswa))->keyBy('key');
+        $alokasi = [];
+        $total = 0;
+        $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+
+        foreach (array_unique($bulanKeys) as $key) {
+            $item = $items->get($key);
+
+            if (! $item || $item['tipe'] !== 'spp') {
+                $this->tolak('Pilihan bulan SPP tidak valid. Muat ulang halaman.');
+
+                return;
+            }
+
+            $alokasi[] = ['tagihan' => $key, 'nominal' => (int) $item['sisa']];
+            $total += (int) $item['sisa'];
+        }
+
+        foreach (array_unique($nonSppKeys) as $key) {
+            $item = $items->get($key);
+
+            if (! $item || $item['tipe'] !== 'non_spp') {
+                $this->tolak('Pilihan biaya lain tidak valid. Muat ulang halaman.');
+
+                return;
+            }
+
+            $tarif = Spp::query()->find($item['spp_id']);
+            $tarifTingkat = Spp::normalisasiTingkat($tarif?->tingkat);
+
+            if ($tarif && $tarifTingkat !== null && $tarifTingkat !== $tingkat) {
+                $this->tolak("Biaya {$tarif->kategori} tidak berlaku untuk tingkat siswa ini.");
+
+                return;
+            }
+
+            $alokasi[] = ['tagihan' => $key, 'nominal' => (int) $item['sisa']];
+            $total += (int) $item['sisa'];
+        }
+
+        if ($alokasi === []) {
+            $this->tolak('Pilih minimal satu tagihan yang akan dibayar.');
+
+            return;
+        }
+
+        $metode = in_array($metode, ['Tunai', 'Transfer Bank', 'QRIS'], true) ? $metode : 'Tunai';
+        $tanggal = $tanggal ?: now()->toDateString();
+
+        try {
+            $dibuat = DB::transaction(fn (): array => app(PembayaranService::class)->buatPembayaran(
+                $siswa,
+                $total,
+                $alokasi,
+                $metode,
+                $tanggal,
+                $catatan,
+                (int) auth()->id(),
+            ));
+
+            $this->redirect(route('pembayaran.cetak', $dibuat[0]));
+        } catch (Throwable $exception) {
+            $this->tolak($exception->getMessage());
+        }
+    }
+
+    protected function tolak(string $pesan): void
+    {
+        Notification::make()
+            ->title('Pembayaran gagal')
+            ->body($pesan)
+            ->danger()
+            ->send();
+    }
+}
