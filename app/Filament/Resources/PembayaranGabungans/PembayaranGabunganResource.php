@@ -25,11 +25,11 @@ class PembayaranGabunganResource extends Resource
 
     protected static UnitEnum|string|null $navigationGroup = 'Transaksi SPP';
 
-    protected static ?string $navigationLabel = 'List Pembayaran Gabungan';
+    protected static ?string $navigationLabel = 'History Pembayaran Gabungan';
 
     protected static ?string $modelLabel = 'Pembayaran Gabungan';
 
-    protected static ?string $pluralModelLabel = 'List Pembayaran Gabungan';
+    protected static ?string $pluralModelLabel = 'History Pembayaran Gabungan';
 
     protected static ?int $navigationSort = 2;
 
