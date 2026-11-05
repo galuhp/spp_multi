@@ -43,6 +43,10 @@ class AdminPanelProvider extends PanelProvider
                 fn (): View => view('filament.partials.pembayaran-form-styles'),
             )
             ->renderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                fn (): View => view('filament.partials.sidebar-styles'),
+            )
+            ->renderHook(
                 PanelsRenderHook::SCRIPTS_AFTER,
                 fn (): View => view('filament.partials.pembayaran-form-scripts'),
             )

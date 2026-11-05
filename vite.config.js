@@ -21,6 +21,7 @@ export default defineConfig({
                 'resources/css/pembayaran-massal.css',
                 'resources/css/laporan-pembayaran.css',
                 'resources/css/pembayaran-form.css',
+                'resources/css/sidebar.css',
                 'resources/js/app.js',
                 'resources/js/demo-preline.js',
             ],

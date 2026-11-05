@@ -1,0 +1,7 @@
+/* Red separators between menu groups in the Transaksi SPP sidebar group. */
+[data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(2),
+[data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(4) {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dc2626;
+}
