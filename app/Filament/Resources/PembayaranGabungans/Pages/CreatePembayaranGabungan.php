@@ -49,13 +49,13 @@ class CreatePembayaranGabungan extends CreateRecord
 
     public function getTitle(): string
     {
-        return 'Pembayaran Massal';
+        return 'Entry Pembayaran Gabungan';
     }
 
     #[Unexposed]
     public function getBreadcrumb(): string
     {
-        return 'Buat Baru';
+        return 'Entry Pembayaran Gabungan';
     }
 
     public function getView(): string

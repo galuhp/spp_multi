@@ -55,7 +55,6 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Entry Pembayaran Gabungan')
                     ->key('buat-pembayaran-massal')
                     ->group('Transaksi SPP')
-                    ->parentItem(PembayaranGabunganResource::class)
                     ->icon(Heroicon::OutlinedPlusCircle)
                     ->sort(1)
                     ->url(fn (): string => PembayaranGabunganResource::getUrl('create'))

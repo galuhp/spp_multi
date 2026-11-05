@@ -72,7 +72,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
         Route::get('/pembayaran/{pembayaran}/cetak', [PembayaranController::class, 'cetak'])->name('pembayaran.cetak');
 
-        // Cetak Pembayaran Massal
+        // Cetak Pembayaran Gabungan
         Route::get('/pembayaran/gabungan/{gabungan}/kuitansi', [PembayaranGabunganController::class, 'kuitansi'])->name('pembayaran.gabungan.kuitansi');
         Route::get('/pembayaran/gabungan/{gabungan}/rekap', [PembayaranGabunganController::class, 'rekap'])->name('pembayaran.gabungan.rekap');
         Route::get('/pembayaran/gabungan-template', [PembayaranGabunganController::class, 'template'])->name('pembayaran.gabungan.template');

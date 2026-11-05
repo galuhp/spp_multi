@@ -354,7 +354,7 @@ class PembayaranMassalTest extends TestCase
             ->assertSee('Juli');
         $this->get(route('pembayaran.gabungan.rekap', $gabungan))
             ->assertOk()
-            ->assertSee('REKAP PEMBAYARAN MASSAL');
+            ->assertSee('REKAP PEMBAYARAN GABUNGAN');
     }
 
     public function test_wizard_melewati_bulan_yang_sudah_lunas(): void

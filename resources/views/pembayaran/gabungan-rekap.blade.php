@@ -35,7 +35,7 @@
                 </div>
             </div>
             <div class="text-right">
-                <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">REKAP PEMBAYARAN MASSAL</div>
+                <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">REKAP PEMBAYARAN GABUNGAN</div>
                 <div class="font-mono font-bold text-sm text-zinc-900 mt-0.5">{{ $gabungan->kode }}</div>
             </div>
         </div>

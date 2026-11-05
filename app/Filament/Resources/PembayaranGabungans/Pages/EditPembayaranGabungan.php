@@ -23,7 +23,7 @@ class EditPembayaranGabungan extends EditRecord
 
     public function getTitle(): string
     {
-        return 'Kelola Pembayaran Massal';
+        return 'Kelola Pembayaran Gabungan';
     }
 
     protected function getHeaderActions(): array
