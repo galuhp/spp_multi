@@ -112,13 +112,15 @@ class BarisRelationManager extends RelationManager
                     ->placeholder('-'),
                 TextColumn::make('alokasi')
                     ->label('Alokasi')
-                    ->formatStateUsing(function ($state): string {
-                        if (! is_array($state) || $state === []) {
+                    ->getStateUsing(function (PembayaranGabunganBaris $record): string {
+                        $items = $this->alokasiItems($record->alokasi);
+
+                        if ($items === []) {
                             return '-';
                         }
 
-                        return collect($state)
-                            ->map(fn (array $item): string => ($item['label'] ?? '-').' (Rp '.number_format((int) ($item['nominal'] ?? 0), 0, ',', '.').')')
+                        return collect($items)
+                            ->map(fn (array $item): string => ($item['label'] ?? $item['tagihan'] ?? '-').' (Rp '.number_format((int) ($item['nominal'] ?? 0), 0, ',', '.').')')
                             ->implode(', ');
                     })
                     ->wrap(),
@@ -180,12 +182,11 @@ class BarisRelationManager extends RelationManager
                                     ->numeric()
                                     ->minValue(0),
                             ])
-                            ->default(fn (): array => collect($record->alokasi ?? [])
+                            ->default(fn (): array => collect($this->alokasiItems($record->alokasi))
                                 ->map(fn (array $item): array => [
                                     'tagihan' => $item['tagihan'] ?? '',
                                     'nominal' => (int) ($item['nominal'] ?? 0),
                                 ])
-                                ->values()
                                 ->all())
                             ->addable(false)
                             ->deletable(false)
@@ -230,5 +231,24 @@ class BarisRelationManager extends RelationManager
                         ->visible(fn (): bool => $this->getOwnerRecord()->isDraft()),
                 ]),
             ]);
+    }
+
+    /**
+     * Normalize the allocation JSON into a list of allocation items.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function alokasiItems(mixed $alokasi): array
+    {
+        if (! is_array($alokasi) || $alokasi === []) {
+            return [];
+        }
+
+        $items = array_is_list($alokasi) ? $alokasi : [$alokasi];
+
+        return collect($items)
+            ->filter(fn ($item): bool => is_array($item))
+            ->values()
+            ->all();
     }
 }

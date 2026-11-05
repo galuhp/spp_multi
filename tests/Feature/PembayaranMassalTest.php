@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Resources\PembayaranGabungans\Pages\CreatePembayaranGabungan;
 use App\Filament\Resources\PembayaranGabungans\Pages\EditPembayaranGabungan;
 use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
+use App\Filament\Resources\PembayaranGabungans\RelationManagers\BarisRelationManager;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
@@ -288,6 +289,22 @@ class PembayaranMassalTest extends TestCase
         $this->get(PembayaranGabunganResource::getUrl('index'))->assertOk();
         $this->get(PembayaranGabunganResource::getUrl('create'))->assertOk();
         $this->get(PembayaranGabunganResource::getUrl('edit', ['record' => $gabungan]))->assertOk();
+    }
+
+    public function test_relation_manager_menampilkan_alokasi_tanpa_error(): void
+    {
+        $gabungan = $this->buatGabungan();
+        $this->tambahBaris($gabungan, $this->siswa, 500000);
+        $this->tetapkanTotal($gabungan, 500000);
+        $this->service->posting($gabungan, $this->admin->id);
+
+        Livewire::test(BarisRelationManager::class, [
+            'ownerRecord' => $gabungan->fresh(),
+            'pageClass' => EditPembayaranGabungan::class,
+        ])
+            ->assertSuccessful()
+            ->assertSee('SPP Juli 2027')
+            ->assertSee('SPP Agustus 2027');
     }
 
     public function test_setoran_kelas_otomatis_memuat_siswa_kelas(): void
