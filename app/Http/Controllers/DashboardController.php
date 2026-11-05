@@ -84,17 +84,16 @@ class DashboardController extends Controller
 
             $totalDibayar = $siswa->totalDibayar();
 
-            $activeYear = $siswa->spp?->tahun ?? (int) date('Y');
+            $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
 
-            foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
-                // Determine year: Juli-Desember in activeYear - 1 or activeYear
-                $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $activeYear) {
-                    return $p->bulan_dibayar === $bulan;
+            foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+                $pembayaran = $riwayatPembayaran->first(function ($p) use ($periode, $siswa) {
+                    return $p->spp_id === $siswa->spp_id && $p->bulan_dibayar === $periode['bulan'];
                 });
 
                 $statusBulan[] = [
-                    'bulan' => $bulan,
-                    'tahun' => $activeYear,
+                    'bulan' => $periode['bulan'],
+                    'tahun' => $periode['tahun'],
                     'lunas' => $pembayaran !== null,
                     'pembayaran' => $pembayaran,
                 ];

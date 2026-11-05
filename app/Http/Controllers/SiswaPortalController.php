@@ -58,10 +58,11 @@ class SiswaPortalController extends Controller
         }
 
         $siswa->load(['spp', 'kelas.jurusan']);
-        $activeYear = $siswa->spp?->tahun ?? (int) date('Y');
+        $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
 
         $riwayatPembayaran = $siswa->pembayarans()
+            ->whereNull('void_at')
             ->with(['user', 'spp'])
             ->get();
 
@@ -69,9 +70,12 @@ class SiswaPortalController extends Controller
         $totalLunas = 0;
         $totalBelumLunas = 0;
 
-        foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
-            $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $activeYear) {
-                return $p->bulan_dibayar === $bulan && $p->tahun_dibayar === $activeYear;
+        foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+            $bulan = $periode['bulan'];
+            $tahun = $periode['tahun'];
+
+            $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $siswa) {
+                return $p->spp_id === $siswa->spp_id && $p->bulan_dibayar === $bulan;
             });
 
             $lunas = $pembayaran !== null;
@@ -83,7 +87,7 @@ class SiswaPortalController extends Controller
 
             $bulanStatus[] = [
                 'bulan' => $bulan,
-                'tahun' => $activeYear,
+                'tahun' => $tahun,
                 'nominal' => $siswa->spp?->nominal ?? 0,
                 'lunas' => $lunas,
                 'pembayaran' => $pembayaran,
@@ -92,8 +96,8 @@ class SiswaPortalController extends Controller
 
         // Non-SPP Tariffs status for this student
         $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
-            ->where(function ($q) use ($activeYear, $activeTahunAjaran) {
-                $q->where('tahun', $activeYear)
+            ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
+                $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
                     ->orWhere('tahun_ajaran', $activeTahunAjaran);
             })
             ->get();
@@ -123,7 +127,7 @@ class SiswaPortalController extends Controller
 
         return view('siswa_portal.tagihan', [
             'siswa' => $siswa,
-            'activeYear' => $activeYear,
+            'activeYear' => $tahunMulai,
             'bulanStatus' => $bulanStatus,
             'totalLunas' => $totalLunas,
             'totalBelumLunas' => $totalBelumLunas,

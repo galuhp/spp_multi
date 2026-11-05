@@ -251,7 +251,7 @@
                                             {{ in_array($item['bulan'], $oldBulan, true) || (empty($oldBulan) && $i === 0) ? 'checked' : '' }}
                                             onchange="hitungTotal()">
                                         <div>
-                                            <div class="font-bold text-xs text-zinc-800">{{ $item['bulan'] }}</div>
+                                            <div class="font-bold text-xs text-zinc-800">{{ $item['bulan'] }} {{ $item['tahun'] }}</div>
                                             <div class="text-[11px] text-zinc-500">Rp {{ number_format($item['nominal'], 0, ',', '.') }}</div>
                                             @if($i === 0)
                                                 <span class="inline-block mt-1 px-1.5 py-0.5 rounded bg-zinc-900 text-white text-[9px] font-bold">DISARANKAN</span>

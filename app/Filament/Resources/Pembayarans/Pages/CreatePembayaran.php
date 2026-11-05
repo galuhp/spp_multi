@@ -75,11 +75,11 @@ class CreatePembayaran extends CreateRecord
         }
 
         $spp = $siswa->spp;
-        $tahun = $spp?->tahun ?? (int) date('Y');
+        $tahunMulai = Pembayaran::tahunMulaiTarif($spp);
         $nominal = $spp?->nominal ?? 0;
 
         $created = [];
-        DB::transaction(function () use ($bulanList, $kodeTransaksi, $userId, $siswa, $spp, $data, $tahun, $nominal, &$created) {
+        DB::transaction(function () use ($bulanList, $kodeTransaksi, $userId, $siswa, $spp, $data, $tahunMulai, $nominal, &$created) {
             foreach ($bulanList as $bulan) {
                 $created[] = Pembayaran::create([
                     'kode_transaksi' => $kodeTransaksi,
@@ -88,7 +88,7 @@ class CreatePembayaran extends CreateRecord
                     'spp_id' => $spp?->id,
                     'tgl_bayar' => $data['tgl_bayar'],
                     'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $tahun,
+                    'tahun_dibayar' => Pembayaran::tahunUntukBulan($bulan, $tahunMulai),
                     'jumlah_bayar' => $nominal,
                     'metode_pembayaran' => $data['metode_pembayaran'],
                     'catatan' => $data['catatan'] ?? null,

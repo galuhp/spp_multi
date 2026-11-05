@@ -129,17 +129,17 @@ class PembayaranForm
                                     return [];
                                 }
 
-                                $activeYear = $siswa->spp?->tahun ?? (int) date('Y');
+                                $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
                                 $paidMonths = $siswa->pembayarans
-                                    ->where('tahun_dibayar', $activeYear)
+                                    ->where('spp_id', $siswa->spp_id)
                                     ->whereNotNull('bulan_dibayar')
                                     ->pluck('bulan_dibayar')
                                     ->all();
 
                                 $unpaid = [];
-                                foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
-                                    if (! in_array($bulan, $paidMonths, true)) {
-                                        $unpaid[$bulan] = "{$bulan} ({$siswa->spp?->formattedNominal()})";
+                                foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+                                    if (! in_array($periode['bulan'], $paidMonths, true)) {
+                                        $unpaid[$periode['bulan']] = "{$periode['bulan']} {$periode['tahun']} ({$siswa->spp?->formattedNominal()})";
                                     }
                                 }
 
@@ -163,12 +163,12 @@ class PembayaranForm
                                     return [];
                                 }
 
-                                $activeYear = $siswa->spp?->tahun ?? (int) date('Y');
+                                $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
                                 $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
 
                                 return Spp::where('kategori', '!=', 'SPP')
-                                    ->where(function ($q) use ($activeYear, $activeTahunAjaran) {
-                                        $q->where('tahun', $activeYear)
+                                    ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
+                                        $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
                                             ->orWhere('tahun_ajaran', $activeTahunAjaran);
                                     })
                                     ->get()

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\TagihanSiswa;
 use App\Filament\Resources\PembayaranGabungans\Pages\CreatePembayaranGabungan;
 use App\Filament\Resources\PembayaranGabungans\Pages\EditPembayaranGabungan;
 use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
@@ -385,6 +386,54 @@ class PembayaranMassalTest extends TestCase
         $this->assertSame(1, $gabungan->baris()->count());
         $this->assertSame(250000, (int) $gabungan->total_diterima);
         $this->assertSame(1, Pembayaran::query()->where('gabungan_id', $gabungan->id)->count());
+    }
+
+    public function test_tagihan_bulanan_memakai_tahun_kalender_yang_benar(): void
+    {
+        $spp = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_SPP,
+            'tipe' => Spp::TIPE_BULANAN,
+            'nama' => 'SPP 2026/2027',
+            'tahun' => 2027,
+            'tahun_ajaran' => '2026/2027',
+            'nominal' => 250000,
+        ]);
+
+        $siswa = $this->buatSiswa([
+            'nama' => 'Siti Aminah',
+            'nisn' => '0098765432',
+            'nis' => '00987654',
+            'spp_id' => $spp->id,
+        ]);
+
+        Pembayaran::query()->create([
+            'kode_transaksi' => 'SPP-TEST-JULI-2026',
+            'user_id' => $this->admin->id,
+            'siswa_id' => $siswa->id,
+            'spp_id' => $spp->id,
+            'tgl_bayar' => now()->format('Y-m-d'),
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 250000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $component = Livewire::test(TagihanSiswa::class)
+            ->set('selectedSiswaId', $siswa->id);
+
+        $status = collect($component->instance()->tagihanData['bulanStatus'])->keyBy('bulan');
+
+        $this->assertSame(2026, $status['Juli']['tahun']);
+        $this->assertTrue($status['Juli']['lunas']);
+        $this->assertSame(2026, $status['Desember']['tahun']);
+        $this->assertSame(2027, $status['Januari']['tahun']);
+        $this->assertFalse($status['Januari']['lunas']);
+
+        $terbuka = collect(app(PembayaranService::class)->tagihanTerbuka($siswa->fresh()))->keyBy('bulan');
+
+        $this->assertFalse($terbuka->has('Juli'));
+        $this->assertSame(2026, $terbuka['Agustus']['tahun']);
+        $this->assertSame(2027, $terbuka['Januari']['tahun']);
     }
 
     /**

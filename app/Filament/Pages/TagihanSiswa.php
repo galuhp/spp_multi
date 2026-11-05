@@ -160,7 +160,7 @@ class TagihanSiswa extends Page
             ];
         }
 
-        $activeYear = $siswa->spp?->tahun ?? (int) date('Y');
+        $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
 
         $riwayatPembayaran = $siswa->pembayarans()
@@ -172,9 +172,12 @@ class TagihanSiswa extends Page
         $totalLunas = 0;
         $totalBelumLunas = 0;
 
-        foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
-            $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $activeYear) {
-                return $p->bulan_dibayar === $bulan && $p->tahun_dibayar === $activeYear;
+        foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+            $bulan = $periode['bulan'];
+            $tahun = $periode['tahun'];
+
+            $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $siswa) {
+                return $p->spp_id === $siswa->spp_id && $p->bulan_dibayar === $bulan;
             });
 
             $lunas = $pembayaran !== null;
@@ -186,7 +189,7 @@ class TagihanSiswa extends Page
 
             $bulanStatus[] = [
                 'bulan' => $bulan,
-                'tahun' => $activeYear,
+                'tahun' => $tahun,
                 'nominal' => $siswa->spp?->nominal ?? 0,
                 'lunas' => $lunas,
                 'pembayaran' => $pembayaran,
@@ -194,8 +197,8 @@ class TagihanSiswa extends Page
         }
 
         $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
-            ->where(function ($q) use ($activeYear, $activeTahunAjaran) {
-                $q->where('tahun', $activeYear)
+            ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
+                $q->where('tahun', $tahunMulai)
                     ->orWhere('tahun_ajaran', $activeTahunAjaran);
             })
             ->get();

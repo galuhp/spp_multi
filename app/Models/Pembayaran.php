@@ -63,6 +63,50 @@ class Pembayaran extends Model
     ];
 
     /**
+     * Starting calendar year of a tariff's academic year.
+     *
+     * The academic year `2026/2027` starts in July 2026 and ends in June 2027.
+     */
+    public static function tahunMulaiTarif(?Spp $tarif): int
+    {
+        if (! $tarif) {
+            return (int) now()->year;
+        }
+
+        if (filled($tarif->tahun_ajaran) && preg_match('/^\s*(\d{4})\s*[\/-]\s*(\d{4})\s*$/', (string) $tarif->tahun_ajaran, $matches)) {
+            return (int) $matches[1];
+        }
+
+        return (int) $tarif->tahun;
+    }
+
+    /**
+     * Calendar year of a month within an academic year.
+     */
+    public static function tahunUntukBulan(string $bulan, int $tahunMulai): int
+    {
+        $index = array_search($bulan, self::TAHUN_AJARAN_BULAN_LIST, true);
+
+        return ($index !== false && $index >= 6) ? $tahunMulai + 1 : $tahunMulai;
+    }
+
+    /**
+     * All academic-year months paired with their calendar year.
+     *
+     * @return array<int, array{bulan: string, tahun: int}>
+     */
+    public static function bulanTahunAjaran(int $tahunMulai): array
+    {
+        return array_map(
+            fn (string $bulan): array => [
+                'bulan' => $bulan,
+                'tahun' => self::tahunUntukBulan($bulan, $tahunMulai),
+            ],
+            self::TAHUN_AJARAN_BULAN_LIST,
+        );
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

@@ -115,26 +115,29 @@ class SiswaController extends Controller
             ->latest('tgl_bayar')
             ->get();
 
-        $activeYear = $siswa->spp?->tahun ?? (int) date('Y');
+        $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
         $statusBulan = [];
 
-        foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
-            $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $activeYear) {
-                return $p->bulan_dibayar === $bulan && $p->tahun_dibayar === $activeYear;
+        foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+            $bulan = $periode['bulan'];
+            $tahun = $periode['tahun'];
+
+            $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $siswa) {
+                return $p->spp_id === $siswa->spp_id && $p->bulan_dibayar === $bulan;
             });
 
             $statusBulan[] = [
                 'bulan' => $bulan,
-                'tahun' => $activeYear,
+                'tahun' => $tahun,
                 'lunas' => $pembayaran !== null,
                 'pembayaran' => $pembayaran,
             ];
         }
 
         $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
-            ->where(function ($q) use ($activeYear, $activeTahunAjaran) {
-                $q->where('tahun', $activeYear)
+            ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
+                $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
                     ->orWhere('tahun_ajaran', $activeTahunAjaran);
             })
             ->get()
@@ -159,7 +162,7 @@ class SiswaController extends Controller
             'riwayatPembayaran' => $riwayatPembayaran,
             'statusBulan' => $statusBulan,
             'nonSppTarifs' => $nonSppTarifs,
-            'activeYear' => $activeYear,
+            'activeYear' => $tahunMulai,
         ]);
     }
 

@@ -88,21 +88,21 @@ class PembayaranController extends Controller
 
             if ($selectedSiswa) {
                 $kelasId = $selectedSiswa->kelas_id;
-                $activeYear = $selectedSiswa->spp?->tahun ?? (int) date('Y');
+                $tahunMulai = Pembayaran::tahunMulaiTarif($selectedSiswa->spp);
                 $paidMonths = $selectedSiswa->pembayarans
-                    ->where('tahun_dibayar', $activeYear)
+                    ->where('spp_id', $selectedSiswa->spp_id)
                     ->whereNotNull('bulan_dibayar')
                     ->pluck('bulan_dibayar')
                     ->all();
-                $dueMonths = $this->dueMonths($activeYear);
+                $dueMonths = $this->dueMonths($tahunMulai);
 
-                foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
-                    if (! in_array($bulan, $paidMonths, true)) {
+                foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+                    if (! in_array($periode['bulan'], $paidMonths, true)) {
                         $unpaidMonths[] = [
-                            'bulan' => $bulan,
-                            'tahun' => $activeYear,
+                            'bulan' => $periode['bulan'],
+                            'tahun' => $periode['tahun'],
                             'nominal' => $selectedSiswa->spp?->nominal ?? 0,
-                            'jatuh_tempo' => in_array($bulan, $dueMonths, true),
+                            'jatuh_tempo' => in_array($periode['bulan'], $dueMonths, true),
                         ];
                     }
                 }
@@ -117,8 +117,8 @@ class PembayaranController extends Controller
                 // Retrieve all non-SPP tariffs applicable to this student's year or academic year
                 $activeTahunAjaran = $selectedSiswa->spp?->tahun_ajaran;
                 $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
-                    ->where(function ($q) use ($activeYear, $activeTahunAjaran) {
-                        $q->where('tahun', $activeYear)
+                    ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
+                        $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
                             ->orWhere('tahun_ajaran', $activeTahunAjaran);
                     })
                     ->orderBy('kategori')
@@ -150,16 +150,20 @@ class PembayaranController extends Controller
         $siswaKelas = collect();
 
         if ($kelasId) {
-            $siswaKelas = Siswa::with(['spp', 'pembayarans:id,siswa_id,bulan_dibayar,tahun_dibayar'])
+            $siswaKelas = Siswa::with(['spp', 'pembayarans:id,siswa_id,spp_id,bulan_dibayar,tahun_dibayar'])
                 ->where('kelas_id', $kelasId)
                 ->when(! $sertakanArsip, fn ($query) => $query->where('is_archived', false))
                 ->orderBy('nama')
                 ->get()
                 ->each(function (Siswa $siswa) {
-                    $tahun = $siswa->spp?->tahun ?? (int) date('Y');
-                    $dibayar = $siswa->pembayarans->where('tahun_dibayar', $tahun)->whereNotNull('bulan_dibayar')->pluck('bulan_dibayar')->all();
+                    $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
+                    $dibayar = $siswa->pembayarans
+                        ->where('spp_id', $siswa->spp_id)
+                        ->whereNotNull('bulan_dibayar')
+                        ->pluck('bulan_dibayar')
+                        ->all();
                     $siswa->jumlah_dibayar = count($dibayar);
-                    $siswa->jumlah_tunggakan = count(array_diff($this->dueMonths($tahun), $dibayar));
+                    $siswa->jumlah_tunggakan = count(array_diff($this->dueMonths($tahunMulai), $dibayar));
                 });
         }
 
@@ -291,13 +295,17 @@ class PembayaranController extends Controller
         }
 
         $createdPembayarans = [];
+        $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
 
-        DB::transaction(function () use ($validated, $siswa, $nominalPerBulan, &$createdPembayarans) {
+        DB::transaction(function () use ($validated, $siswa, $nominalPerBulan, $tahunMulai, &$createdPembayarans) {
             foreach ($validated['bulan_dibayar'] as $bulan) {
-                // Check if already paid
+                $tahun = Pembayaran::tahunUntukBulan($bulan, $tahunMulai);
+
+                // Check if already paid under the same tariff.
                 $exists = Pembayaran::where('siswa_id', $siswa->id)
+                    ->where('spp_id', $siswa->spp_id)
                     ->where('bulan_dibayar', $bulan)
-                    ->where('tahun_dibayar', $validated['tahun_dibayar'])
+                    ->whereNull('void_at')
                     ->exists();
 
                 if ($exists) {
@@ -311,15 +319,15 @@ class PembayaranController extends Controller
                     'spp_id' => $siswa->spp_id,
                     'tgl_bayar' => $validated['tgl_bayar'],
                     'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $validated['tahun_dibayar'],
+                    'tahun_dibayar' => $tahun,
                     'jumlah_bayar' => $nominalPerBulan,
                     'metode_pembayaran' => $validated['metode_pembayaran'],
-                    'catatan' => $validated['catatan'] ?? ('Pembayaran SPP Bulan '.$bulan.' '.$validated['tahun_dibayar']),
+                    'catatan' => $validated['catatan'] ?? ('Pembayaran SPP Bulan '.$bulan.' '.$tahun),
                 ]);
 
                 LogAktivitas::catat(
                     'pembayaran.dibuat',
-                    "Pembayaran SPP {$bulan} {$validated['tahun_dibayar']} atas nama {$siswa->nama} ({$pembayaran->kode_transaksi})",
+                    "Pembayaran SPP {$bulan} {$tahun} atas nama {$siswa->nama} ({$pembayaran->kode_transaksi})",
                     $pembayaran,
                     $pembayaran->only(['kode_transaksi', 'siswa_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar', 'metode_pembayaran', 'tgl_bayar'])
                 );

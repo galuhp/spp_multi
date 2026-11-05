@@ -24,14 +24,16 @@ class PembayaranService
 
         if ($tarif) {
             if ($tarif->isBulanan()) {
-                $tahun = (int) $tarif->tahun;
+                $tahunMulai = Pembayaran::tahunMulaiTarif($tarif);
 
-                foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bulan) {
+                foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+                    $bulan = $periode['bulan'];
+                    $tahun = $periode['tahun'];
+
                     $sudah = Pembayaran::query()
                         ->where('siswa_id', $siswa->id)
                         ->where('spp_id', $tarif->id)
                         ->where('bulan_dibayar', $bulan)
-                        ->where('tahun_dibayar', $tahun)
                         ->whereNull('void_at')
                         ->exists();
 
