@@ -25,14 +25,14 @@
     <!-- Mobile Navigation Drawer -->
     <div id="mobile-sidebar-drawer" class="no-print hidden fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
         <div data-sidebar-close class="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs"></div>
-        <aside class="relative z-10 w-72 max-w-[85vw] h-full flex flex-col bg-zinc-900 border-r border-zinc-800 shadow-xl">
+        <aside class="relative z-10 w-72 max-w-[85vw] h-full flex flex-col bg-white border-r border-zinc-200 shadow-xl">
             @include('layouts.partials.sidebar-content', ['mobile' => true])
         </aside>
     </div>
 
     <div class="flex-1 flex overflow-hidden">
         <!-- Sidebar Navigation (Desktop) -->
-        <aside class="no-print hidden md:flex md:w-64 md:flex-col bg-zinc-900 border-r border-zinc-800 shrink-0">
+        <aside class="no-print hidden md:flex md:w-64 md:flex-col bg-white border-r border-zinc-200 shrink-0">
             @include('layouts.partials.sidebar-content', ['mobile' => false])
         </aside>
 
@@ -51,7 +51,7 @@
 
                 <div class="flex items-center gap-3 shrink-0">
                     <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 border border-zinc-200 text-xs text-zinc-600 font-medium">
-                        <span class="w-1.5 h-1.5 rounded-full bg-zinc-900"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
                         {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
                     </span>
 
@@ -60,7 +60,7 @@
                         @php $headerUser = auth()->user(); @endphp
                         <details data-dropdown class="relative z-40">
                             <summary class="list-none cursor-pointer outline-none flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 transition select-none shadow-xs">
-                                <div class="w-8 h-8 rounded-lg bg-zinc-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                                     {{ strtoupper(substr($headerUser->name, 0, 2)) }}
                                 </div>
                                 <div class="hidden sm:flex flex-col text-left leading-tight">
