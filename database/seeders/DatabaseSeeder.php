@@ -97,20 +97,9 @@ class DatabaseSeeder extends Seeder
         }
 
         // 5. SPP & Fee Tariffs
-        $spp2025 = Spp::firstOrCreate(
-            ['tahun' => 2025, 'kategori' => Spp::KATEGORI_SPP],
-            ['kategori' => Spp::KATEGORI_SPP, 'tipe' => Spp::TIPE_BULANAN, 'tahun_ajaran' => '2024/2025', 'nominal' => 200000, 'keterangan' => 'Tarif SPP TA 2024/2025']
-        );
-
-        $spp2026 = Spp::firstOrCreate(
-            ['tahun' => 2026, 'kategori' => Spp::KATEGORI_SPP],
-            ['kategori' => Spp::KATEGORI_SPP, 'tipe' => Spp::TIPE_BULANAN, 'tahun_ajaran' => '2025/2026', 'nominal' => 225000, 'keterangan' => 'Tarif SPP TA 2025/2026']
-        );
-
-        $spp2027 = Spp::firstOrCreate(
-            ['tahun' => 2027, 'kategori' => Spp::KATEGORI_SPP],
-            ['kategori' => Spp::KATEGORI_SPP, 'tipe' => Spp::TIPE_BULANAN, 'tahun_ajaran' => '2026/2027', 'nominal' => 250000, 'keterangan' => 'Tarif SPP TA 2026/2027 (Berjalan)']
-        );
+        $this->buatTarifSpp(2025, '2024/2025', 200000, 'Tarif SPP TA 2024/2025');
+        $this->buatTarifSpp(2026, '2025/2026', 225000, 'Tarif SPP TA 2025/2026');
+        $spp2027 = $this->buatTarifSpp(2027, '2026/2027', 250000, 'Tarif SPP TA 2026/2027 (Berjalan)');
 
         $gedung2027 = Spp::firstOrCreate(
             ['tahun' => 2027, 'kategori' => Spp::KATEGORI_UANG_GEDUNG],
@@ -162,7 +151,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => $userSiswa1->id,
                 'kelas_id' => $kelasModels['X RPL 1']->id,
-                'spp_id' => $spp2027->id,
+                'spp_id' => $spp2027['10']->id,
                 'nisn' => '0071234561',
                 'nis' => '2026001',
                 'nama' => 'Ahmad Rifai',
@@ -173,7 +162,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => $userSiswa2->id,
                 'kelas_id' => $kelasModels['X RPL 1']->id,
-                'spp_id' => $spp2027->id,
+                'spp_id' => $spp2027['10']->id,
                 'nisn' => '0071234562',
                 'nis' => '2026002',
                 'nama' => 'Siti Nurhaliza',
@@ -184,7 +173,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => null,
                 'kelas_id' => $kelasModels['X RPL 2']->id,
-                'spp_id' => $spp2027->id,
+                'spp_id' => $spp2027['10']->id,
                 'nisn' => '0071234563',
                 'nis' => '2026003',
                 'nama' => 'Bayu Pratama',
@@ -195,7 +184,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => null,
                 'kelas_id' => $kelasModels['XI RPL 1']->id,
-                'spp_id' => $spp2026->id,
+                'spp_id' => $spp2027['11']->id,
                 'nisn' => '0061234564',
                 'nis' => '2025010',
                 'nama' => 'Dewi Lestari',
@@ -206,7 +195,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => null,
                 'kelas_id' => $kelasModels['XII RPL 1']->id,
-                'spp_id' => $spp2025->id,
+                'spp_id' => $spp2027['12']->id,
                 'nisn' => '0051234565',
                 'nis' => '2024015',
                 'nama' => 'Fajar Nugraha',
@@ -217,7 +206,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => null,
                 'kelas_id' => $kelasModels['X TKJ 1']->id,
-                'spp_id' => $spp2027->id,
+                'spp_id' => $spp2027['10']->id,
                 'nisn' => '0071234566',
                 'nis' => '2026020',
                 'nama' => 'Gita Gutawa',
@@ -230,6 +219,14 @@ class DatabaseSeeder extends Seeder
         $createdSiswas = [];
         foreach ($siswaData as $data) {
             $createdSiswas[] = Siswa::firstOrCreate(['nisn' => $data['nisn']], $data);
+        }
+
+        foreach ($createdSiswas as $siswa) {
+            $tarif = Spp::untukKelas($siswa->kelas);
+
+            if ($tarif) {
+                $siswa->update(['spp_id' => $tarif->id]);
+            }
         }
 
         // 7. Seed Sample Payments
@@ -258,5 +255,33 @@ class DatabaseSeeder extends Seeder
                 );
             }
         }
+    }
+
+    /**
+     * Create the same SPP nominal for levels X, XI, and XII.
+     *
+     * @return array<string, Spp>
+     */
+    private function buatTarifSpp(int $tahun, string $tahunAjaran, int $nominal, string $keterangan): array
+    {
+        $tarifs = [];
+
+        foreach (Spp::TINGKAT_LIST as $tingkat => $label) {
+            $tarifs[$tingkat] = Spp::firstOrCreate(
+                [
+                    'kategori' => Spp::KATEGORI_SPP,
+                    'tahun' => $tahun,
+                    'tahun_ajaran' => $tahunAjaran,
+                    'tingkat' => $tingkat,
+                ],
+                [
+                    'tipe' => Spp::TIPE_BULANAN,
+                    'nominal' => $nominal,
+                    'keterangan' => $keterangan,
+                ]
+            );
+        }
+
+        return $tarifs;
     }
 }

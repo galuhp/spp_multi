@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'nominal', 'keterangan'])]
+#[Fillable(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'tingkat', 'nominal', 'keterangan'])]
 class Spp extends Model
 {
     use HasFactory;
@@ -34,6 +34,87 @@ class Spp extends Model
     public const TIPE_BULANAN = 'bulanan';
 
     public const TIPE_SEKALI_BAYAR = 'sekali_bayar';
+
+    public const TINGKAT_LIST = [
+        '10' => 'X',
+        '11' => 'XI',
+        '12' => 'XII',
+    ];
+
+    /**
+     * Non-SPP tariffs never have a class level.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Spp $spp): void {
+            if (filled($spp->kategori) && $spp->kategori !== self::KATEGORI_SPP) {
+                $spp->tingkat = null;
+            }
+        });
+    }
+
+    public static function normalisasiTingkat(?string $tingkat): ?string
+    {
+        $tingkat = mb_strtoupper(trim((string) $tingkat));
+
+        return match ($tingkat) {
+            '10', 'X' => '10',
+            '11', 'XI' => '11',
+            '12', 'XII' => '12',
+            default => is_numeric($tingkat) ? (string) $tingkat : null,
+        };
+    }
+
+    public static function labelTingkat(?string $tingkat): string
+    {
+        $normal = self::normalisasiTingkat($tingkat);
+
+        return self::TINGKAT_LIST[$normal] ?? ($normal ?? '-');
+    }
+
+    /**
+     * Find the SPP tariff for a level and academic year.
+     */
+    public static function untukTingkat(?string $tingkat, ?string $tahunAjaran = null): ?self
+    {
+        $tingkat = self::normalisasiTingkat($tingkat);
+
+        if ($tingkat === null) {
+            return null;
+        }
+
+        return self::query()
+            ->where('kategori', self::KATEGORI_SPP)
+            ->where('tipe', self::TIPE_BULANAN)
+            ->when($tahunAjaran, fn (Builder $query): Builder => $query->where('tahun_ajaran', $tahunAjaran))
+            ->where('tingkat', $tingkat)
+            ->orderByDesc('tahun_ajaran')
+            ->first();
+    }
+
+    /**
+     * Find the SPP tariff that matches the class level and academic year.
+     */
+    public static function untukKelas(?Kelas $kelas): ?self
+    {
+        if (! $kelas) {
+            return null;
+        }
+
+        $kelas->loadMissing('tahunAjaran');
+
+        return self::untukTingkat($kelas->tingkat, $kelas->tahunAjaran?->nama);
+    }
+
+    /**
+     * Resolve the current tariff for a student, with a legacy fallback.
+     */
+    public static function untukSiswa(Siswa $siswa): ?self
+    {
+        $siswa->loadMissing(['kelas.tahunAjaran', 'spp']);
+
+        return self::untukKelas($siswa->kelas) ?? $siswa->spp;
+    }
 
     /**
      * Determine if this tariff is paid monthly.
@@ -64,11 +145,13 @@ class Spp extends Model
      */
     public function namaLengkap(): string
     {
-        if ($this->nama) {
-            return "{$this->nama} (TA {$this->tahun_ajaran})";
+        $label = $this->nama ?: $this->kategori;
+
+        if ($this->kategori === self::KATEGORI_SPP && filled($this->tingkat)) {
+            $label .= ' Tingkat '.self::labelTingkat($this->tingkat);
         }
 
-        return "{$this->kategori} TA {$this->tahun_ajaran}";
+        return "{$label} (TA {$this->tahun_ajaran})";
     }
 
     /**

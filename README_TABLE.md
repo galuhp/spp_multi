@@ -15,7 +15,7 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | 7 | `siswas` | Data induk siswa: identitas (NISN, NIS, NIK), kelahiran, kontak, status, dan arsip/lulus; terhubung ke user login, kelas, dan tarif SPP |
 | 8 | `wali` | Data orang tua/wali per siswa (nama ayah, ibu, wali, dan nomor HP) |
 | 9 | `riwayat_kelas` | Riwayat penempatan kelas siswa per tahun ajaran, termasuk hasil proses naik kelas/kelulusan (status, batch) |
-| 10 | `spps` | Master tarif dan kategori pembayaran: SPP bulanan maupun biaya non-SPP (uang gedung, seragam, praktik, ujian) |
+| 10 | `spps` | Master tarif dan kategori pembayaran: SPP bulanan per tingkat (X/XI/XII) maupun biaya non-SPP (uang gedung, seragam, praktik, ujian) |
 | 11 | `pembayarans` | Transaksi pembayaran SPP/non-SPP per siswa (kode transaksi, bulan/tahun dibayar, jumlah, metode), termasuk relasi ke setoran gabungan dan status void |
 | 12 | `pembayaran_gabungan` | Header setoran gabungan (setoran per kelas, transfer bank, catatan manual) dengan status draft → memproses → diposting → void |
 | 13 | `pembayaran_gabungan_baris` | Rincian tiap baris setoran gabungan: siswa, jumlah, alokasi ke tagihan, validasi, dan peta ke transaksi `pembayarans` |
@@ -56,8 +56,9 @@ Tabel `spps` menyimpan **master tarif dan kategori pembayaran** sekolah, baik SP
 | `kategori` | varchar(50) | tidak | `'SPP'` | Kategori/pos tarif. Contoh: `SPP`, `Uang Gedung`, `Uang Seragam`, `Biaya Praktik`, `Biaya Ujian` |
 | `tipe` | varchar(30) | tidak | `'bulanan'` | Tipe pembayaran: `bulanan` atau `sekali_bayar` |
 | `nama` | varchar(100) | ya | `null` | Label khusus tarif. Contoh: `DSP Angkatan 2026`, `Seragam Lengkap 4 Stel` |
-| `tahun` | integer | tidak | — | Tahun mulai tahun ajaran (contoh: `2026` untuk TA `2026/2027`) |
+| `tahun` | integer | tidak | — | Tahun referensi tarif. Pemetaan bulan memakai `tahun_ajaran` |
 | `tahun_ajaran` | varchar(20) | tidak | — | Tahun ajaran dalam format `YYYY/YYYY` (contoh: `2026/2027`) |
+| `tingkat` | varchar(5) | ya | `null` | Tingkat berlaku tarif SPP: `10` (X), `11` (XI), `12` (XII). `null` untuk non-SPP / data lama |
 | `nominal` | integer | tidak | — | Nominal dalam Rupiah. Untuk `bulanan`: nominal per bulan. Untuk `sekali_bayar`: nominal total tagihan |
 | `keterangan` | varchar | ya | `null` | Keterangan tambahan |
 | `created_at` | datetime | ya | `null` | Waktu dibuat |
@@ -68,8 +69,9 @@ Tabel `spps` menyimpan **master tarif dan kategori pembayaran** sekolah, baik SP
 | Nama | Kolom | Tipe |
 |------|-------|------|
 | `PRIMARY` | `id` | Primary key |
+| `spps_kategori_tahun_tingkat_unique` | `kategori`, `tahun_ajaran`, `tingkat` | Unique |
 
-Tidak ada unique index pada tabel ini. Kombinasi kategori/tahun ajaran dapat memiliki beberapa tarif (misalnya beberapa pos non-SPP pada tahun ajaran yang sama).
+Unique index memastikan hanya ada satu tarif SPP per tahun ajaran dan tingkat. Beberapa baris non-SPP dengan `tingkat = null` tetap diperbolehkan karena NULL dianggap berbeda oleh database.
 
 ## Konstanta Model
 
@@ -109,34 +111,42 @@ Catatan:
 
 1. **Tarif SPP bulanan**
    - `kategori = 'SPP'` dan `tipe = 'bulanan'`.
+   - Satu baris per `tahun_ajaran` + `tingkat`; `tingkat` wajib diisi (`10`/`11`/`12`).
    - `nominal` adalah nominal per bulan.
-   - Pembayaran dibuat per bulan (`pembayarans.bulan_dibayar`) dengan `tahun_dibayar` mengikuti `spps.tahun`.
+   - `siswas.spp_id` menunjuk tarif tingkat yang sesuai. Tarif disinkronkan saat siswa dibuat/diedit, impor siswa, dan kenaikan kelas.
+   - Pemetaan tahun kalender: Juli–Desember memakai tahun mulai tahun ajaran, Januari–Juni memakai tahun berikutnya. Contoh TA `2026/2027`: Juli–Desember 2026, Januari–Juni 2027.
 
 2. **Biaya non-SPP**
    - `kategori != 'SPP'`.
+   - `tingkat` selalu `null`.
    - `tipe` umumnya `sekali_bayar`.
    - `nominal` adalah total kewajiban; pembayaran dapat penuh atau dicicil.
 
 3. **Tahun ajaran**
-   - `tahun` = tahun mulai (contoh `2026`).
-   - `tahun_ajaran` = label lengkap (contoh `2026/2027`).
-   - Keduanya dipakai untuk memfilter tarif yang berlaku pada tahun ajaran siswa.
+   - `tahun_ajaran` = label lengkap (contoh `2026/2027`) dan menjadi acuan pemetaan tarif.
+   - `tahun` hanya referensi; sistem tidak memakainya untuk menentukan bulan/tahun pembayaran.
 
 4. **Format nominal**
    - Disimpan sebagai integer Rupiah tanpa desimal.
    - Ditampilkan lewat `formattedNominal()`, misalnya `Rp 250.000 / bulan` untuk tipe bulanan.
 
+5. **Data lama**
+   - Baris SPP lama dengan `tingkat = null` tetap disimpan agar pembayaran historis tidak rusak.
+   - Baris lama tersebut tidak ditampilkan di daftar Tarif & Kategori; gunakan baris per tingkat untuk tarif baru.
+
 ## Contoh Data
 
-| kategori | tipe | nama | tahun | tahun_ajaran | nominal |
-|----------|------|------|-------|--------------|---------|
-| SPP | bulanan | null | 2026 | 2026/2027 | 250000 |
-| Uang Gedung | sekali_bayar | DSP Angkatan 2026 | 2026 | 2026/2027 | 2000000 |
-| Uang Seragam | sekali_bayar | Seragam Lengkap 4 Stel | 2026 | 2026/2027 | 850000 |
-| Biaya Praktik | sekali_bayar | Praktik Semester 1 | 2026 | 2026/2027 | 300000 |
+| kategori | tipe | nama | tahun | tahun_ajaran | tingkat | nominal |
+|----------|------|------|-------|--------------|---------|---------|
+| SPP | bulanan | null | 2027 | 2026/2027 | 10 | 250000 |
+| SPP | bulanan | null | 2027 | 2026/2027 | 11 | 250000 |
+| SPP | bulanan | null | 2027 | 2026/2027 | 12 | 250000 |
+| Uang Gedung | sekali_bayar | DSP Angkatan 2026 | 2027 | 2026/2027 | null | 2000000 |
+| Uang Seragam | sekali_bayar | Seragam Lengkap 4 Stel | 2027 | 2026/2027 | null | 850000 |
+| Biaya Praktik | sekali_bayar | Praktik Semester 1 | 2027 | 2026/2027 | null | 300000 |
 
-## Catatan Terkait Pembayaran Massal
+## Catatan Terkait Pembayaran Gabungan
 
-- Alokasi Pembayaran Massal memakai identitas tagihan per bulan SPP: `spp_id + bulan + tahun`, bukan tabel `tagihan` terpisah.
+- Alokasi Pembayaran Gabungan memakai identitas tagihan per bulan SPP: `spp_id + bulan + tahun`, bukan tabel `tagihan` terpisah.
 - Kelebihan bayar ditolak; sisa tagihan dihitung dari `spps.nominal` dikurangi pembayaran non-void.
 - Tarif non-SPP yang berlaku difilter berdasarkan `tahun` atau `tahun_ajaran` milik tarif SPP siswa.

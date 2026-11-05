@@ -91,6 +91,7 @@ class ImporSiswa extends Page
 
             if ($opsi->isNotEmpty()) {
                 return $opsi
+                    ->unique('tahun_ajaran')
                     ->mapWithKeys(fn (Spp $spp): array => [
                         $spp->id => "TA {$spp->tahun_ajaran} - {$spp->formattedNominal()}",
                     ])
@@ -102,6 +103,7 @@ class ImporSiswa extends Page
             ->where('kategori', Spp::KATEGORI_SPP)
             ->orderBy('tahun_ajaran')
             ->get()
+            ->unique('tahun_ajaran')
             ->mapWithKeys(fn (Spp $spp): array => [
                 $spp->id => "TA {$spp->tahun_ajaran} - {$spp->formattedNominal()}",
             ])

@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use App\Models\LogAktivitas;
 use App\Models\RiwayatKelas;
 use App\Models\Siswa;
+use App\Models\Spp;
 use App\Models\Wali;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -499,8 +500,11 @@ class ImporSiswaService
         }
 
         $hp = PembacaNilai::normalisasiHp($baris->hp_wali);
+        $spp = Spp::untukTingkat($kelas->tingkat, $kelas->tahunAjaran?->nama);
+
         $data = [
             'kelas_id' => $kelas->id,
+            'spp_id' => $spp?->id ?? $baris->spp_id,
             'nisn' => $baris->nisn,
             'nik' => $baris->nik,
             'nis' => $baris->nis,
@@ -516,7 +520,6 @@ class ImporSiswaService
 
         if ($siswa === null) {
             $siswa = Siswa::query()->create($data + [
-                'spp_id' => $baris->spp_id,
                 'status' => 'aktif',
             ]);
         } else {
@@ -568,6 +571,7 @@ class ImporSiswaService
 
         if (! isset($this->cacheKelas[$tahunAjaranId])) {
             $this->cacheKelas[$tahunAjaranId] = Kelas::query()
+                ->with('tahunAjaran')
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->get()
                 ->keyBy(fn (Kelas $kelas): string => PembacaNilai::normalisasiKelas($kelas->nama_kelas))

@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\Spps\Schemas;
 
+use App\Models\Spp;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Validation\Rules\Unique;
 
 class SppForm
 {
@@ -60,6 +63,28 @@ class SppForm
                     ->placeholder('Contoh: 2026/2027')
                     ->default(date('Y').'/'.(date('Y') + 1))
                     ->required(),
+
+                Select::make('tingkat')
+                    ->label('Tingkat Berlaku')
+                    ->options(Spp::TINGKAT_LIST)
+                    ->visible(fn (Get $get): bool => $get('kategori') === Spp::KATEGORI_SPP)
+                    ->required(fn (Get $get): bool => $get('kategori') === Spp::KATEGORI_SPP)
+                    ->unique(
+                        ignoreRecord: true,
+                        modifyRuleUsing: function (Unique $rule, Get $get): Unique {
+                            if ($get('kategori') !== Spp::KATEGORI_SPP) {
+                                return $rule->where('kategori', '__non_spp__');
+                            }
+
+                            return $rule
+                                ->where('kategori', Spp::KATEGORI_SPP)
+                                ->where('tahun_ajaran', $get('tahun_ajaran'));
+                        },
+                    )
+                    ->validationMessages([
+                        'unique' => 'Tarif SPP untuk tingkat ini sudah ada pada tahun ajaran tersebut.',
+                    ])
+                    ->helperText('Satu tarif SPP per tingkat per tahun ajaran.'),
 
                 TextInput::make('nominal')
                     ->label('Besaran Nominal Tarif')

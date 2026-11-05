@@ -67,7 +67,7 @@
                     placeholder="Contoh: Uang Gedung Angkatan 2026" />
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label for="tahun" class="block text-sm font-medium text-zinc-700 mb-1.5">
                         Tahun <span class="text-rose-500">*</span>
@@ -80,6 +80,20 @@
                         Tahun Ajaran <span class="text-rose-500">*</span>
                     </label>
                     <x-ui.input id="tahun_ajaran" name="tahun_ajaran" value="{{ old('tahun_ajaran', $spp->tahun_ajaran) }}" required />
+                </div>
+
+                <div>
+                    <label for="tingkat" class="block text-sm font-medium text-zinc-700 mb-1.5">
+                        Tingkat SPP
+                    </label>
+                    <select id="tingkat" name="tingkat"
+                        class="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
+                        <option value="">Semua Tingkat / Non-SPP</option>
+                        @foreach(\App\Models\Spp::TINGKAT_LIST as $nilai => $label)
+                            <option value="{{ $nilai }}" @selected(old('tingkat', $spp->tingkat) === $nilai)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-[11px] text-zinc-400 mt-1">Wajib untuk tarif SPP.</p>
                 </div>
             </div>
 

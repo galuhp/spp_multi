@@ -183,6 +183,34 @@ class ImporSiswaMassalTest extends TestCase
         ]);
     }
 
+    public function test_impor_memakai_tarif_sesuai_tingkat_kelas(): void
+    {
+        $tarifX = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_SPP,
+            'tipe' => Spp::TIPE_BULANAN,
+            'tahun' => 2027,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 250000,
+        ]);
+
+        [$batch, $service] = $this->impor([
+            $this->barisValid([
+                'nisn' => '0071234599',
+                'nis' => '2026099',
+                'nik' => '3273010101010099',
+            ]),
+        ]);
+
+        $ringkasan = $service->simpanBatch($batch, false);
+
+        $this->assertSame(1, $ringkasan['berhasil']);
+        $this->assertDatabaseHas('siswas', [
+            'nisn' => '0071234599',
+            'spp_id' => $tarifX->id,
+        ]);
+    }
+
     public function test_nik_enam_belas_digit_numerik_dan_ilmiah_tetap_utuh(): void
     {
         [$batch, $service] = $this->impor(

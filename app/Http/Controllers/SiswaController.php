@@ -95,6 +95,9 @@ class SiswaController extends Controller
             $userId = $user->id;
         }
 
+        $kelas = Kelas::with('tahunAjaran')->find($validated['kelas_id']);
+        $validated['spp_id'] = Spp::untukKelas($kelas)?->id ?? $validated['spp_id'];
+
         $validated['user_id'] = $userId;
         unset($validated['create_user_account']);
 
@@ -200,6 +203,9 @@ class SiswaController extends Controller
             'kelas_id.required' => 'Kelas wajib dipilih.',
             'spp_id.required' => 'Tarif SPP wajib dipilih.',
         ]);
+
+        $kelas = Kelas::with('tahunAjaran')->find($validated['kelas_id']);
+        $validated['spp_id'] = Spp::untukKelas($kelas)?->id ?? $validated['spp_id'];
 
         $siswa->update($validated);
 

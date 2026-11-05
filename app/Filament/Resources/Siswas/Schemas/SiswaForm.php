@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\Siswas\Schemas;
 
+use App\Models\Kelas;
 use App\Models\Spp;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class SiswaForm
@@ -48,16 +51,46 @@ class SiswaForm
                     ->relationship('kelas', 'nama_kelas')
                     ->searchable()
                     ->preload()
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, Get $get): void {
+                        $kelas = Kelas::with('tahunAjaran')->find($get('kelas_id'));
+                        $tarif = Spp::untukKelas($kelas);
+
+                        if ($tarif) {
+                            $set('spp_id', $tarif->id);
+                        }
+                    })
                     ->required(),
 
                 Select::make('spp_id')
                     ->label('Tarif SPP Bulanan')
-                    ->options(fn () => Spp::where('kategori', 'SPP')->get()->mapWithKeys(function ($spp) {
-                        return [$spp->id => "SPP TA {$spp->tahun_ajaran} ({$spp->formattedNominal()}/bln)"];
-                    }))
+                    ->options(function (Get $get): array {
+                        $kelas = Kelas::with('tahunAjaran')->find($get('kelas_id'));
+
+                        if (! $kelas) {
+                            return [];
+                        }
+
+                        return Spp::query()
+                            ->where('kategori', Spp::KATEGORI_SPP)
+                            ->where('tipe', Spp::TIPE_BULANAN)
+                            ->when($kelas->tahunAjaran?->nama, fn ($query, $tahunAjaran) => $query->where('tahun_ajaran', $tahunAjaran))
+                            ->where(function ($query) use ($kelas): void {
+                                $query->where('tingkat', Spp::normalisasiTingkat($kelas->tingkat))
+                                    ->orWhereNull('tingkat');
+                            })
+                            ->orderByRaw('tingkat is null')
+                            ->get()
+                            ->mapWithKeys(fn (Spp $spp): array => [
+                                $spp->id => ($spp->tingkat ? 'Tingkat '.Spp::labelTingkat($spp->tingkat) : 'Semua Tingkat')
+                                    .' — '.$spp->formattedNominal().' (TA '.$spp->tahun_ajaran.')',
+                            ])
+                            ->all();
+                    })
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->helperText('Otomatis mengikuti tingkat kelas. Tarif lama tanpa tingkat tetap tersedia sebagai cadangan.'),
 
                 TextInput::make('no_telp')
                     ->label('Nomor Telepon / WhatsApp')

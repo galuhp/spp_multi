@@ -77,23 +77,37 @@ class SppController extends Controller
                 'min:2000',
                 'max:2100',
                 Rule::unique('spps')->where(function ($query) use ($request) {
-                    return $query->where('kategori', $request->input('kategori'))
-                        ->where('tahun', $request->input('tahun'))
-                        ->when($request->filled('nama'), fn ($q) => $q->where('nama', $request->input('nama')));
+                    $query->where('kategori', $request->input('kategori'))
+                        ->where('tahun', $request->input('tahun'));
+
+                    if ($request->input('kategori') === Spp::KATEGORI_SPP) {
+                        $query->where('tingkat', $request->input('tingkat'));
+                    } else {
+                        $query->whereNull('tingkat');
+                    }
+
+                    return $query->when($request->filled('nama'), fn ($q) => $q->where('nama', $request->input('nama')));
                 }),
             ],
             'tahun_ajaran' => ['required', 'string', 'max:20'],
+            'tingkat' => ['nullable', 'in:10,11,12', 'required_if:kategori,'.Spp::KATEGORI_SPP],
             'nominal' => ['required', 'integer', 'min:1000'],
             'keterangan' => ['nullable', 'string', 'max:255'],
         ], [
             'kategori.required' => 'Kategori tarif wajib dipilih atau diisi.',
             'tipe.required' => 'Tipe pembayaran wajib dipilih.',
             'tahun.required' => 'Tahun wajib diisi.',
-            'tahun.unique' => 'Tarif untuk kategori dan tahun ini sudah terdaftar.',
+            'tahun.unique' => 'Tarif untuk kategori, tahun, dan tingkat ini sudah terdaftar.',
             'tahun_ajaran.required' => 'Tahun ajaran wajib diisi (contoh: 2026/2027).',
+            'tingkat.required_if' => 'Tingkat wajib dipilih untuk tarif SPP.',
+            'tingkat.in' => 'Tingkat harus X, XI, atau XII.',
             'nominal.required' => 'Besaran nominal tarif wajib diisi.',
             'nominal.min' => 'Nominal minimal Rp 1.000.',
         ]);
+
+        if ($kategori !== Spp::KATEGORI_SPP) {
+            $validated['tingkat'] = null;
+        }
 
         $spp = Spp::create($validated);
 
@@ -140,25 +154,39 @@ class SppController extends Controller
                 'min:2000',
                 'max:2100',
                 Rule::unique('spps')->where(function ($query) use ($request, $spp) {
-                    return $query->where('kategori', $request->input('kategori'))
+                    $query->where('kategori', $request->input('kategori'))
                         ->where('tahun', $request->input('tahun'))
-                        ->where('id', '!=', $spp->id)
-                        ->when($request->filled('nama'), fn ($q) => $q->where('nama', $request->input('nama')));
+                        ->where('id', '!=', $spp->id);
+
+                    if ($request->input('kategori') === Spp::KATEGORI_SPP) {
+                        $query->where('tingkat', $request->input('tingkat'));
+                    } else {
+                        $query->whereNull('tingkat');
+                    }
+
+                    return $query->when($request->filled('nama'), fn ($q) => $q->where('nama', $request->input('nama')));
                 }),
             ],
             'tahun_ajaran' => ['required', 'string', 'max:20'],
+            'tingkat' => ['nullable', 'in:10,11,12', 'required_if:kategori,'.Spp::KATEGORI_SPP],
             'nominal' => ['required', 'integer', 'min:1000'],
             'keterangan' => ['nullable', 'string', 'max:255'],
         ], [
             'kategori.required' => 'Kategori tarif wajib dipilih atau diisi.',
             'tipe.required' => 'Tipe pembayaran wajib dipilih.',
             'tahun.required' => 'Tahun wajib diisi.',
-            'tahun.unique' => 'Tarif untuk kategori dan tahun ini sudah terdaftar.',
+            'tahun.unique' => 'Tarif untuk kategori, tahun, dan tingkat ini sudah terdaftar.',
             'tahun_ajaran.required' => 'Tahun ajaran wajib diisi.',
+            'tingkat.required_if' => 'Tingkat wajib dipilih untuk tarif SPP.',
+            'tingkat.in' => 'Tingkat harus X, XI, atau XII.',
             'nominal.required' => 'Besaran nominal tarif wajib diisi.',
         ]);
 
-        $sebelum = $spp->only(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'nominal', 'keterangan']);
+        if ($kategori !== Spp::KATEGORI_SPP) {
+            $validated['tingkat'] = null;
+        }
+
+        $sebelum = $spp->only(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'tingkat', 'nominal', 'keterangan']);
 
         $spp->update($validated);
 

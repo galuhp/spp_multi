@@ -8,6 +8,8 @@ use App\Models\Pembayaran;
 use App\Models\ProsesKelasBatch;
 use App\Models\RiwayatKelas;
 use App\Models\Siswa;
+use App\Models\Spp;
+use App\Models\TahunAjaran;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -188,7 +190,9 @@ class ProsesKelasService
             ];
         }
 
-        $batch = DB::transaction(function () use ($siap, $kelasAsal, $tahunAjaranAsalId, $tahunAjaranTujuanId, $userId, $dilewati, $pesan) {
+        $tahunAjaranTujuanNama = TahunAjaran::query()->whereKey($tahunAjaranTujuanId)->value('nama');
+
+        $batch = DB::transaction(function () use ($siap, $kelasAsal, $tahunAjaranAsalId, $tahunAjaranTujuanId, $tahunAjaranTujuanNama, $userId, $dilewati, $pesan) {
             $batch = ProsesKelasBatch::create([
                 'jenis' => ProsesKelasBatch::JENIS_NAIK_KELAS,
                 'tahun_ajaran_asal' => $tahunAjaranAsalId,
@@ -225,6 +229,12 @@ class ProsesKelasService
                 ]);
 
                 $siswa->update(['kelas_id' => $kelasTujuan->id]);
+
+                $tarifTujuan = Spp::untukTingkat($kelasTujuan->tingkat, $tahunAjaranTujuanNama);
+
+                if ($tarifTujuan) {
+                    $siswa->update(['spp_id' => $tarifTujuan->id]);
+                }
             }
 
             LogAktivitas::catat(
@@ -377,7 +387,9 @@ class ProsesKelasService
             return ['berhasil' => false, 'alasan' => 'Batch tidak dapat dibatalkan karena sudah ada pembayaran pada tahun ajaran tujuan.'];
         }
 
-        DB::transaction(function () use ($batch) {
+        $tahunAjaranAsalNama = TahunAjaran::query()->whereKey($batch->tahun_ajaran_asal)->value('nama');
+
+        DB::transaction(function () use ($batch, $tahunAjaranAsalNama) {
             $riwayatBaru = RiwayatKelas::query()->where('batch_id', $batch->id)->get();
 
             foreach ($riwayatBaru as $riwayat) {
@@ -397,7 +409,14 @@ class ProsesKelasService
                     ->value('kelas_id');
 
                 if ($siswa && $kelasAsal) {
-                    $siswa->update(['kelas_id' => $kelasAsal]);
+                    $perubahan = ['kelas_id' => $kelasAsal];
+                    $tarifAsal = Spp::untukTingkat(Kelas::find($kelasAsal)?->tingkat, $tahunAjaranAsalNama);
+
+                    if ($tarifAsal) {
+                        $perubahan['spp_id'] = $tarifAsal->id;
+                    }
+
+                    $siswa->update($perubahan);
                 }
 
                 $riwayat->delete();

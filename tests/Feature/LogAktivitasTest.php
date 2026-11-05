@@ -18,7 +18,9 @@ class LogAktivitasTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $petugas;
+
     protected Siswa $siswa;
 
     protected function setUp(): void
@@ -92,6 +94,7 @@ class LogAktivitasTest extends TestCase
         $this->actingAs($this->admin)->put(route('spp.update', $spp->id), [
             'tahun' => 2026,
             'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
             'nominal' => 300000,
         ]);
 
