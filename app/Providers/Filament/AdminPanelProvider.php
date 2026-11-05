@@ -38,6 +38,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn (): View => view('filament.auth.demo-login-buttons'),
             )
+            ->renderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                fn (): View => view('filament.partials.pembayaran-form-styles'),
+            )
             ->brandName('E-SPP SEKOLAH')
             ->colors([
                 'primary' => Color::Indigo,

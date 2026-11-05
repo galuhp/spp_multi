@@ -111,6 +111,11 @@ class PembayaranForm
                                 'spp' => 'Iuran SPP Bulanan',
                                 'non_spp' => 'Biaya Lainnya (Uang Gedung, Seragam, Praktik, dll.)',
                             ])
+                            ->descriptions([
+                                'spp' => 'Iuran bulanan untuk satu atau beberapa bulan.',
+                                'non_spp' => 'Uang gedung, seragam, praktik, ujian, dan biaya lainnya.',
+                            ])
+                            ->extraAttributes(['class' => 'pembayaran-jenis-cards'])
                             ->default('spp')
                             ->required()
                             ->live()

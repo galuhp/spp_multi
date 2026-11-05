@@ -1,0 +1,81 @@
+/* Selectable cards for Jenis Pembayaran on /admin/pembayarans/create. */
+.pembayaran-jenis-cards.fi-fo-radio {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .pembayaran-jenis-cards.fi-fo-radio {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.pembayaran-jenis-cards .fi-fo-radio-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e4e4e7;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.pembayaran-jenis-cards .fi-fo-radio-label:hover {
+    border-color: #a1a1aa;
+    background-color: #fafafa;
+}
+
+.pembayaran-jenis-cards .fi-fo-radio-label:has(input:checked) {
+    border-color: var(--primary-600, #4f46e5);
+    background-color: #eef2ff;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+.pembayaran-jenis-cards .fi-fo-radio-label input[type='radio'] {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    accent-color: var(--primary-600, #4f46e5);
+}
+
+.pembayaran-jenis-cards .fi-fo-radio-label-text > p:first-child {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: #18181b;
+}
+
+.pembayaran-jenis-cards .fi-fo-radio-label-description {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: #71717a;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-radio-label {
+    border-color: #3f3f46;
+    background-color: #18181b;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-radio-label:hover {
+    border-color: #71717a;
+    background-color: #27272a;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-radio-label:has(input:checked) {
+    border-color: var(--primary-400, #818cf8);
+    background-color: #1e1b4b;
+    box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-radio-label-text > p:first-child {
+    color: #fafafa;
+}
+
+.dark .pembayaran-jenis-cards .fi-fo-radio-label-description {
+    color: #a1a1aa;
+}
