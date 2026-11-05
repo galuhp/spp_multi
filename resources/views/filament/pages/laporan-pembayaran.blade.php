@@ -1,4 +1,8 @@
 <x-filament-panels::page>
+    @push('styles')
+        @vite('resources/css/laporan-pembayaran.css')
+    @endpush
+
     @php
         $pembayarans = $this->filteredPembayarans;
         $totalPenerimaan = $pembayarans->sum('jumlah_bayar');
@@ -20,20 +24,17 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Awal</label>
-                <input type="date" wire:model.live="tgl_awal"
-                    class="w-full rounded-lg border-gray-300 text-sm shadow-xs focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                <input type="date" wire:model.live="tgl_awal" class="laporan-field">
             </div>
 
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Akhir</label>
-                <input type="date" wire:model.live="tgl_akhir"
-                    class="w-full rounded-lg border-gray-300 text-sm shadow-xs focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                <input type="date" wire:model.live="tgl_akhir" class="laporan-field">
             </div>
 
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pos / Kategori</label>
-                <select wire:model.live="kategori"
-                    class="w-full rounded-lg border-gray-300 text-sm shadow-xs focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                <select wire:model.live="kategori" class="laporan-field">
                     <option value="">Semua Pos Tarif</option>
                     @foreach($this->kategoriList as $kat)
                         <option value="{{ $kat }}">{{ $kat }}</option>
@@ -43,8 +44,7 @@
 
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Rombel Kelas</label>
-                <select wire:model.live="kelas_id"
-                    class="w-full rounded-lg border-gray-300 text-sm shadow-xs focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                <select wire:model.live="kelas_id" class="laporan-field">
                     <option value="">Semua Kelas</option>
                     @foreach($this->kelasList as $k)
                         <option value="{{ $k->id }}">{{ $k->nama_kelas }} ({{ $k->jurusan?->kode }})</option>
@@ -54,8 +54,7 @@
 
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Metode Pembayaran</label>
-                <select wire:model.live="metode_pembayaran"
-                    class="w-full rounded-lg border-gray-300 text-sm shadow-xs focus:border-primary-500 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                <select wire:model.live="metode_pembayaran" class="laporan-field">
                     <option value="">Semua Metode</option>
                     <option value="Tunai / Kasir">Tunai / Kasir</option>
                     <option value="Transfer Bank">Transfer Bank</option>
@@ -69,7 +68,7 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div class="fi-section rounded-xl bg-white p-5 shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
             <span class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Penerimaan</span>
-            <div class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-400">
+            <div class="mt-2 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                 Rp {{ number_format($totalPenerimaan, 0, ',', '.') }}
             </div>
         </div>
@@ -108,7 +107,7 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($pembayarans as $p)
                         <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
-                            <td class="px-4 py-3 font-mono text-xs font-semibold text-primary-600 dark:text-primary-400">
+                            <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                                 {{ $p->kode_transaksi }}
                             </td>
                             <td class="px-4 py-3 text-xs">
@@ -119,7 +118,7 @@
                                 <div class="text-xs text-gray-500">NISN: {{ $p->siswa?->nisn }} &bull; {{ $p->siswa?->kelas?->nama_kelas }}</div>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
+                                <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
                                     {{ $p->spp?->kategori ?? 'SPP' }}
                                 </span>
                                 <div class="text-xs text-gray-500 mt-0.5">
@@ -141,7 +140,7 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <a href="{{ route('pembayaran.cetak', $p->id) }}" target="_blank"
-                                    class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/50">
+                                    class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50">
                                     Cetak Kwitansi
                                 </a>
                             </td>
