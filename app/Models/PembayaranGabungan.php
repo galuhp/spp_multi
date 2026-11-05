@@ -29,6 +29,18 @@ class PembayaranGabungan extends Model
 {
     use HasFactory;
 
+    /**
+     * Derive the payment method from the source so the form does not need a separate field.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (PembayaranGabungan $gabungan): void {
+            $gabungan->metode = $gabungan->sumber === self::SUMBER_TRANSFER_BANK
+                ? self::METODE_TRANSFER
+                : self::METODE_TUNAI;
+        });
+    }
+
     public const SUMBER_SETORAN_KELAS = 'setoran_kelas';
 
     public const SUMBER_TRANSFER_BANK = 'transfer_bank';

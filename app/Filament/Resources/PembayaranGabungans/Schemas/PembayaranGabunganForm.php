@@ -40,13 +40,6 @@ class PembayaranGabunganForm
                     ->required()
                     ->live(),
 
-                Select::make('metode')
-                    ->label('Metode')
-                    ->options(PembayaranGabungan::metodeOptions())
-                    ->default(PembayaranGabungan::METODE_TUNAI)
-                    ->disabled(fn (?PembayaranGabungan $record): bool => $record !== null && ! $record->isDraft())
-                    ->required(),
-
                 Select::make('kelas_id')
                     ->label('Kelas (untuk setoran kelas)')
                     ->options(fn (): array => Kelas::query()
