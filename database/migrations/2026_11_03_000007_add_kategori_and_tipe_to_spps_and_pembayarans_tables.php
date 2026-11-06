@@ -8,19 +8,68 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * The production database may already contain these columns after a
+     * previously interrupted deploy, so each change is applied defensively.
      */
     public function up(): void
     {
-        Schema::table('spps', function (Blueprint $table) {
-            $table->string('kategori', 50)->default('SPP')->after('id');
-            $table->string('tipe', 30)->default('bulanan')->after('kategori');
-            $table->string('nama', 100)->nullable()->after('tipe');
-        });
+        $this->tambahKolomSpps();
+        $this->perbaruiPembayaran();
+    }
 
-        Schema::table('pembayarans', function (Blueprint $table) {
-            $table->dropUnique('unique_siswa_spp_bulan_tahun');
-            $table->string('bulan_dibayar', 20)->nullable()->change();
-        });
+    /**
+     * Add only the SPP columns that are still missing.
+     */
+    private function tambahKolomSpps(): void
+    {
+        if (! Schema::hasTable('spps')) {
+            return;
+        }
+
+        if (! Schema::hasColumn('spps', 'kategori')) {
+            Schema::table('spps', function (Blueprint $table): void {
+                $table->string('kategori', 50)->default('SPP')->after('id');
+            });
+        }
+
+        if (! Schema::hasColumn('spps', 'tipe')) {
+            Schema::table('spps', function (Blueprint $table): void {
+                $table->string('tipe', 30)->default('bulanan')->after('kategori');
+            });
+        }
+
+        if (! Schema::hasColumn('spps', 'nama')) {
+            Schema::table('spps', function (Blueprint $table): void {
+                $table->string('nama', 100)->nullable()->after('tipe');
+            });
+        }
+    }
+
+    /**
+     * Remove the legacy unique index and allow nullable non-SPP months.
+     */
+    private function perbaruiPembayaran(): void
+    {
+        if (! Schema::hasTable('pembayarans')) {
+            return;
+        }
+
+        $indexes = collect(Schema::getIndexes('pembayarans'))
+            ->pluck('name')
+            ->all();
+
+        if (in_array('unique_siswa_spp_bulan_tahun', $indexes, true)) {
+            Schema::table('pembayarans', function (Blueprint $table): void {
+                $table->dropUnique('unique_siswa_spp_bulan_tahun');
+            });
+        }
+
+        if (Schema::hasColumn('pembayarans', 'bulan_dibayar')) {
+            Schema::table('pembayarans', function (Blueprint $table): void {
+                $table->string('bulan_dibayar', 20)->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -28,13 +77,24 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pembayarans', function (Blueprint $table) {
-            $table->string('bulan_dibayar', 20)->nullable(false)->change();
-            $table->unique(['siswa_id', 'bulan_dibayar', 'tahun_dibayar'], 'unique_siswa_spp_bulan_tahun');
-        });
+        if (Schema::hasTable('pembayarans') && Schema::hasColumn('pembayarans', 'bulan_dibayar')) {
+            Schema::table('pembayarans', function (Blueprint $table): void {
+                $table->string('bulan_dibayar', 20)->nullable(false)->change();
+                $table->unique(['siswa_id', 'bulan_dibayar', 'tahun_dibayar'], 'unique_siswa_spp_bulan_tahun');
+            });
+        }
 
-        Schema::table('spps', function (Blueprint $table) {
-            $table->dropColumn(['kategori', 'tipe', 'nama']);
-        });
+        if (Schema::hasTable('spps')) {
+            $columns = array_values(array_filter(
+                ['kategori', 'tipe', 'nama'],
+                fn (string $column): bool => Schema::hasColumn('spps', $column),
+            ));
+
+            if ($columns !== []) {
+                Schema::table('spps', function (Blueprint $table) use ($columns): void {
+                    $table->dropColumn($columns);
+                });
+            }
+        }
     }
 };
