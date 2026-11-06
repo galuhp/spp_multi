@@ -16,7 +16,7 @@
         }
     </style>
 </head>
-<body class="min-h-full flex flex-col justify-center items-center p-4 sm:p-6 antialiased text-zinc-800 relative bg-zinc-100">
+<body class="min-h-full flex flex-col justify-center items-center p-4 sm:p-6 antialiased text-zinc-800 relative bg-zinc-100 font-print">
     <div class="w-full max-w-xl my-8 space-y-5">
         <!-- School Brand Header -->
         <div class="text-center">

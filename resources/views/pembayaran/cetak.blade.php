@@ -15,7 +15,7 @@
         }
     </style>
 </head>
-<body class="bg-zinc-100 p-4 sm:p-8 text-zinc-900 antialiased font-sans">
+<body class="bg-zinc-100 p-4 sm:p-8 text-zinc-900 antialiased font-print">
     <div class="no-print max-w-2xl mx-auto mb-4 flex items-center justify-between">
         <a href="{{ auth()->user()?->isSiswa() ? route('portal.riwayat') : \App\Filament\Resources\Pembayarans\PembayaranResource::getUrl('index') }}" class="text-xs font-semibold text-zinc-600 hover:text-zinc-900">
             &larr; Kembali ke Aplikasi

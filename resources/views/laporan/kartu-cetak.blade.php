@@ -33,7 +33,7 @@
         }
     </style>
 </head>
-<body class="bg-zinc-100 p-4 sm:p-8 text-zinc-900 antialiased font-sans">
+<body class="bg-zinc-100 p-4 sm:p-8 text-zinc-900 antialiased font-print">
     @php
         $siswa = $kartu['siswa'];
         $kelas = $kartu['kelas'];

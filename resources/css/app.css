@@ -9,6 +9,25 @@
 @theme {
     --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-print: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+        'Courier New', monospace;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+.font-print {
+    font-family: var(--font-print);
+    font-variant-numeric: tabular-nums;
+}
+
+.font-print table,
+.font-print th,
+.font-print td {
+    font-variant-numeric: tabular-nums;
+}
+
+.font-print .font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
