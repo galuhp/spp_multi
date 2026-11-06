@@ -108,7 +108,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <span class="text-xs font-medium text-zinc-500">Nama Siswa</span>
-                        <div class="text-base font-bold text-zinc-900">{{ $siswa->nama }}</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-base font-bold text-zinc-900">{{ $siswa->nama }}</span>
+                            @if(($tagihan['totalDitanggung'] + $tagihan['totalNonSppDitanggung']) > 0)
+                                <x-ui.badge color="sky">Ditanggung Pemerintah</x-ui.badge>
+                            @endif
+                        </div>
                         <div class="text-xs text-zinc-500">NISN: {{ $siswa->nisn }} &bull; NIS: {{ $siswa->nis }}</div>
                     </div>
                     <div>
@@ -132,7 +137,7 @@
             </x-ui.card>
 
             <!-- Ringkasan -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-ui.card class="!max-w-none !p-5">
                     <span class="text-xs font-medium uppercase tracking-wider text-emerald-700">SPP Bulanan Terbayar</span>
                     <div class="mt-2 text-2xl font-bold text-emerald-700">
@@ -153,6 +158,13 @@
                         Rp {{ number_format($tagihan['totalNonSppBelumLunas'], 0, ',', '.') }}
                     </div>
                 </x-ui.card>
+
+                <x-ui.card class="!max-w-none !p-5">
+                    <span class="text-xs font-medium uppercase tracking-wider text-sky-700">Ditanggung Pemerintah</span>
+                    <div class="mt-2 text-2xl font-bold text-sky-700">
+                        Rp {{ number_format($tagihan['totalDitanggung'] + $tagihan['totalNonSppDitanggung'], 0, ',', '.') }}
+                    </div>
+                </x-ui.card>
             </div>
 
             <!-- Matriks SPP Bulanan -->
@@ -164,11 +176,16 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                     @foreach($tagihan['bulanStatus'] as $item)
-                        <div class="rounded-field border p-4 text-center {{ $item['lunas'] ? 'border-emerald-200 bg-emerald-50' : ($item['status'] === 'sebagian' ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50') }}">
+                        <div class="rounded-field border p-4 text-center {{ $item['ditanggung'] ? 'border-sky-200 bg-sky-50' : ($item['lunas'] ? 'border-emerald-200 bg-emerald-50' : ($item['status'] === 'sebagian' ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50')) }}">
                             <div class="text-sm font-bold text-zinc-900">{{ $item['bulan'] }}</div>
                             <div class="text-xs text-zinc-500">{{ $item['tahun'] }}</div>
                             <div class="mt-3">
-                                @if($item['lunas'])
+                                @if($item['ditanggung'])
+                                    <x-ui.badge color="sky">Ditanggung Pemerintah</x-ui.badge>
+                                    <div class="mt-1 text-xs font-semibold text-sky-700">
+                                        Rp {{ number_format($item['nominal'], 0, ',', '.') }}
+                                    </div>
+                                @elseif($item['lunas'])
                                     <x-ui.badge color="green">Lunas</x-ui.badge>
                                     <div class="mt-1 text-xs font-semibold text-emerald-700">
                                         Rp {{ number_format($item['dibayar'], 0, ',', '.') }}
@@ -241,7 +258,9 @@
                                             Rp {{ number_format($item['sisa'], 0, ',', '.') }}
                                         </x-ui.table.cell>
                                         <x-ui.table.cell class="text-center">
-                                            @if($item['lunas'])
+                                            @if($item['ditanggung'])
+                                                <x-ui.badge color="sky">Ditanggung Pemerintah</x-ui.badge>
+                                            @elseif($item['lunas'])
                                                 <x-ui.badge color="green">Lunas</x-ui.badge>
                                             @elseif($item['dibayar'] > 0)
                                                 <x-ui.badge color="yellow">Dicicil</x-ui.badge>

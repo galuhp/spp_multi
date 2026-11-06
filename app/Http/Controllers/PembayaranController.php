@@ -9,6 +9,7 @@ use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
 use App\Support\Pembayaran\PembayaranService;
+use App\Support\Pembayaran\TanggunganPemerintahService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -253,6 +254,10 @@ class PembayaranController extends Controller
             $siswa = Siswa::findOrFail($validated['siswa_id']);
             $tarif = Spp::findOrFail($validated['spp_id']);
 
+            if (app(TanggunganPemerintahService::class)->isPosDitanggung($siswa, $tarif)) {
+                return back()->withInput()->with('error', "Tagihan {$tarif->kategori} ditanggung pemerintah.");
+            }
+
             $sudahDibayar = (int) Pembayaran::where('siswa_id', $siswa->id)
                 ->where('spp_id', $tarif->id)
                 ->whereNull('void_at')
@@ -319,6 +324,23 @@ class PembayaranController extends Controller
 
         $createdPembayarans = [];
         $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
+        $tanggunganPemerintah = app(TanggunganPemerintahService::class);
+
+        $bulanDitanggung = collect($validated['bulan_dibayar'])
+            ->filter(fn (string $bulan): bool => $tanggunganPemerintah->isSppDitanggung(
+                $siswa,
+                $siswa->spp,
+                $bulan,
+                Pembayaran::tahunUntukBulan($bulan, $tahunMulai),
+            ))
+            ->values();
+
+        if ($bulanDitanggung->isNotEmpty()) {
+            return back()->withInput()->with(
+                'error',
+                'Bulan SPP berikut ditanggung pemerintah: '.$bulanDitanggung->implode(', ').'.',
+            );
+        }
 
         DB::transaction(function () use ($validated, $siswa, $nominalPerBulan, $tahunMulai, &$createdPembayarans) {
             foreach ($validated['bulan_dibayar'] as $bulan) {

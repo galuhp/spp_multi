@@ -207,4 +207,12 @@ class Spp extends Model
     {
         return $this->hasMany(Pembayaran::class);
     }
+
+    /**
+     * Government-covered markers for this specific fee.
+     */
+    public function tanggunganPemerintah(): HasMany
+    {
+        return $this->hasMany(SiswaTanggunganPemerintah::class);
+    }
 }

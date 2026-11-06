@@ -48,6 +48,11 @@ class SiswasTable
                     ->label('Status')
                     ->badge()
                     ->color(fn (?string $state): string => $state === 'lulus' ? 'success' : 'gray'),
+                TextColumn::make('tanggungan_pemerintah_aktif_count')
+                    ->label('Ditanggung Pemerintah')
+                    ->badge()
+                    ->formatStateUsing(fn (int $state): string => $state > 0 ? 'Ya' : 'Tidak')
+                    ->color(fn (int $state): string => $state > 0 ? 'info' : 'gray'),
                 IconColumn::make('is_archived')
                     ->label('Arsip')
                     ->boolean(),
@@ -79,6 +84,19 @@ class SiswasTable
                 SelectFilter::make('kelas_id')
                     ->label('Filter Kelas')
                     ->relationship('kelas', 'nama_kelas'),
+                SelectFilter::make('ditanggung_pemerintah')
+                    ->label('Ditanggung Pemerintah')
+                    ->options([
+                        'ya' => 'Ya',
+                        'tidak' => 'Tidak',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'ya' => $query->whereHas('tanggunganPemerintah', fn (Builder $query): Builder => $query->whereNull('dicabut_at')),
+                            'tidak' => $query->whereDoesntHave('tanggunganPemerintah', fn (Builder $query): Builder => $query->whereNull('dicabut_at')),
+                            default => $query,
+                        };
+                    }),
             ])
             ->recordActions([
                 Action::make('keluarkanArsip')

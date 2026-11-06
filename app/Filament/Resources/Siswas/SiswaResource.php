@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Siswas;
 use App\Filament\Resources\Siswas\Pages\CreateSiswa;
 use App\Filament\Resources\Siswas\Pages\EditSiswa;
 use App\Filament\Resources\Siswas\Pages\ListSiswas;
+use App\Filament\Resources\Siswas\RelationManagers\TanggunganPemerintahRelationManager;
 use App\Filament\Resources\Siswas\Schemas\SiswaForm;
 use App\Filament\Resources\Siswas\Tables\SiswasTable;
 use App\Models\RolePermission;
@@ -53,7 +54,11 @@ class SiswaResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['kelas.jurusan', 'spp']);
+        return parent::getEloquentQuery()
+            ->with(['kelas.jurusan', 'spp'])
+            ->withCount([
+                'tanggunganPemerintah as tanggungan_pemerintah_aktif_count' => fn (Builder $query): Builder => $query->whereNull('dicabut_at'),
+            ]);
     }
 
     public static function form(Schema $schema): Schema
@@ -69,7 +74,7 @@ class SiswaResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            TanggunganPemerintahRelationManager::class,
         ];
     }
 

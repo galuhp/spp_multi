@@ -137,6 +137,14 @@ class Siswa extends Model
     }
 
     /**
+     * Government-covered fee markers for this student.
+     */
+    public function tanggunganPemerintah(): HasMany
+    {
+        return $this->hasMany(SiswaTanggunganPemerintah::class);
+    }
+
+    /**
      * Guardian data of this student.
      */
     public function wali(): HasOne

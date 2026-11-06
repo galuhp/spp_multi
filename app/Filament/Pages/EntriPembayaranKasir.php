@@ -7,6 +7,7 @@ use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Support\Pembayaran\PembayaranService;
+use App\Support\Pembayaran\TanggunganPemerintahService;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -141,6 +142,7 @@ class EntriPembayaranKasir extends Page
         }
 
         $service = app(PembayaranService::class);
+        $tanggunganPemerintah = app(TanggunganPemerintahService::class);
         $items = collect($service->tagihanTerbuka($siswa))->keyBy('key');
         $spp = $siswa->spp;
         $tahunMulai = Pembayaran::tahunMulaiTarif($spp);
@@ -157,7 +159,9 @@ class EntriPembayaranKasir extends Page
                 $terbuka = $items->get($key);
 
                 if (! $terbuka) {
-                    $status = 'lunas';
+                    $status = $tanggunganPemerintah->isSppDitanggung($siswa, $spp, $periode['bulan'], $periode['tahun'])
+                        ? 'ditanggung'
+                        : 'lunas';
                 } elseif ($tahunMulai < $tahunAjaranSekarang) {
                     $status = 'tunggakan';
                 } elseif ($tahunMulai > $tahunAjaranSekarang) {

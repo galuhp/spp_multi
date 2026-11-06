@@ -7,6 +7,7 @@ use App\Models\Pembayaran;
 use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
+use App\Support\Pembayaran\TanggunganPemerintahService;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -157,9 +158,12 @@ class TagihanSiswa extends Page
                 'nonSppStatus' => [],
                 'totalNonSppLunas' => 0,
                 'totalNonSppBelumLunas' => 0,
+                'totalDitanggung' => 0,
+                'totalNonSppDitanggung' => 0,
             ];
         }
 
+        $tanggunganPemerintah = app(TanggunganPemerintahService::class);
         $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
 
@@ -171,6 +175,7 @@ class TagihanSiswa extends Page
         $bulanStatus = [];
         $totalLunas = 0;
         $totalBelumLunas = 0;
+        $totalDitanggung = 0;
 
         $nominalSpp = (int) ($siswa->spp?->nominal ?? 0);
 
@@ -183,11 +188,16 @@ class TagihanSiswa extends Page
                 ->where('bulan_dibayar', $bulan);
 
             $dibayar = (int) $bayarList->sum('jumlah_bayar');
-            $sisa = max(0, $nominalSpp - $dibayar);
-            $status = $dibayar <= 0 ? 'belum' : ($sisa > 0 ? 'sebagian' : 'lunas');
+            $ditanggung = $tanggunganPemerintah->isSppDitanggung($siswa, $siswa->spp, $bulan, $tahun);
+            $sisa = $ditanggung ? 0 : max(0, $nominalSpp - $dibayar);
+            $status = $ditanggung ? 'ditanggung' : ($dibayar <= 0 ? 'belum' : ($sisa > 0 ? 'sebagian' : 'lunas'));
 
-            $totalLunas += min($dibayar, $nominalSpp);
-            $totalBelumLunas += $sisa;
+            if ($ditanggung) {
+                $totalDitanggung += $nominalSpp;
+            } else {
+                $totalLunas += min($dibayar, $nominalSpp);
+                $totalBelumLunas += $sisa;
+            }
 
             $bulanStatus[] = [
                 'bulan' => $bulan,
@@ -197,6 +207,7 @@ class TagihanSiswa extends Page
                 'sisa' => $sisa,
                 'status' => $status,
                 'lunas' => $status === 'lunas',
+                'ditanggung' => $ditanggung,
                 'pembayaran' => $bayarList->sortByDesc('id')->first(),
             ];
         }
@@ -224,15 +235,21 @@ class TagihanSiswa extends Page
         $nonSppStatus = [];
         $totalNonSppLunas = 0;
         $totalNonSppBelumLunas = 0;
+        $totalNonSppDitanggung = 0;
 
         foreach ($nonSppTarifs as $tarif) {
             $bayarList = $riwayatPembayaran->where('spp_id', $tarif->id);
             $dibayar = (int) $bayarList->sum('jumlah_bayar');
-            $sisa = max(0, $tarif->nominal - $dibayar);
-            $lunas = $sisa === 0 && $dibayar > 0;
+            $ditanggung = $tanggunganPemerintah->isPosDitanggung($siswa, $tarif);
+            $sisa = $ditanggung ? 0 : max(0, $tarif->nominal - $dibayar);
+            $lunas = ! $ditanggung && $sisa === 0 && $dibayar > 0;
 
-            $totalNonSppLunas += $dibayar;
-            $totalNonSppBelumLunas += $sisa;
+            if ($ditanggung) {
+                $totalNonSppDitanggung += (int) $tarif->nominal;
+            } else {
+                $totalNonSppLunas += $dibayar;
+                $totalNonSppBelumLunas += $sisa;
+            }
 
             $nonSppStatus[] = [
                 'tarif' => $tarif,
@@ -240,6 +257,7 @@ class TagihanSiswa extends Page
                 'dibayar' => $dibayar,
                 'sisa' => $sisa,
                 'lunas' => $lunas,
+                'ditanggung' => $ditanggung,
                 'pembayarans' => $bayarList,
             ];
         }
@@ -251,6 +269,8 @@ class TagihanSiswa extends Page
             'nonSppStatus' => $nonSppStatus,
             'totalNonSppLunas' => $totalNonSppLunas,
             'totalNonSppBelumLunas' => $totalNonSppBelumLunas,
+            'totalDitanggung' => $totalDitanggung,
+            'totalNonSppDitanggung' => $totalNonSppDitanggung,
         ];
     }
 }

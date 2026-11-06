@@ -6,6 +6,7 @@ use App\Filament\Resources\Pembayarans\PembayaranResource;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
+use App\Support\Pembayaran\TanggunganPemerintahService;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -93,6 +94,7 @@ class CreatePembayaran extends CreateRecord
         $tahunMulai = Pembayaran::tahunMulaiTarif($spp);
         $nominalSpp = (int) ($spp?->nominal ?? 0);
         $nominalPerBulan = [];
+        $tanggunganPemerintah = app(TanggunganPemerintahService::class);
 
         if ($pilihSpp && ($spp === null || $nominalSpp <= 0)) {
             $this->tolak('Siswa belum memiliki tarif SPP yang valid.');
@@ -106,8 +108,15 @@ class CreatePembayaran extends CreateRecord
                 ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
             $bulanLunas = [];
+            $bulanDitanggung = [];
 
             foreach ($bulanList as $bulan) {
+                if ($tanggunganPemerintah->isSppDitanggung($siswa, $spp, $bulan, Pembayaran::tahunUntukBulan($bulan, $tahunMulai))) {
+                    $bulanDitanggung[] = $bulan;
+
+                    continue;
+                }
+
                 $dibayar = (int) ($dibayarPerBulan->get($bulan) ?? 0);
                 $sisa = max(0, $nominalSpp - $dibayar);
 
@@ -118,6 +127,10 @@ class CreatePembayaran extends CreateRecord
                 }
 
                 $nominalPerBulan[$bulan] = $sisa;
+            }
+
+            if ($bulanDitanggung !== []) {
+                $this->tolak('Bulan SPP berikut ditanggung pemerintah: '.implode(', ', $bulanDitanggung).'.');
             }
 
             if ($bulanLunas !== []) {
@@ -142,6 +155,10 @@ class CreatePembayaran extends CreateRecord
 
             if (! $tarif || $tarif->kategori === Spp::KATEGORI_SPP) {
                 $this->tolak('Pos biaya yang dipilih tidak valid.');
+            }
+
+            if ($tanggunganPemerintah->isPosDitanggung($siswa, $tarif)) {
+                $this->tolak("Tagihan {$tarif->kategori} ditanggung pemerintah.");
             }
 
             $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');

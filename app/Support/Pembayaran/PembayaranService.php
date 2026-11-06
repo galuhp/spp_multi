@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class PembayaranService
 {
+    public function __construct(
+        private readonly TanggunganPemerintahService $tanggunganPemerintah,
+    ) {}
+
     /**
      * Outstanding bills for a student, oldest first.
      *
@@ -45,6 +49,11 @@ class PembayaranService
                 foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
                     $bulan = $periode['bulan'];
                     $tahun = $periode['tahun'];
+
+                    if ($this->tanggunganPemerintah->isSppDitanggung($siswa, $tarif, $bulan, $tahun)) {
+                        continue;
+                    }
+
                     $dibayar = (int) ($dibayarPerBulan->get($bulan.'|'.$tahun) ?? 0);
                     $sisa = max(0, $nominal - $dibayar);
 
@@ -122,6 +131,10 @@ class PembayaranService
 
         foreach ($nonSpp as $tarifLain) {
             if ($tarif && $tarifLain->id === $tarif->id) {
+                continue;
+            }
+
+            if ($this->tanggunganPemerintah->isPosDitanggung($siswa, $tarifLain)) {
                 continue;
             }
 

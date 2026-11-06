@@ -6,6 +6,7 @@ use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
+use App\Support\Pembayaran\TanggunganPemerintahService;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
@@ -159,6 +160,7 @@ class PembayaranForm
 
                                 $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
                                 $nominal = (int) ($siswa->spp?->nominal ?? 0);
+                                $tanggungan = app(TanggunganPemerintahService::class);
                                 $dibayarPerBulan = $siswa->pembayarans
                                     ->where('spp_id', $siswa->spp_id)
                                     ->whereNotNull('bulan_dibayar')
@@ -167,6 +169,10 @@ class PembayaranForm
 
                                 $unpaid = [];
                                 foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+                                    if ($tanggungan->isSppDitanggung($siswa, $siswa->spp, $periode['bulan'], $periode['tahun'])) {
+                                        continue;
+                                    }
+
                                     $sisa = max(0, $nominal - (int) ($dibayarPerBulan->get($periode['bulan']) ?? 0));
 
                                     if ($sisa > 0) {
@@ -216,6 +222,7 @@ class PembayaranForm
                                 $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
                                 $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
                                 $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+                                $tanggungan = app(TanggunganPemerintahService::class);
 
                                 return Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
                                     ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
@@ -230,7 +237,11 @@ class PembayaranForm
                                         }
                                     })
                                     ->get()
-                                    ->filter(function (Spp $tarif) use ($siswa): bool {
+                                    ->filter(function (Spp $tarif) use ($siswa, $tanggungan): bool {
+                                        if ($tanggungan->isPosDitanggung($siswa, $tarif)) {
+                                            return false;
+                                        }
+
                                         $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
 
                                         return ((int) $tarif->nominal - $dibayar) > 0;

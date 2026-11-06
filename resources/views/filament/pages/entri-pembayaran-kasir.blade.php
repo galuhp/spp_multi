@@ -146,15 +146,16 @@
 
                             <div class="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                                 <template x-for="(m, index) in months" :key="m.key">
-                                    <button type="button" @click="toggleMonth(index)" :disabled="m.status === 'lunas'"
+                                    <button type="button" @click="toggleMonth(index)" :disabled="m.status === 'lunas' || m.status === 'ditanggung'"
                                         :class="monthClass(m)"
                                         class="relative flex flex-col items-start rounded-lg border px-3 py-2.5 text-left transition">
                                         <span class="text-sm font-medium" x-text="m.bulan"></span>
                                         <span class="text-xs opacity-70" x-text="m.tahun"></span>
-                                        <span class="mt-2 text-xs" x-text="m.status === 'lunas' ? 'Lunas' : rp(m.nominal)"></span>
+                                        <span class="mt-2 text-xs" x-text="m.status === 'lunas' ? 'Lunas' : (m.status === 'ditanggung' ? 'Ditanggung Pemerintah' : rp(m.nominal))"></span>
 
                                         <span :class="has(m.key) ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
                                         <span :class="m.status === 'lunas' ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
+                                        <span :class="m.status === 'ditanggung' ? '' : 'hidden'" class="absolute right-2 top-2 rounded bg-sky-100 px-1.5 text-[10px] font-medium text-sky-800">Pemerintah</span>
                                         <span :class="(m.status === 'tunggakan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800">Tunggakan</span>
                                         <span :class="(m.status === 'berjalan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded bg-gray-200 px-1.5 text-[10px] font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">Bulan ini</span>
                                     </button>
@@ -336,14 +337,14 @@
 
                 unpaidUpTo(index) {
                     return this.months
-                        .filter((m, i) => i <= index && m.status !== 'lunas')
+                        .filter((m, i) => i <= index && m.status !== 'lunas' && m.status !== 'ditanggung')
                         .map((m) => m.key);
                 },
 
                 toggleMonth(index) {
                     const m = this.months[index];
 
-                    if (!m || m.status === 'lunas') {
+                    if (!m || m.status === 'lunas' || m.status === 'ditanggung') {
                         return;
                     }
 
@@ -413,6 +414,10 @@
                 monthClass(m) {
                     if (m.status === 'lunas') {
                         return 'cursor-not-allowed border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300';
+                    }
+
+                    if (m.status === 'ditanggung') {
+                        return 'cursor-not-allowed border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300';
                     }
 
                     if (this.has(m.key)) {
