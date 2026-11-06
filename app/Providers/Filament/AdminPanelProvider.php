@@ -95,7 +95,7 @@ class AdminPanelProvider extends PanelProvider
                 'Pengaturan & Akses',
             ])
             ->navigationItems([
-                NavigationItem::make('Entry Pembayaran Gabungan')
+                NavigationItem::make('Entry Pembayaran Kolektif')
                     ->key('buat-pembayaran-massal')
                     ->group('Transaksi SPP')
                     ->icon(Heroicon::OutlinedPlusCircle)
