@@ -55,11 +55,22 @@ return new class extends Migration
             return;
         }
 
-        $indexes = collect(Schema::getIndexes('pembayarans'))
-            ->pluck('name')
-            ->all();
+        $indexes = collect(Schema::getIndexes('pembayarans'));
 
-        if (in_array('unique_siswa_spp_bulan_tahun', $indexes, true)) {
+        $hasSiswaIndex = $indexes->contains(
+            fn (array $index): bool => in_array('siswa_id', $index['columns'], true)
+                && $index['name'] !== 'unique_siswa_spp_bulan_tahun',
+        );
+
+        if (! $hasSiswaIndex) {
+            Schema::table('pembayarans', function (Blueprint $table): void {
+                $table->index('siswa_id', 'pembayarans_siswa_id_index');
+            });
+        }
+
+        $indexNames = $indexes->pluck('name')->all();
+
+        if (in_array('unique_siswa_spp_bulan_tahun', $indexNames, true)) {
             Schema::table('pembayarans', function (Blueprint $table): void {
                 $table->dropUnique('unique_siswa_spp_bulan_tahun');
             });
