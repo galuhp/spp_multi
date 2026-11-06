@@ -2,11 +2,14 @@
 
 namespace App\Filament\Pages\Auth;
 
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Illuminate\Validation\ValidationException;
 use SensitiveParameter;
+use Throwable;
 
 class Login extends BaseLogin
 {
@@ -21,6 +24,35 @@ class Login extends BaseLogin
             ->autocomplete('username')
             ->autofocus()
             ->extraInputAttributes(['tabindex' => 1]);
+    }
+
+    /**
+     * Show a visible notification whenever authentication fails.
+     */
+    public function authenticate(): ?LoginResponse
+    {
+        try {
+            return parent::authenticate();
+        } catch (ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first()
+                ?: 'Username atau kata sandi tidak sesuai.';
+
+            Notification::make()
+                ->title('Login gagal')
+                ->body($message)
+                ->danger()
+                ->send();
+
+            throw $exception;
+        } catch (Throwable $exception) {
+            Notification::make()
+                ->title('Login gagal')
+                ->body('Terjadi kesalahan saat memproses login. Silakan coba lagi.')
+                ->danger()
+                ->send();
+
+            throw $exception;
+        }
     }
 
     /**

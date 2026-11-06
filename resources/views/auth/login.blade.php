@@ -75,29 +75,11 @@
                 </x-ui.button>
             </form>
 
-            <!-- Quick Demo Accounts Helper -->
-            <div class="mt-6 pt-5 border-t border-zinc-200">
-                <div class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider text-center mb-3">
-                    Akses Akun Demo Cepat
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <x-ui.button type="button" variant="outline" size="sm" onclick="fillLogin('admin', 'password')">Admin</x-ui.button>
-                    <x-ui.button type="button" variant="outline" size="sm" onclick="fillLogin('petugas', 'password')">Petugas</x-ui.button>
-                    <x-ui.button type="button" variant="outline" size="sm" onclick="fillLogin('siswa', 'password')">Siswa</x-ui.button>
-                </div>
-            </div>
         </x-ui.card>
 
         <p class="text-center text-xs text-zinc-500 mt-6">
             &copy; {{ date('Y') }} Sistem Informasi Manajemen SPP Sekolah
         </p>
     </div>
-
-    <script>
-        function fillLogin(username, password) {
-            document.getElementById('login').value = username;
-            document.getElementById('password').value = password;
-        }
-    </script>
 </body>
 </html>

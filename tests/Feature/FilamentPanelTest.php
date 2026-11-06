@@ -33,6 +33,7 @@ class FilamentPanelTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Username / NISN');
+        $response->assertDontSee('Akses Akun Demo Cepat');
     }
 
     public function test_user_can_login_to_filament_with_username(): void
@@ -69,6 +70,7 @@ class FilamentPanelTest extends TestCase
             ])
             ->call('authenticate')
             ->assertHasFormErrors(['username'])
+            ->assertNotified('Login gagal')
             ->assertSee('Username atau kata sandi tidak sesuai.');
 
         $this->assertGuest();
