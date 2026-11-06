@@ -63,7 +63,7 @@ class LogAktivitasTest extends TestCase
         $this->assertEquals(250000, $log->data['jumlah_bayar']);
     }
 
-    public function test_deleting_payment_is_logged_before_removal(): void
+    public function test_deleting_payment_is_handled_as_void_and_logged(): void
     {
         $pembayaran = Pembayaran::create([
             'kode_transaksi' => 'SPP-20261102-0001',
@@ -79,9 +79,13 @@ class LogAktivitasTest extends TestCase
 
         $this->actingAs($this->admin)->delete(route('pembayaran.destroy', $pembayaran->id));
 
-        $this->assertDatabaseMissing('pembayarans', ['id' => $pembayaran->id]);
+        $this->assertDatabaseHas('pembayarans', [
+            'id' => $pembayaran->id,
+            'void_oleh' => $this->admin->id,
+        ]);
+        $this->assertNotNull($pembayaran->fresh()->void_at);
 
-        $log = LogAktivitas::where('aksi', 'pembayaran.dihapus')->first();
+        $log = LogAktivitas::where('aksi', 'pembayaran.void')->first();
         $this->assertNotNull($log);
         $this->assertEquals($this->admin->id, $log->user_id);
         $this->assertEquals('SPP-20261102-0001', $log->data['kode_transaksi']);

@@ -98,7 +98,7 @@ class ManajemenRole extends Page
                 'jumlah' => User::query()->where('role', $role->value)->count(),
                 'deskripsi' => match ($role) {
                     UserRole::Admin => 'Akses penuh, termasuk pengaturan sekolah dan manajemen role.',
-                    UserRole::Petugas => 'Transaksi pembayaran, laporan, kesiswaan, dan master data.',
+                    UserRole::Petugas => 'Transaksi pembayaran, laporan, dan kesiswaan.',
                     UserRole::Siswa => 'Portal siswa untuk melihat tagihan dan riwayat pembayaran.',
                 },
             ])

@@ -55,14 +55,14 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'username' => ['required', 'string', 'max:50', 'unique:users,username'],
             'email' => ['nullable', 'email', 'max:100', 'unique:users,email'],
-            'password' => ['required', 'string', Password::min(6)],
+            'password' => ['required', 'string', Password::min(8)],
             'role' => ['required', Rule::enum(UserRole::class)],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
             'username.required' => 'Username wajib diisi.',
             'username.unique' => 'Username sudah digunakan.',
             'password.required' => 'Kata sandi wajib diisi.',
-            'password.min' => 'Kata sandi minimal 6 karakter.',
+            'password.min' => 'Kata sandi minimal 8 karakter.',
             'role.required' => 'Hak akses / role wajib dipilih.',
         ]);
 
@@ -96,15 +96,15 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'username' => ['required', 'string', 'max:50', 'unique:users,username,' . $user->id],
-            'email' => ['nullable', 'email', 'max:100', 'unique:users,email,' . $user->id],
-            'password' => ['nullable', 'string', Password::min(6)],
+            'username' => ['required', 'string', 'max:50', 'unique:users,username,'.$user->id],
+            'email' => ['nullable', 'email', 'max:100', 'unique:users,email,'.$user->id],
+            'password' => ['nullable', 'string', Password::min(8)],
             'role' => ['required', Rule::enum(UserRole::class)],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
             'username.required' => 'Username wajib diisi.',
             'username.unique' => 'Username sudah digunakan.',
-            'password.min' => 'Kata sandi minimal 6 karakter.',
+            'password.min' => 'Kata sandi minimal 8 karakter.',
             'role.required' => 'Hak akses / role wajib dipilih.',
         ]);
 

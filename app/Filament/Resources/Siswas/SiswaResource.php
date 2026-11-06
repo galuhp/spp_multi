@@ -14,6 +14,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class SiswaResource extends Resource
@@ -37,6 +39,21 @@ class SiswaResource extends Resource
         $user = auth()->user();
 
         return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::KESISWAAN);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['kelas.jurusan', 'spp']);
     }
 
     public static function form(Schema $schema): Schema

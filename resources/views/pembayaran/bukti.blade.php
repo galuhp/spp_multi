@@ -182,10 +182,17 @@
                     </div>
                     <div>
                         <h2 class="text-base sm:text-lg font-extrabold text-rose-700 uppercase tracking-wide">
-                            Bukti Pembayaran Tidak Valid
+                            {{ ($void ?? false) ? 'Pembayaran Telah Dibatalkan' : 'Bukti Pembayaran Tidak Valid' }}
                         </h2>
                         <p class="text-xs sm:text-sm text-zinc-600 mt-2 leading-relaxed">
-                            Maaf, kode transaksi <span class="font-mono font-bold text-zinc-900">{{ $kode }}</span> tidak ditemukan atau tanda tangan digital pada tautan QR Code tidak sesuai dengan data sistem sekolah.
+                            @if($void ?? false)
+                                Kode transaksi <span class="font-mono font-bold text-zinc-900">{{ $kode }}</span> tercatat di sistem, tetapi transaksinya telah di-void.
+                                @if(filled($alasan ?? null))
+                                    Alasan: <strong>{{ $alasan }}</strong>.
+                                @endif
+                            @else
+                                Maaf, kode transaksi <span class="font-mono font-bold text-zinc-900">{{ $kode }}</span> tidak ditemukan atau tanda tangan digital pada tautan QR Code tidak sesuai dengan data sistem sekolah.
+                            @endif
                         </p>
                     </div>
                     <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">

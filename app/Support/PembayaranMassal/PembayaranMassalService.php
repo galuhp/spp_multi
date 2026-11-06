@@ -9,6 +9,7 @@ use App\Models\PembayaranGabunganBaris;
 use App\Models\Siswa;
 use App\Support\Pembayaran\PembayaranService;
 use App\Support\Pembayaran\PembayaranTidakValidException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class PembayaranMassalService
@@ -184,78 +185,80 @@ class PembayaranMassalService
         $barisGagal = null;
 
         try {
-            DB::transaction(function () use ($gabungan, $userId): void {
-                /** @var PembayaranGabungan $terkunci */
-                $terkunci = PembayaranGabungan::query()->whereKey($gabungan->id)->lockForUpdate()->firstOrFail();
+            Cache::lock("pembayaran-gabungan:{$gabungan->id}", 30)->block(10, function () use ($gabungan, $userId): void {
+                DB::transaction(function () use ($gabungan, $userId): void {
+                    /** @var PembayaranGabungan $terkunci */
+                    $terkunci = PembayaranGabungan::query()->whereKey($gabungan->id)->lockForUpdate()->firstOrFail();
 
-                if ($terkunci->isPosted()) {
-                    return;
-                }
-
-                if (! $terkunci->isDraft()) {
-                    throw new PembayaranTidakValidException('Gabungan tidak dapat diposting pada status saat ini.');
-                }
-
-                $terkunci->update(['status' => PembayaranGabungan::STATUS_MEMPROSES]);
-
-                $totalBaris = (int) $terkunci->baris()->whereNull('void_at')->sum('jumlah');
-
-                if ($totalBaris !== (int) $terkunci->total_diterima) {
-                    throw new PembayaranTidakValidException('Total diterima berubah dan tidak sama dengan total baris.');
-                }
-
-                $daftarBaris = $terkunci->baris()
-                    ->whereNull('void_at')
-                    ->orderBy('id')
-                    ->get();
-
-                foreach ($daftarBaris as $baris) {
-                    $baris = PembayaranGabunganBaris::query()->whereKey($baris->id)->lockForUpdate()->firstOrFail();
-                    $siswa = Siswa::query()->findOrFail($baris->siswa_id);
-
-                    $validasi = $this->pembayaran->validasiBaris($siswa, (int) $baris->jumlah, $baris->alokasi);
-
-                    if ($validasi['status'] === 'error') {
-                        throw new PembayaranTidakValidException($validasi['pesan'] ?? 'Baris tidak valid.', $baris->id);
+                    if ($terkunci->isPosted()) {
+                        return;
                     }
 
-                    $pembayaran = $this->pembayaran->buatPembayaran(
-                        $siswa,
-                        (int) $baris->jumlah,
-                        $validasi['alokasi'],
-                        $terkunci->metode,
-                        $terkunci->tanggal->format('Y-m-d'),
-                        $terkunci->catatan,
-                        $userId,
-                        $terkunci,
-                        $baris,
-                    );
+                    if (! $terkunci->isDraft()) {
+                        throw new PembayaranTidakValidException('Gabungan tidak dapat diposting pada status saat ini.');
+                    }
 
-                    $baris->update([
-                        'alokasi' => $validasi['alokasi'],
-                        'status_validasi' => PembayaranGabunganBaris::STATUS_OK,
-                        'pesan' => null,
-                        'pembayaran_id' => $pembayaran[0]->id ?? null,
+                    $terkunci->update(['status' => PembayaranGabungan::STATUS_MEMPROSES]);
+
+                    $totalBaris = (int) $terkunci->baris()->whereNull('void_at')->sum('jumlah');
+
+                    if ($totalBaris !== (int) $terkunci->total_diterima) {
+                        throw new PembayaranTidakValidException('Total diterima berubah dan tidak sama dengan total baris.');
+                    }
+
+                    $daftarBaris = $terkunci->baris()
+                        ->whereNull('void_at')
+                        ->orderBy('id')
+                        ->get();
+
+                    foreach ($daftarBaris as $baris) {
+                        $baris = PembayaranGabunganBaris::query()->whereKey($baris->id)->lockForUpdate()->firstOrFail();
+                        $siswa = Siswa::query()->findOrFail($baris->siswa_id);
+
+                        $validasi = $this->pembayaran->validasiBaris($siswa, (int) $baris->jumlah, $baris->alokasi);
+
+                        if ($validasi['status'] === 'error') {
+                            throw new PembayaranTidakValidException($validasi['pesan'] ?? 'Baris tidak valid.', $baris->id);
+                        }
+
+                        $pembayaran = $this->pembayaran->buatPembayaran(
+                            $siswa,
+                            (int) $baris->jumlah,
+                            $validasi['alokasi'],
+                            $terkunci->metode,
+                            $terkunci->tanggal->format('Y-m-d'),
+                            $terkunci->catatan,
+                            $userId,
+                            $terkunci,
+                            $baris,
+                        );
+
+                        $baris->update([
+                            'alokasi' => $validasi['alokasi'],
+                            'status_validasi' => PembayaranGabunganBaris::STATUS_OK,
+                            'pesan' => null,
+                            'pembayaran_id' => $pembayaran[0]->id ?? null,
+                        ]);
+                    }
+
+                    $terkunci->update([
+                        'status' => PembayaranGabungan::STATUS_DIPOSTING,
+                        'diposting_oleh' => $userId,
+                        'diposting_at' => now(),
                     ]);
-                }
 
-                $terkunci->update([
-                    'status' => PembayaranGabungan::STATUS_DIPOSTING,
-                    'diposting_oleh' => $userId,
-                    'diposting_at' => now(),
-                ]);
-
-                LogAktivitas::catat(
-                    'pembayaran_gabungan.diposting',
-                    "Pembayaran gabungan {$terkunci->kode} diposting ({$daftarBaris->count()} siswa).",
-                    $terkunci,
-                    [
-                        'gabungan_id' => $terkunci->id,
-                        'kode' => $terkunci->kode,
-                        'jumlah_siswa' => $daftarBaris->count(),
-                        'total' => (int) $terkunci->total_diterima,
-                    ]
-                );
+                    LogAktivitas::catat(
+                        'pembayaran_gabungan.diposting',
+                        "Pembayaran gabungan {$terkunci->kode} diposting ({$daftarBaris->count()} siswa).",
+                        $terkunci,
+                        [
+                            'gabungan_id' => $terkunci->id,
+                            'kode' => $terkunci->kode,
+                            'jumlah_siswa' => $daftarBaris->count(),
+                            'total' => (int) $terkunci->total_diterima,
+                        ]
+                    );
+                });
             });
         } catch (PembayaranTidakValidException $exception) {
             $barisGagal = $exception->barisId;

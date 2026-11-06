@@ -2,11 +2,14 @@
 
 namespace App\Support\Pembayaran;
 
+use App\Models\LogAktivitas;
 use App\Models\Pembayaran;
 use App\Models\PembayaranGabungan;
 use App\Models\PembayaranGabunganBaris;
 use App\Models\Siswa;
 use App\Models\Spp;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class PembayaranService
 {
@@ -22,22 +25,30 @@ class PembayaranService
         $items = [];
         $tarif = $siswa->spp;
 
+        $siswa->loadMissing('kelas');
+
         if ($tarif) {
             if ($tarif->isBulanan()) {
                 $tahunMulai = Pembayaran::tahunMulaiTarif($tarif);
 
+                $dibayarPerBulan = Pembayaran::query()
+                    ->where('siswa_id', $siswa->id)
+                    ->where('spp_id', $tarif->id)
+                    ->whereNull('void_at')
+                    ->whereNotNull('bulan_dibayar')
+                    ->get(['bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
+                    ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar)
+                    ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
+
+                $nominal = (int) $tarif->nominal;
+
                 foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
                     $bulan = $periode['bulan'];
                     $tahun = $periode['tahun'];
+                    $dibayar = (int) ($dibayarPerBulan->get($bulan.'|'.$tahun) ?? 0);
+                    $sisa = max(0, $nominal - $dibayar);
 
-                    $sudah = Pembayaran::query()
-                        ->where('siswa_id', $siswa->id)
-                        ->where('spp_id', $tarif->id)
-                        ->where('bulan_dibayar', $bulan)
-                        ->whereNull('void_at')
-                        ->exists();
-
-                    if ($sudah) {
+                    if ($sisa <= 0) {
                         continue;
                     }
 
@@ -46,15 +57,17 @@ class PembayaranService
                         'spp_id' => $tarif->id,
                         'bulan' => $bulan,
                         'tahun' => $tahun,
-                        'nominal' => (int) $tarif->nominal,
-                        'sisa' => (int) $tarif->nominal,
+                        'nominal' => $nominal,
+                        'dibayar' => min($dibayar, $nominal),
+                        'sisa' => $sisa,
                         'label' => "SPP {$bulan} {$tahun}",
                         'tipe' => 'spp',
                     ];
                 }
             } else {
                 $dibayar = $this->totalDibayar($siswa, $tarif);
-                $sisa = max(0, (int) $tarif->nominal - $dibayar);
+                $nominal = (int) $tarif->nominal;
+                $sisa = max(0, $nominal - $dibayar);
 
                 if ($sisa > 0) {
                     $items[] = [
@@ -62,7 +75,8 @@ class PembayaranService
                         'spp_id' => $tarif->id,
                         'bulan' => null,
                         'tahun' => (int) $tarif->tahun,
-                        'nominal' => (int) $tarif->nominal,
+                        'nominal' => $nominal,
+                        'dibayar' => min($dibayar, $nominal),
                         'sisa' => $sisa,
                         'label' => $tarif->namaLengkap(),
                         'tipe' => 'non_spp',
@@ -73,19 +87,35 @@ class PembayaranService
 
         $tahunTarif = $tarif?->tahun;
         $tahunAjaran = $tarif?->tahun_ajaran;
+        $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+        $variasiTingkat = array_values(array_unique(array_filter([
+            $tingkat,
+            $tingkat ? (Spp::TINGKAT_LIST[$tingkat] ?? null) : null,
+        ])));
 
         $nonSpp = Spp::query()
             ->where('kategori', '!=', Spp::KATEGORI_SPP)
             ->when($tahunTarif || $tahunAjaran, function ($query) use ($tahunTarif, $tahunAjaran): void {
                 $query->where(function ($subquery) use ($tahunTarif, $tahunAjaran): void {
                     if ($tahunTarif) {
-                        $subquery->where('tahun', $tahunTarif);
+                        $subquery->whereIn('tahun', [$tahunTarif, $tahunTarif + 1]);
                     }
 
                     if ($tahunAjaran) {
-                        $subquery->orWhere('tahun_ajaran', $tahunAjaran);
+                        if ($tahunTarif) {
+                            $subquery->orWhere('tahun_ajaran', $tahunAjaran);
+                        } else {
+                            $subquery->where('tahun_ajaran', $tahunAjaran);
+                        }
                     }
                 });
+            })
+            ->where(function ($query) use ($variasiTingkat): void {
+                $query->whereNull('tingkat');
+
+                if ($variasiTingkat !== []) {
+                    $query->orWhereIn('tingkat', $variasiTingkat);
+                }
             })
             ->orderBy('id')
             ->get();
@@ -96,7 +126,8 @@ class PembayaranService
             }
 
             $dibayar = $this->totalDibayar($siswa, $tarifLain);
-            $sisa = max(0, (int) $tarifLain->nominal - $dibayar);
+            $nominal = (int) $tarifLain->nominal;
+            $sisa = max(0, $nominal - $dibayar);
 
             if ($sisa <= 0) {
                 continue;
@@ -107,7 +138,8 @@ class PembayaranService
                 'spp_id' => $tarifLain->id,
                 'bulan' => null,
                 'tahun' => (int) $tarifLain->tahun,
-                'nominal' => (int) $tarifLain->nominal,
+                'nominal' => $nominal,
+                'dibayar' => min($dibayar, $nominal),
                 'sisa' => $sisa,
                 'label' => $tarifLain->namaLengkap(),
                 'tipe' => 'non_spp',
@@ -276,35 +308,81 @@ class PembayaranService
         ?PembayaranGabungan $gabungan = null,
         ?PembayaranGabunganBaris $baris = null,
     ): array {
-        $siswa = Siswa::query()->whereKey($siswa->id)->lockForUpdate()->firstOrFail();
+        return Cache::lock("pembayaran-siswa:{$siswa->id}", 10)->block(5, function () use ($siswa, $jumlah, $alokasi, $metode, $tanggal, $catatan, $userId, $gabungan, $baris): array {
+            $siswa = Siswa::query()->whereKey($siswa->id)->lockForUpdate()->firstOrFail();
 
-        $validasi = $this->validasiBaris($siswa, $jumlah, $alokasi);
+            $validasi = $this->validasiBaris($siswa, $jumlah, $alokasi);
 
-        if ($validasi['status'] === 'error') {
-            throw new PembayaranTidakValidException($validasi['pesan'] ?? 'Pembayaran tidak valid.', $baris?->id);
-        }
+            if ($validasi['status'] === 'error') {
+                throw new PembayaranTidakValidException($validasi['pesan'] ?? 'Pembayaran tidak valid.', $baris?->id);
+            }
 
-        $kode = Pembayaran::generateKodeTransaksi();
-        $dibuat = [];
+            $kode = Pembayaran::generateKodeTransaksi();
+            $dibuat = [];
 
-        foreach ($validasi['alokasi'] as $item) {
-            $dibuat[] = Pembayaran::query()->create([
-                'kode_transaksi' => $kode,
-                'user_id' => $userId,
-                'siswa_id' => $siswa->id,
-                'spp_id' => $item['spp_id'],
-                'tgl_bayar' => $tanggal,
-                'bulan_dibayar' => $item['bulan'],
-                'tahun_dibayar' => $item['tahun'],
-                'jumlah_bayar' => $item['nominal'],
-                'metode_pembayaran' => $metode,
-                'catatan' => $catatan,
-                'gabungan_id' => $gabungan?->id,
-                'gabungan_baris_id' => $baris?->id,
-            ]);
-        }
+            foreach ($validasi['alokasi'] as $item) {
+                $dibuat[] = Pembayaran::query()->create([
+                    'kode_transaksi' => $kode,
+                    'user_id' => $userId,
+                    'siswa_id' => $siswa->id,
+                    'spp_id' => $item['spp_id'],
+                    'tgl_bayar' => $tanggal,
+                    'bulan_dibayar' => $item['bulan'],
+                    'tahun_dibayar' => $item['tahun'],
+                    'jumlah_bayar' => $item['nominal'],
+                    'metode_pembayaran' => $metode,
+                    'catatan' => $catatan,
+                    'gabungan_id' => $gabungan?->id,
+                    'gabungan_baris_id' => $baris?->id,
+                ]);
+            }
 
-        return $dibuat;
+            return $dibuat;
+        });
+    }
+
+    /**
+     * Void a single payment while preserving the receipt and audit trail.
+     */
+    public function voidPembayaran(Pembayaran $pembayaran, int $userId, string $alasan): Pembayaran
+    {
+        return Cache::lock("pembayaran-siswa:{$pembayaran->siswa_id}", 10)->block(5, function () use ($pembayaran, $userId, $alasan): Pembayaran {
+            return DB::transaction(function () use ($pembayaran, $userId, $alasan): Pembayaran {
+                $terkunci = Pembayaran::query()
+                    ->whereKey($pembayaran->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($terkunci->gabungan_baris_id !== null) {
+                    throw new \RuntimeException('Pembayaran gabungan harus di-void melalui menu History Pembayaran Gabungan.');
+                }
+
+                if ($terkunci->isVoid()) {
+                    return $terkunci;
+                }
+
+                $terkunci->update([
+                    'void_at' => now(),
+                    'void_oleh' => $userId,
+                    'void_alasan' => $alasan,
+                ]);
+
+                LogAktivitas::catat(
+                    'pembayaran.void',
+                    "Transaksi {$terkunci->kode_transaksi} dibatalkan. Alasan: {$alasan}",
+                    $terkunci,
+                    [
+                        'kode_transaksi' => $terkunci->kode_transaksi,
+                        'siswa_id' => $terkunci->siswa_id,
+                        'spp_id' => $terkunci->spp_id,
+                        'jumlah_bayar' => $terkunci->jumlah_bayar,
+                        'alasan' => $alasan,
+                    ]
+                );
+
+                return $terkunci;
+            });
+        });
     }
 
     /**

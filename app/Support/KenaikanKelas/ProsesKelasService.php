@@ -478,18 +478,32 @@ class ProsesKelasService
             return ['jumlah_bulan' => 0, 'nominal' => 0, 'bulan' => []];
         }
 
-        $tahun = (int) $tarif->tahun;
-        $dibayar = $siswa->pembayarans()
-            ->where('tahun_dibayar', $tahun)
-            ->whereNotNull('bulan_dibayar')
-            ->pluck('bulan_dibayar')
-            ->all();
+        $nominal = (int) $tarif->nominal;
+        $tahunMulai = Pembayaran::tahunMulaiTarif($tarif);
 
-        $tunggakan = array_values(array_diff(Pembayaran::TAHUN_AJARAN_BULAN_LIST, $dibayar));
+        $dibayarPerBulan = $siswa->pembayarans()
+            ->whereNull('void_at')
+            ->where('spp_id', $tarif->id)
+            ->whereNotNull('bulan_dibayar')
+            ->get(['bulan_dibayar', 'jumlah_bayar'])
+            ->groupBy('bulan_dibayar')
+            ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
+
+        $tunggakan = [];
+        $totalTunggakan = 0;
+
+        foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+            $sisa = max(0, $nominal - (int) ($dibayarPerBulan->get($periode['bulan']) ?? 0));
+
+            if ($sisa > 0) {
+                $tunggakan[] = $periode['bulan'];
+                $totalTunggakan += $sisa;
+            }
+        }
 
         return [
             'jumlah_bulan' => count($tunggakan),
-            'nominal' => count($tunggakan) * (int) $tarif->nominal,
+            'nominal' => $totalTunggakan,
             'bulan' => $tunggakan,
         ];
     }

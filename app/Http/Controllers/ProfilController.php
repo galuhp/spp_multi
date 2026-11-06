@@ -73,7 +73,7 @@ class ProfilController extends Controller
 
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'string', 'confirmed', Password::min(6)],
+            'password' => ['required', 'string', 'confirmed', Password::min(8)],
         ], [
             'current_password.required' => 'Kata sandi saat ini wajib diisi.',
             'current_password.current_password' => 'Kata sandi saat ini tidak sesuai.',

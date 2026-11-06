@@ -54,6 +54,7 @@ class TahunAjaransTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make()
+                    ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
                     ->disabled(fn (TahunAjaran $record): bool => $record->sedangDipakai())
                     ->tooltip(fn (TahunAjaran $record): ?string => $record->sedangDipakai()
                         ? 'Tidak dapat dihapus karena masih dipakai kelas atau riwayat kelas.'

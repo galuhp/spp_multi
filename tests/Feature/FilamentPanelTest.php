@@ -122,7 +122,7 @@ class FilamentPanelTest extends TestCase
             ->assertStatus(200);
     }
 
-    public function test_petugas_can_access_operational_and_master_data_but_not_user_management(): void
+    public function test_petugas_can_access_operational_but_not_master_data_or_user_management(): void
     {
         $petugas = User::factory()->create([
             'role' => UserRole::Petugas,
@@ -142,19 +142,19 @@ class FilamentPanelTest extends TestCase
 
         $this->actingAs($petugas)
             ->get('/admin/jurusans')
-            ->assertStatus(200);
+            ->assertStatus(403);
 
         $this->actingAs($petugas)
             ->get('/admin/kelas')
-            ->assertStatus(200);
+            ->assertStatus(403);
 
         $this->actingAs($petugas)
             ->get('/admin/spps')
-            ->assertStatus(200);
+            ->assertStatus(403);
 
         $this->actingAs($petugas)
             ->get('/admin/tahun-ajarans')
-            ->assertStatus(200);
+            ->assertStatus(403);
 
         $this->actingAs($petugas)
             ->get('/admin/users')

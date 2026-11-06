@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class PembayaranResource extends Resource
@@ -46,6 +47,16 @@ class PembayaranResource extends Resource
         return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
+
     /**
      * Keep the history menu inactive while the create form is open.
      *
@@ -58,7 +69,8 @@ class PembayaranResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()
+            ->with(['siswa.kelas.jurusan', 'spp', 'user']);
         $user = auth()->user();
 
         if ($user && $user->isSiswa() && $user->siswa) {

@@ -172,34 +172,52 @@ class TagihanSiswa extends Page
         $totalLunas = 0;
         $totalBelumLunas = 0;
 
+        $nominalSpp = (int) ($siswa->spp?->nominal ?? 0);
+
         foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
             $bulan = $periode['bulan'];
             $tahun = $periode['tahun'];
 
-            $pembayaran = $riwayatPembayaran->first(function ($p) use ($bulan, $siswa) {
-                return $p->spp_id === $siswa->spp_id && $p->bulan_dibayar === $bulan;
-            });
+            $bayarList = $riwayatPembayaran
+                ->where('spp_id', $siswa->spp_id)
+                ->where('bulan_dibayar', $bulan);
 
-            $lunas = $pembayaran !== null;
-            if ($lunas) {
-                $totalLunas += $pembayaran->jumlah_bayar;
-            } else {
-                $totalBelumLunas += ($siswa->spp?->nominal ?? 0);
-            }
+            $dibayar = (int) $bayarList->sum('jumlah_bayar');
+            $sisa = max(0, $nominalSpp - $dibayar);
+            $status = $dibayar <= 0 ? 'belum' : ($sisa > 0 ? 'sebagian' : 'lunas');
+
+            $totalLunas += min($dibayar, $nominalSpp);
+            $totalBelumLunas += $sisa;
 
             $bulanStatus[] = [
                 'bulan' => $bulan,
                 'tahun' => $tahun,
-                'nominal' => $siswa->spp?->nominal ?? 0,
-                'lunas' => $lunas,
-                'pembayaran' => $pembayaran,
+                'nominal' => $nominalSpp,
+                'dibayar' => min($dibayar, $nominalSpp),
+                'sisa' => $sisa,
+                'status' => $status,
+                'lunas' => $status === 'lunas',
+                'pembayaran' => $bayarList->sortByDesc('id')->first(),
             ];
         }
 
+        $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+        $variasiTingkat = array_values(array_unique(array_filter([
+            $tingkat,
+            $tingkat ? (Spp::TINGKAT_LIST[$tingkat] ?? null) : null,
+        ])));
+
         $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
             ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
-                $q->where('tahun', $tahunMulai)
+                $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
                     ->orWhere('tahun_ajaran', $activeTahunAjaran);
+            })
+            ->where(function ($q) use ($variasiTingkat): void {
+                $q->whereNull('tingkat');
+
+                if ($variasiTingkat !== []) {
+                    $q->orWhereIn('tingkat', $variasiTingkat);
+                }
             })
             ->get();
 

@@ -19,12 +19,23 @@ class BuktiPembayaranController extends Controller
         if ($pembayaran === null || ! $pembayaran->hasValidVerificationToken($token)) {
             return response()->view('pembayaran.bukti', [
                 'valid' => false,
+                'void' => false,
                 'kode' => $kode,
             ], 404);
         }
 
+        if ($pembayaran->isVoid()) {
+            return response()->view('pembayaran.bukti', [
+                'valid' => false,
+                'void' => true,
+                'kode' => $kode,
+                'alasan' => $pembayaran->void_alasan,
+            ], 410);
+        }
+
         return response()->view('pembayaran.bukti', [
             'valid' => true,
+            'void' => false,
             'pembayaran' => $pembayaran,
             'relatedPayments' => $pembayaran->relatedBatchPayments(),
         ]);

@@ -118,6 +118,10 @@
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-900 text-white">
                                 LUNAS
                             </span>
+                        @elseif($item['status'] === 'sebagian')
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                                SEBAGIAN
+                            </span>
                         @else
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white">
                                 BELUM
@@ -136,6 +140,20 @@
                                     Cetak Kuitansi
                                 </x-ui.button>
                             </div>
+                        @elseif($item['status'] === 'sebagian')
+                            <div class="text-[11px] text-emerald-700 mt-1">
+                                Dibayar: Rp {{ number_format($item['dibayar'], 0, ',', '.') }}
+                            </div>
+                            <div class="text-[11px] font-semibold text-rose-600 mt-1">
+                                Sisa: Rp {{ number_format($item['sisa'], 0, ',', '.') }}
+                            </div>
+                            @if($item['pembayaran'])
+                                <div class="mt-3">
+                                    <x-ui.button as="a" href="{{ route('portal.kuitansi', $item['pembayaran']->id) }}" target="_blank" variant="secondary" size="sm" class="w-full">
+                                        Cetak Kuitansi
+                                    </x-ui.button>
+                                </div>
+                            @endif
                         @else
                             <div class="text-[11px] text-rose-600 mt-1">
                                 Menunggu pembayaran

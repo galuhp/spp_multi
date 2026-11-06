@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\Pembayarans\Tables;
 
 use App\Models\Pembayaran;
+use App\Support\Pembayaran\PembayaranService;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -68,6 +68,12 @@ class PembayaransTable
                     ->label('Petugas')
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('void_at')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => $state ? 'Void' : 'Valid')
+                    ->color(fn ($state): string => $state ? 'danger' : 'success'),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -97,14 +103,33 @@ class PembayaransTable
                     ->url(fn (Pembayaran $record): string => route('pembayaran.cetak', $record->id))
                     ->openUrlInNewTab(),
 
-                DeleteAction::make()
-                    ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false),
-                ]),
+                Action::make('void')
+                    ->label('Void')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->outlined()
+                    ->visible(fn (Pembayaran $record): bool => $record->void_at === null
+                        && $record->gabungan_id === null
+                        && (auth()->user()?->isAdmin() ?? false))
+                    ->form([
+                        Textarea::make('alasan')
+                            ->label('Alasan void')
+                            ->required()
+                            ->maxLength(500),
+                    ])
+                    ->action(function (Pembayaran $record, array $data): void {
+                        app(PembayaranService::class)->voidPembayaran(
+                            $record,
+                            (int) auth()->id(),
+                            $data['alasan'],
+                        );
+
+                        Notification::make()
+                            ->title('Transaksi di-void')
+                            ->body('Riwayat dan nomor kuitansi tetap tersimpan.')
+                            ->success()
+                            ->send();
+                    }),
             ]);
     }
 }

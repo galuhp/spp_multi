@@ -62,7 +62,7 @@ Buka <http://localhost:8000>. Untuk mode pengembangan dengan hot reload: `compos
 | Petugas | `petugas` | `password` |
 | Siswa | `siswa` atau `0071234561` | `password` |
 
-> Ganti seluruh kata sandi sebelum digunakan di lingkungan produksi. Siswa yang dibuat lewat form memakai NISN sebagai username dan kata sandi awal.
+> Ganti seluruh kata sandi sebelum digunakan di lingkungan produksi. Siswa yang dibuat lewat form memakai NISN sebagai username dan kata sandi awal acak yang ditampilkan ke admin saat akun dibuat.
 
 ## Struktur Data
 

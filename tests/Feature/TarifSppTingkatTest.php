@@ -14,6 +14,7 @@ use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Support\KenaikanKelas\ProsesKelasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -114,6 +115,9 @@ class TarifSppTingkatTest extends TestCase
             'nisn' => '7123456777',
             'spp_id' => $this->tarif['10']->id,
         ]);
+
+        $user = User::query()->where('username', '7123456777')->firstOrFail();
+        $this->assertFalse(Hash::check('7123456777', $user->password));
     }
 
     public function test_tarif_spp_wajib_memilih_tingkat(): void

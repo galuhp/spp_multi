@@ -148,22 +148,29 @@ class PembayaranForm
                                     return [];
                                 }
 
-                                $siswa = Siswa::with('spp', 'pembayarans')->find($siswaId);
+                                $siswa = Siswa::with([
+                                    'spp',
+                                    'pembayarans' => fn ($query) => $query->whereNull('void_at'),
+                                ])->find($siswaId);
+
                                 if (! $siswa) {
                                     return [];
                                 }
 
                                 $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
-                                $paidMonths = $siswa->pembayarans
+                                $nominal = (int) ($siswa->spp?->nominal ?? 0);
+                                $dibayarPerBulan = $siswa->pembayarans
                                     ->where('spp_id', $siswa->spp_id)
                                     ->whereNotNull('bulan_dibayar')
-                                    ->pluck('bulan_dibayar')
-                                    ->all();
+                                    ->groupBy('bulan_dibayar')
+                                    ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
                                 $unpaid = [];
                                 foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
-                                    if (! in_array($periode['bulan'], $paidMonths, true)) {
-                                        $unpaid[$periode['bulan']] = "{$periode['bulan']} {$periode['tahun']} ({$siswa->spp?->formattedNominal()})";
+                                    $sisa = max(0, $nominal - (int) ($dibayarPerBulan->get($periode['bulan']) ?? 0));
+
+                                    if ($sisa > 0) {
+                                        $unpaid[$periode['bulan']] = "{$periode['bulan']} {$periode['tahun']} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
                                     }
                                 }
 
@@ -196,7 +203,12 @@ class PembayaranForm
                                     return [];
                                 }
 
-                                $siswa = Siswa::with(['spp', 'kelas', 'pembayarans'])->find($siswaId);
+                                $siswa = Siswa::with([
+                                    'spp',
+                                    'kelas',
+                                    'pembayarans' => fn ($query) => $query->whereNull('void_at'),
+                                ])->find($siswaId);
+
                                 if (! $siswa) {
                                     return [];
                                 }

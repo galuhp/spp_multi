@@ -55,6 +55,18 @@
             </div>
         </div>
 
+        @if($pembayaran->isVoid())
+            <div class="my-4 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-800">
+                <strong class="uppercase">Transaksi dibatalkan (VOID)</strong>
+                @if($pembayaran->void_at)
+                    &bull; {{ $pembayaran->void_at->translatedFormat('d F Y H:i') }}
+                @endif
+                @if($pembayaran->void_alasan)
+                    <div class="mt-1">Alasan: {{ $pembayaran->void_alasan }}</div>
+                @endif
+            </div>
+        @endif
+
         <!-- Student & Date Info -->
         <div class="grid grid-cols-2 gap-4 py-4 text-xs border-b border-zinc-200">
             <div class="space-y-1">

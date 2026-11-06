@@ -54,6 +54,21 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_attempts_are_rate_limited(): void
+    {
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->post('/login', [
+                'login' => 'tidak-ada',
+                'password' => 'password-salah',
+            ]);
+        }
+
+        $this->post('/login', [
+            'login' => 'tidak-ada',
+            'password' => 'password-salah',
+        ])->assertStatus(429);
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create([

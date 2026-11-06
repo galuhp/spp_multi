@@ -9,6 +9,7 @@ use App\Models\Spp;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreatePembayaran extends CreateRecord
@@ -59,6 +60,14 @@ class CreatePembayaran extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        return Cache::lock(
+            'pembayaran-siswa:'.((int) ($data['siswa_id'] ?? 0)),
+            10,
+        )->block(5, fn (): Model => $this->handleRecordCreationTerlindungi($data));
+    }
+
+    protected function handleRecordCreationTerlindungi(array $data): Model
+    {
         $pilihSpp = in_array('spp', (array) ($data['bayar_spp'] ?? []), true);
         $pilihNonSpp = in_array('non_spp', (array) ($data['bayar_non_spp'] ?? []), true);
 
@@ -66,7 +75,11 @@ class CreatePembayaran extends CreateRecord
             $this->tolak('Pilih minimal satu jenis pembayaran.');
         }
 
-        $siswa = Siswa::with(['spp', 'pembayarans'])->findOrFail($data['siswa_id']);
+        $siswa = Siswa::with([
+            'spp',
+            'pembayarans' => fn ($query) => $query->whereNull('void_at'),
+        ])->findOrFail($data['siswa_id']);
+
         $kodeTransaksi = Pembayaran::generateKodeTransaksi();
         $userId = auth()->id();
 
@@ -79,20 +92,36 @@ class CreatePembayaran extends CreateRecord
         $spp = $siswa->spp;
         $tahunMulai = Pembayaran::tahunMulaiTarif($spp);
         $nominalSpp = (int) ($spp?->nominal ?? 0);
+        $nominalPerBulan = [];
 
         if ($pilihSpp && ($spp === null || $nominalSpp <= 0)) {
             $this->tolak('Siswa belum memiliki tarif SPP yang valid.');
         }
 
         if ($pilihSpp) {
-            $sudahDibayar = $siswa->pembayarans
+            $dibayarPerBulan = $siswa->pembayarans
                 ->where('spp_id', $spp?->id)
-                ->whereIn('bulan_dibayar', $bulanList)
-                ->pluck('bulan_dibayar')
-                ->all();
+                ->whereNotNull('bulan_dibayar')
+                ->groupBy('bulan_dibayar')
+                ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
-            if ($sudahDibayar !== []) {
-                $this->tolak('Bulan SPP berikut sudah dibayar: '.implode(', ', $sudahDibayar).'.');
+            $bulanLunas = [];
+
+            foreach ($bulanList as $bulan) {
+                $dibayar = (int) ($dibayarPerBulan->get($bulan) ?? 0);
+                $sisa = max(0, $nominalSpp - $dibayar);
+
+                if ($sisa <= 0) {
+                    $bulanLunas[] = $bulan;
+
+                    continue;
+                }
+
+                $nominalPerBulan[$bulan] = $sisa;
+            }
+
+            if ($bulanLunas !== []) {
+                $this->tolak('Bulan SPP berikut sudah lunas: '.implode(', ', $bulanLunas).'.');
             }
         }
 
@@ -127,7 +156,7 @@ class CreatePembayaran extends CreateRecord
 
         $created = [];
 
-        DB::transaction(function () use ($pilihSpp, $bulanList, $kodeTransaksi, $userId, $siswa, $spp, $data, $tahunMulai, $nominalSpp, $validatedNonSpp, &$created) {
+        DB::transaction(function () use ($pilihSpp, $bulanList, $kodeTransaksi, $userId, $siswa, $spp, $data, $tahunMulai, $nominalSpp, $nominalPerBulan, $validatedNonSpp, &$created) {
             if ($pilihSpp) {
                 foreach ($bulanList as $bulan) {
                     $created[] = Pembayaran::create([
@@ -138,7 +167,7 @@ class CreatePembayaran extends CreateRecord
                         'tgl_bayar' => $data['tgl_bayar'],
                         'bulan_dibayar' => $bulan,
                         'tahun_dibayar' => Pembayaran::tahunUntukBulan($bulan, $tahunMulai),
-                        'jumlah_bayar' => $nominalSpp,
+                        'jumlah_bayar' => $nominalPerBulan[$bulan] ?? $nominalSpp,
                         'metode_pembayaran' => $data['metode_pembayaran'],
                         'catatan' => $data['catatan'] ?? null,
                     ]);

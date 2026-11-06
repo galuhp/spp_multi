@@ -56,6 +56,7 @@ class RiwayatPembayaranSiswa extends Page
 
         return $siswa->pembayarans()
             ->with(['spp', 'user'])
+            ->whereNull('void_at')
             ->latest('tgl_bayar')
             ->paginate(15);
     }

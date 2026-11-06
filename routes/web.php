@@ -55,7 +55,7 @@ Route::get('/bukti/{kode}/{token}', [BuktiPembayaranController::class, 'show'])
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', fn () => redirect('/admin/login'))->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.post');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');

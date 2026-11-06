@@ -224,6 +224,7 @@ class Pembayaran extends Model
         $query = static::query()
             ->with('spp')
             ->where('siswa_id', $this->siswa_id)
+            ->whereNull('void_at')
             ->whereDate('tgl_bayar', $this->tgl_bayar);
 
         if ($this->created_at !== null) {

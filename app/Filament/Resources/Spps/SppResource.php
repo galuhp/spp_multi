@@ -56,9 +56,7 @@ class SppResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        $user = auth()->user();
-
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
+        return auth()->user()?->isAdmin() ?? false;
     }
 
     public static function form(Schema $schema): Schema

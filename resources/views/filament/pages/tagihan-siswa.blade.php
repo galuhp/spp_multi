@@ -164,28 +164,38 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                     @foreach($tagihan['bulanStatus'] as $item)
-                        <div class="rounded-field border p-4 text-center {{ $item['lunas'] ? 'border-emerald-200 bg-emerald-50' : 'border-zinc-200 bg-zinc-50' }}">
+                        <div class="rounded-field border p-4 text-center {{ $item['lunas'] ? 'border-emerald-200 bg-emerald-50' : ($item['status'] === 'sebagian' ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50') }}">
                             <div class="text-sm font-bold text-zinc-900">{{ $item['bulan'] }}</div>
                             <div class="text-xs text-zinc-500">{{ $item['tahun'] }}</div>
                             <div class="mt-3">
                                 @if($item['lunas'])
                                     <x-ui.badge color="green">Lunas</x-ui.badge>
                                     <div class="mt-1 text-xs font-semibold text-emerald-700">
-                                        Rp {{ number_format($item['pembayaran']->jumlah_bayar, 0, ',', '.') }}
+                                        Rp {{ number_format($item['dibayar'], 0, ',', '.') }}
                                     </div>
-                                    @if($item['pembayaran'])
-                                        <div class="mt-2">
-                                            <x-filament::button tag="a" href="{{ route('pembayaran.cetak', $item['pembayaran']->id) }}"
-                                                target="_blank" color="gray" size="sm" outlined icon="heroicon-o-printer"
-                                                class="w-full whitespace-nowrap">
-                                                Cetak Kuitansi
-                                            </x-filament::button>
-                                        </div>
-                                    @endif
+                                @elseif($item['status'] === 'sebagian')
+                                    <x-ui.badge color="amber">Sebagian</x-ui.badge>
+                                    <div class="mt-1 text-xs text-emerald-700">
+                                        Dibayar Rp {{ number_format($item['dibayar'], 0, ',', '.') }}
+                                    </div>
+                                    <div class="text-xs font-semibold text-rose-700">
+                                        Sisa Rp {{ number_format($item['sisa'], 0, ',', '.') }}
+                                    </div>
                                 @else
                                     <x-ui.badge color="red">Belum Lunas</x-ui.badge>
                                     <div class="mt-1 text-xs text-zinc-500">
                                         Rp {{ number_format($item['nominal'], 0, ',', '.') }}
+                                    </div>
+                                @endif
+
+                                @if($item['pembayaran'])
+                                    <div class="mt-2">
+                                        <x-filament::button tag="a"
+                                            href="{{ auth()->user()?->isSiswa() ? route('portal.kuitansi', $item['pembayaran']->id) : route('pembayaran.cetak', $item['pembayaran']->id) }}"
+                                            target="_blank" color="gray" size="sm" outlined icon="heroicon-o-printer"
+                                            class="w-full whitespace-nowrap">
+                                            Cetak Kuitansi
+                                        </x-filament::button>
                                     </div>
                                 @endif
                             </div>

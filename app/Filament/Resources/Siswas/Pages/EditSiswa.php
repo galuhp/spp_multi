@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Siswas\Pages;
 use App\Filament\Resources\Siswas\SiswaResource;
 use App\Models\Kelas;
 use App\Models\Spp;
-use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditSiswa extends EditRecord
@@ -22,8 +21,6 @@ class EditSiswa extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            DeleteAction::make(),
-        ];
+        return [];
     }
 }

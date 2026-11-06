@@ -6,9 +6,6 @@ use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
 use App\Models\Siswa;
 use App\Support\KenaikanKelas\ProsesKelasService;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -110,12 +107,6 @@ class SiswasTable
                     ->color('success')
                     ->url(fn ($record): string => CreatePembayaran::getUrl(['siswa_id' => $record->id])),
                 EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 }

@@ -94,6 +94,18 @@ class ProfilUserTest extends TestCase
         ]);
     }
 
+    public function test_user_cannot_set_password_shorter_than_eight_characters(): void
+    {
+        $response = $this->actingAs($this->admin)->put(route('profil.password'), [
+            'current_password' => 'password123',
+            'password' => 'short',
+            'password_confirmation' => 'short',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertTrue(Hash::check('password123', $this->admin->fresh()->password));
+    }
+
     public function test_user_cannot_change_password_with_wrong_current_password(): void
     {
         $response = $this->actingAs($this->admin)->put(route('profil.password'), [

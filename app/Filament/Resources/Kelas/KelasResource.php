@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
@@ -56,9 +57,12 @@ class KelasResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        $user = auth()->user();
+        return auth()->user()?->isAdmin() ?? false;
+    }
 
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::MASTER_DATA);
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['tahunAjaran', 'jurusan']);
     }
 
     public static function form(Schema $schema): Schema

@@ -3,9 +3,7 @@
 namespace App\Filament\Resources\Users\Tables;
 
 use App\Models\User;
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -67,12 +65,8 @@ class UsersTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->visible(fn (User $record): bool => $record->id !== auth()->id()),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                    ->visible(fn (User $record): bool => $record->id !== auth()->id()
+                        && ! $record->pembayarans()->exists()),
             ]);
     }
 }

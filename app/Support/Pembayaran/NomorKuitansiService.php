@@ -3,6 +3,7 @@
 namespace App\Support\Pembayaran;
 
 use App\Models\NomorKuitansiUrutan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class NomorKuitansiService
@@ -14,31 +15,33 @@ class NomorKuitansiService
     {
         $tahun ??= (int) now()->year;
 
-        return DB::transaction(function () use ($tahun, $seri): string {
-            $baris = NomorKuitansiUrutan::query()
-                ->where('seri', $seri)
-                ->where('tahun', $tahun)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $baris) {
-                NomorKuitansiUrutan::query()->create([
-                    'seri' => $seri,
-                    'tahun' => $tahun,
-                    'nomor_terakhir' => 0,
-                ]);
-
+        return Cache::lock("nomor-kuitansi:{$seri}:{$tahun}", 10)->block(5, function () use ($tahun, $seri): string {
+            return DB::transaction(function () use ($tahun, $seri): string {
                 $baris = NomorKuitansiUrutan::query()
                     ->where('seri', $seri)
                     ->where('tahun', $tahun)
                     ->lockForUpdate()
-                    ->firstOrFail();
-            }
+                    ->first();
 
-            $nomor = $baris->nomor_terakhir + 1;
-            $baris->update(['nomor_terakhir' => $nomor]);
+                if (! $baris) {
+                    NomorKuitansiUrutan::query()->create([
+                        'seri' => $seri,
+                        'tahun' => $tahun,
+                        'nomor_terakhir' => 0,
+                    ]);
 
-            return sprintf('%s-%s-%04d', $seri, now()->format('Ymd'), $nomor);
+                    $baris = NomorKuitansiUrutan::query()
+                        ->where('seri', $seri)
+                        ->where('tahun', $tahun)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                }
+
+                $nomor = $baris->nomor_terakhir + 1;
+                $baris->update(['nomor_terakhir' => $nomor]);
+
+                return sprintf('%s-%s-%04d', $seri, now()->format('Ymd'), $nomor);
+            });
         });
     }
 }

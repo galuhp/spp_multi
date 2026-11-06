@@ -8,8 +8,10 @@ use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
+use App\Support\Pembayaran\PembayaranService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -26,6 +28,7 @@ class PembayaranController extends Controller
         $kategori = $request->query('kategori');
 
         $pembayarans = Pembayaran::with(['siswa.kelas', 'user', 'spp'])
+            ->whereNull('void_at')
             ->when($search, function ($query, $term) {
                 return $query->where('kode_transaksi', 'like', "%{$term}%")
                     ->orWhereHas('siswa', function ($q) use ($term) {
@@ -48,7 +51,9 @@ class PembayaranController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $totalPenerimaan = Pembayaran::when($tglAwal, fn ($q) => $q->whereDate('tgl_bayar', '>=', $tglAwal))
+        $totalPenerimaan = Pembayaran::query()
+            ->whereNull('void_at')
+            ->when($tglAwal, fn ($q) => $q->whereDate('tgl_bayar', '>=', $tglAwal))
             ->when($tglAkhir, fn ($q) => $q->whereDate('tgl_bayar', '<=', $tglAkhir))
             ->when($kategori, fn ($q) => $q->whereHas('spp', fn ($sq) => $sq->where('kategori', $kategori)))
             ->sum('jumlah_bayar');
@@ -84,7 +89,11 @@ class PembayaranController extends Controller
         $tunggakanTahunLalu = 0;
 
         if ($siswaId) {
-            $selectedSiswa = Siswa::with(['kelas.jurusan', 'spp', 'pembayarans.spp'])->find($siswaId);
+            $selectedSiswa = Siswa::with([
+                'kelas.jurusan',
+                'spp',
+                'pembayarans' => fn ($query) => $query->whereNull('void_at')->with('spp'),
+            ])->find($siswaId);
 
             if ($selectedSiswa) {
                 $kelasId = $selectedSiswa->kelas_id;
@@ -150,7 +159,12 @@ class PembayaranController extends Controller
         $siswaKelas = collect();
 
         if ($kelasId) {
-            $siswaKelas = Siswa::with(['spp', 'pembayarans:id,siswa_id,spp_id,bulan_dibayar,tahun_dibayar'])
+            $siswaKelas = Siswa::with([
+                'spp',
+                'pembayarans' => fn ($query) => $query
+                    ->select(['id', 'siswa_id', 'spp_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
+                    ->whereNull('void_at'),
+            ])
                 ->where('kelas_id', $kelasId)
                 ->when(! $sertakanArsip, fn ($query) => $query->where('is_archived', false))
                 ->orderBy('nama')
@@ -208,6 +222,14 @@ class PembayaranController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        return Cache::lock(
+            'pembayaran-siswa:'.((int) $request->input('siswa_id', 0)),
+            10,
+        )->block(5, fn (): RedirectResponse => $this->storeTerlindungi($request));
+    }
+
+    protected function storeTerlindungi(Request $request): RedirectResponse
+    {
         $jenisTransaksi = $request->input('jenis_transaksi', 'spp');
 
         // Handle Non-SPP payment (Uang Gedung, Uang Seragam, Biaya Praktik, etc.)
@@ -233,6 +255,7 @@ class PembayaranController extends Controller
 
             $sudahDibayar = (int) Pembayaran::where('siswa_id', $siswa->id)
                 ->where('spp_id', $tarif->id)
+                ->whereNull('void_at')
                 ->sum('jumlah_bayar');
 
             $sisa = max(0, $tarif->nominal - $sudahDibayar);
@@ -301,15 +324,16 @@ class PembayaranController extends Controller
             foreach ($validated['bulan_dibayar'] as $bulan) {
                 $tahun = Pembayaran::tahunUntukBulan($bulan, $tahunMulai);
 
-                // Check if already paid under the same tariff.
-                $exists = Pembayaran::where('siswa_id', $siswa->id)
+                $dibayar = (int) Pembayaran::where('siswa_id', $siswa->id)
                     ->where('spp_id', $siswa->spp_id)
                     ->where('bulan_dibayar', $bulan)
                     ->whereNull('void_at')
-                    ->exists();
+                    ->sum('jumlah_bayar');
 
-                if ($exists) {
-                    continue; // Skip if already paid
+                $sisa = max(0, $nominalPerBulan - $dibayar);
+
+                if ($sisa <= 0) {
+                    continue;
                 }
 
                 $pembayaran = Pembayaran::create([
@@ -320,7 +344,7 @@ class PembayaranController extends Controller
                     'tgl_bayar' => $validated['tgl_bayar'],
                     'bulan_dibayar' => $bulan,
                     'tahun_dibayar' => $tahun,
-                    'jumlah_bayar' => $nominalPerBulan,
+                    'jumlah_bayar' => $sisa,
                     'metode_pembayaran' => $validated['metode_pembayaran'],
                     'catatan' => $validated['catatan'] ?? ('Pembayaran SPP Bulan '.$bulan.' '.$tahun),
                 ]);
@@ -368,21 +392,18 @@ class PembayaranController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Void a payment instead of deleting its financial record.
      */
-    public function destroy(Pembayaran $pembayaran): RedirectResponse
+    public function destroy(Request $request, Pembayaran $pembayaran): RedirectResponse
     {
-        $pembayaran->loadMissing('siswa');
+        $alasan = trim((string) $request->input('alasan', '')) ?: 'Dibatalkan oleh administrator.';
 
-        LogAktivitas::catat(
-            'pembayaran.dihapus',
-            "Transaksi {$pembayaran->kode_transaksi} ({$pembayaran->bulan_dibayar} {$pembayaran->tahun_dibayar}, ".($pembayaran->siswa?->nama ?? 'siswa tidak diketahui').') dihapus',
-            $pembayaran,
-            $pembayaran->only(['kode_transaksi', 'siswa_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar', 'metode_pembayaran', 'tgl_bayar', 'user_id'])
-        );
+        try {
+            app(PembayaranService::class)->voidPembayaran($pembayaran, (int) auth()->id(), $alasan);
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
 
-        $pembayaran->delete();
-
-        return redirect()->route('pembayaran.index')->with('success', 'Transaksi pembayaran berhasil dihapus.');
+        return redirect()->route('pembayaran.index')->with('success', 'Transaksi pembayaran berhasil di-void. Riwayat dan nomor kuitansi tetap tersimpan.');
     }
 }

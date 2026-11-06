@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class PembayaranGabunganResource extends Resource
@@ -56,6 +57,13 @@ class PembayaranGabunganResource extends Resource
             static::getRouteBaseName().'.index',
             static::getRouteBaseName().'.edit',
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with('pembuat')
+            ->withCount('baris');
     }
 
     public static function form(Schema $schema): Schema

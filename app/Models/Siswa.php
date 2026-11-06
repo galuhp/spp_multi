@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use RuntimeException;
 
 #[Fillable([
     'user_id',
@@ -33,6 +34,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Siswa extends Model
 {
     use HasFactory;
+
+    /**
+     * Prevent deleting a student that still owns payment history.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Siswa $siswa): void {
+            if ($siswa->pembayarans()->exists()) {
+                throw new RuntimeException('Siswa dengan riwayat pembayaran tidak dapat dihapus. Arsipkan data siswa.');
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -148,14 +161,21 @@ class Siswa extends Model
     }
 
     /**
-     * Check if a specific month and year has been paid.
+     * Check if a specific month and year has been fully paid.
      */
     public function sudahBayar(string $bulan, int $tahun): bool
     {
-        return $this->pembayarans()
+        $nominal = (int) ($this->spp?->nominal ?? 0);
+
+        if ($nominal <= 0) {
+            return false;
+        }
+
+        return (int) $this->pembayarans()
             ->whereNull('void_at')
+            ->where('spp_id', $this->spp_id)
             ->where('bulan_dibayar', $bulan)
             ->where('tahun_dibayar', $tahun)
-            ->exists();
+            ->sum('jumlah_bayar') >= $nominal;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\Kelas;
+use App\Models\LogAktivitas;
 use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Spp;
@@ -11,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SiswaController extends Controller
@@ -85,11 +87,15 @@ class SiswaController extends Controller
         ]);
 
         $userId = null;
+        $kataSandiAwal = null;
+
         if ($request->boolean('create_user_account')) {
+            $kataSandiAwal = Str::password(12);
+
             $user = User::create([
                 'name' => $validated['nama'],
                 'username' => $validated['nisn'],
-                'password' => Hash::make($validated['nisn']), // default password is NISN
+                'password' => Hash::make($kataSandiAwal),
                 'role' => UserRole::Siswa,
             ]);
             $userId = $user->id;
@@ -103,7 +109,13 @@ class SiswaController extends Controller
 
         Siswa::create($validated);
 
-        return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil ditambahkan.');
+        $pesan = 'Data siswa berhasil ditambahkan.';
+
+        if ($kataSandiAwal !== null) {
+            $pesan .= " Akun portal dibuat dengan username {$validated['nisn']} dan kata sandi awal {$kataSandiAwal}. Minta siswa segera mengganti kata sandi.";
+        }
+
+        return redirect()->route('siswa.index')->with('success', $pesan);
     }
 
     /**
@@ -115,6 +127,7 @@ class SiswaController extends Controller
 
         $riwayatPembayaran = $siswa->pembayarans()
             ->with(['user', 'spp'])
+            ->whereNull('void_at')
             ->latest('tgl_bayar')
             ->get();
 
@@ -219,20 +232,26 @@ class SiswaController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Archive the specified student instead of deleting financial history.
      */
     public function destroy(Siswa $siswa): RedirectResponse
     {
-        if ($siswa->pembayarans()->exists()) {
-            return back()->with('error', 'Siswa tidak dapat dihapus karena sudah memiliki riwayat transaksi pembayaran SPP.');
+        if ($siswa->isArchived()) {
+            return back()->with('error', 'Siswa sudah berada di arsip.');
         }
 
-        if ($siswa->user) {
-            $siswa->user->delete();
-        }
+        $siswa->update([
+            'is_archived' => true,
+            'archived_at' => now(),
+        ]);
 
-        $siswa->delete();
+        LogAktivitas::catat(
+            'siswa.diarsipkan',
+            "Siswa {$siswa->nama} dipindahkan ke arsip.",
+            $siswa,
+            ['alasan' => 'Tindakan hapus data dialihkan menjadi arsip.']
+        );
 
-        return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil dihapus.');
+        return redirect()->route('siswa.index')->with('success', 'Data siswa dipindahkan ke arsip. Riwayat pembayaran tetap tersimpan.');
     }
 }

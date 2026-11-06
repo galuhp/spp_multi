@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Pembayaran;
+use App\Models\Siswa;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -23,13 +24,21 @@ class LatestPembayaranWidget extends TableWidget
         return $table
             ->heading('Transaksi Pembayaran Terbaru')
             ->query(function (): Builder {
-                $query = Pembayaran::query()->with(['siswa.kelas', 'user', 'spp'])->latest('id')->limit(8);
+                $query = Pembayaran::query()
+                    ->with(['siswa.kelas', 'user', 'spp'])
+                    ->whereNull('void_at')
+                    ->latest('id')
+                    ->limit(8);
 
                 if (auth()->user()?->isSiswa()) {
-                    $siswa = auth()->user()->siswa;
-                    if ($siswa) {
-                        $query->where('siswa_id', $siswa->id);
-                    }
+                    $siswa = auth()->user()->siswa
+                        ?? Siswa::query()
+                            ->where('nisn', auth()->user()->username)
+                            ->first();
+
+                    $siswa
+                        ? $query->where('siswa_id', $siswa->id)
+                        : $query->whereRaw('0 = 1');
                 }
 
                 return $query;
@@ -77,7 +86,9 @@ class LatestPembayaranWidget extends TableWidget
                     ->outlined()
                     ->size('sm')
                     ->button()
-                    ->url(fn (Pembayaran $record): string => route('pembayaran.cetak', $record->id))
+                    ->url(fn (Pembayaran $record): string => auth()->user()?->isSiswa()
+                        ? route('portal.kuitansi', $record->id)
+                        : route('pembayaran.cetak', $record->id))
                     ->openUrlInNewTab(),
             ]);
     }

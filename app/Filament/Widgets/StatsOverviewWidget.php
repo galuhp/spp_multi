@@ -21,10 +21,19 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
         if ($user?->isSiswa()) {
             $siswa = $user->siswa ?? Siswa::where('nisn', $user->username)->first();
             $totalDibayar = $siswa ? $siswa->totalDibayar() : 0;
-            $bulanLunasCount = $siswa ? $siswa->pembayarans()
-                ->whereHas('spp', fn ($q) => $q->where('kategori', Spp::KATEGORI_SPP))
-                ->distinct('bulan_dibayar')
-                ->count('bulan_dibayar') : 0;
+            $nominalSpp = (int) ($siswa?->spp?->nominal ?? 0);
+            $bulanLunasCount = 0;
+
+            if ($siswa && $nominalSpp > 0) {
+                $bulanLunasCount = $siswa->pembayarans()
+                    ->whereNull('void_at')
+                    ->where('spp_id', $siswa->spp_id)
+                    ->whereNotNull('bulan_dibayar')
+                    ->get()
+                    ->groupBy('bulan_dibayar')
+                    ->filter(fn ($rows): bool => (int) $rows->sum('jumlah_bayar') >= $nominalSpp)
+                    ->count();
+            }
 
             return [
                 Stat::make('Total Pembayaran Saya', 'Rp '.number_format($totalDibayar, 0, ',', '.'))
@@ -45,11 +54,11 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
         $today = Carbon::today();
         $startOfMonth = Carbon::now()->startOfMonth();
 
-        $transaksiHariIni = Pembayaran::whereDate('tgl_bayar', $today)->count();
-        $nominalHariIni = (int) Pembayaran::whereDate('tgl_bayar', $today)->sum('jumlah_bayar');
+        $transaksiHariIni = Pembayaran::query()->whereNull('void_at')->whereDate('tgl_bayar', $today)->count();
+        $nominalHariIni = (int) Pembayaran::query()->whereNull('void_at')->whereDate('tgl_bayar', $today)->sum('jumlah_bayar');
 
-        $nominalBulanIni = (int) Pembayaran::where('tgl_bayar', '>=', $startOfMonth)->sum('jumlah_bayar');
-        $transaksiBulanIni = Pembayaran::where('tgl_bayar', '>=', $startOfMonth)->count();
+        $nominalBulanIni = (int) Pembayaran::query()->whereNull('void_at')->where('tgl_bayar', '>=', $startOfMonth)->sum('jumlah_bayar');
+        $transaksiBulanIni = Pembayaran::query()->whereNull('void_at')->where('tgl_bayar', '>=', $startOfMonth)->count();
 
         $totalSiswa = Siswa::count();
         $totalTarif = Spp::count();

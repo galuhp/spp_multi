@@ -26,6 +26,7 @@ class UserForm
                 TextInput::make('email')
                     ->label('Alamat Email')
                     ->email()
+                    ->unique(ignoreRecord: true)
                     ->maxLength(100),
 
                 Select::make('role')
@@ -42,9 +43,11 @@ class UserForm
                     ->label('Kata Sandi')
                     ->password()
                     ->revealable()
+                    ->minLength(8)
+                    ->maxLength(255)
                     ->dehydrated(fn (?string $state): bool => filled($state))
                     ->required(fn (string $operation): bool => $operation === 'create')
-                    ->helperText('Kosongkan jika tidak ingin mengubah kata sandi.'),
+                    ->helperText('Minimal 8 karakter. Kosongkan jika tidak ingin mengubah kata sandi.'),
             ]);
     }
 }
