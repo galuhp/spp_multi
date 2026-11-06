@@ -6,6 +6,8 @@ use App\Models\LogAktivitas;
 use App\Models\ProfilSekolah;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfilSekolahController extends Controller
@@ -26,6 +28,8 @@ class ProfilSekolahController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'app_name' => ['nullable', 'string', 'max:100'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
             'nama_sekolah' => ['required', 'string', 'max:150'],
             'npsn' => ['nullable', 'string', 'max:30'],
             'jenjang' => ['nullable', 'string', 'max:20'],
@@ -46,8 +50,17 @@ class ProfilSekolahController extends Controller
 
         $sekolah = ProfilSekolah::current();
         $sebelum = $sekolah->only(array_keys($validated));
+        $data = Arr::except($validated, ['logo']);
 
-        $sekolah->update($validated);
+        if ($request->hasFile('logo')) {
+            if ($sekolah->logo) {
+                Storage::disk('public')->delete($sekolah->logo);
+            }
+
+            $data['logo'] = $request->file('logo')->store('sekolah', 'public');
+        }
+
+        $sekolah->update($data);
         ProfilSekolah::clearCache();
 
         LogAktivitas::catat(
@@ -56,7 +69,7 @@ class ProfilSekolahController extends Controller
             $sekolah,
             [
                 'sebelum' => $sebelum,
-                'sesudah' => $validated,
+                'sesudah' => $data,
             ]
         );
 

@@ -21,7 +21,7 @@
         <div class="rounded-xl border border-zinc-200 bg-white p-5">
             <h3 class="text-base font-semibold text-zinc-900">Pilih Tahun Ajaran & Kelas Asal</h3>
             <p class="mt-0.5 text-xs text-zinc-500">
-                Tahun ajaran tujuan harus sudah memiliki rombel. Siswa yang tidak naik tetap dipilihkan kelas di tingkat yang sama.
+                Tahun ajaran tujuan harus berbeda dari tahun ajaran asal dan sudah memiliki rombel. Siswa yang tidak naik tetap dipilihkan kelas di tingkat yang sama.
             </p>
 
             <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -41,7 +41,7 @@
                     <select wire:model.live="tahun_ajaran_tujuan_id"
                         class="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
                         <option value="">Pilih tahun ajaran</option>
-                        @foreach ($this->tahunAjaranOptions as $id => $nama)
+                        @foreach ($this->tahunAjaranTujuanOptions as $id => $nama)
                             <option value="{{ $id }}">{{ $nama }}</option>
                         @endforeach
                     </select>
@@ -125,17 +125,15 @@
 
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     @if (auth()->user()?->isStaff())
-                        <button type="button" wire:click="pratinjau"
-                            class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                        <x-filament::button type="button" color="gray" size="sm" wire:click="pratinjau">
                             Pratinjau
-                        </button>
+                        </x-filament::button>
 
                         @if ($pratinjau)
-                            <button type="button" wire:click="eksekusi"
-                                wire:confirm="Simpan kenaikan kelas untuk {{ $jumlahNaik }} siswa naik dan {{ $jumlahTinggal }} siswa tinggal?"
-                                class="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800">
+                            <x-filament::button type="button" size="sm" wire:click="eksekusi"
+                                wire:confirm="Simpan kenaikan kelas untuk {{ $jumlahNaik }} siswa naik dan {{ $jumlahTinggal }} siswa tinggal?">
                                 Simpan Kenaikan Kelas
-                            </button>
+                            </x-filament::button>
                         @endif
                     @else
                         <p class="text-xs text-zinc-500">Hanya staf yang dapat menyimpan proses kenaikan kelas.</p>
@@ -200,11 +198,11 @@
                                 <td class="px-3 py-2 text-xs text-zinc-500">{{ $batch->created_at?->format('d/m/Y H:i') }}</td>
                                 <td class="px-3 py-2">
                                     @if (auth()->user()?->isStaff() && $service->bisaDibatalkan($batch))
-                                        <button type="button" wire:click="batalkan({{ $batch->id }})"
-                                            wire:confirm="Batalkan batch #{{ $batch->id }}? Riwayat kelas baru akan dihapus dan status lama dipulihkan."
-                                            class="rounded-lg border border-rose-300 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50">
+                                        <x-filament::button type="button" color="danger" size="sm" outlined
+                                            wire:click="batalkan({{ $batch->id }})"
+                                            wire:confirm="Batalkan batch #{{ $batch->id }}? Riwayat kelas baru akan dihapus dan status lama dipulihkan.">
                                             Batalkan
-                                        </button>
+                                        </x-filament::button>
                                     @else
                                         <span class="text-xs text-zinc-400">-</span>
                                     @endif

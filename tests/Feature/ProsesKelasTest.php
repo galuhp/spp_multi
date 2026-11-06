@@ -251,6 +251,27 @@ class ProsesKelasTest extends TestCase
         $this->get(KelulusanSiswa::getUrl())->assertOk();
     }
 
+    public function test_tahun_ajaran_tujuan_tidak_boleh_sama_dengan_tahun_ajaran_asal(): void
+    {
+        Livewire::test(KenaikanKelas::class)
+            ->set('tahun_ajaran_asal_id', $this->asal->id)
+            ->assertSet('tahun_ajaran_tujuan_id', $this->tujuan->id)
+            ->set('tahun_ajaran_tujuan_id', $this->asal->id)
+            ->assertSet('tahun_ajaran_tujuan_id', null)
+            ->assertSet('galat', 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.');
+    }
+
+    public function test_opsi_tahun_ajaran_tujuan_tidak_memuat_tahun_ajaran_asal(): void
+    {
+        $component = Livewire::test(KenaikanKelas::class)
+            ->set('tahun_ajaran_asal_id', $this->asal->id);
+
+        $options = $component->instance()->getTahunAjaranTujuanOptionsProperty();
+
+        $this->assertArrayNotHasKey($this->asal->id, $options);
+        $this->assertArrayHasKey($this->tujuan->id, $options);
+    }
+
     public function test_tagihan_siswa_mendukung_pencarian_nama_dan_filter_kelas(): void
     {
         $kelas = $this->buatKelas('12', $this->asal, 'XII RPL 1');

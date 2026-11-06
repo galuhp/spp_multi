@@ -107,6 +107,7 @@ class EntriPembayaranKasir extends Page
 
         $this->tingkat = $tingkat;
         $this->cari = '';
+        $this->dispatch('focus-cari');
     }
 
     public function getSiswaProperty(): ?Siswa

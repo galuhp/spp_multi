@@ -88,9 +88,12 @@ class PembayaransTable
             ])
             ->recordActions([
                 Action::make('cetak_kuitansi')
-                    ->label('Cetak')
+                    ->label('Cetak Kuitansi')
                     ->icon('heroicon-o-printer')
-                    ->color('info')
+                    ->color('gray')
+                    ->outlined()
+                    ->size('sm')
+                    ->button()
                     ->url(fn (Pembayaran $record): string => route('pembayaran.cetak', $record->id))
                     ->openUrlInNewTab(),
 

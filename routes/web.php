@@ -115,6 +115,9 @@ Route::middleware('auth')->group(function () {
             return redirect($query ? $url.'?'.$query : $url);
         })->name('laporan.index');
         Route::get('/laporan/cetak', [LaporanController::class, 'cetak'])->name('laporan.cetak');
+        Route::get('/laporan/tunggakan/cetak', [LaporanController::class, 'cetakTunggakan'])->name('laporan.tunggakan.cetak');
+        Route::get('/laporan/potensi/cetak', [LaporanController::class, 'cetakPotensi'])->name('laporan.potensi.cetak');
+        Route::get('/laporan/kartu/cetak', [LaporanController::class, 'cetakKartu'])->name('laporan.kartu.cetak');
     });
 
     // Admin Only Routes

@@ -18,13 +18,13 @@ class LaporanPembayaran extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentChartBar;
 
-    protected static UnitEnum|string|null $navigationGroup = 'Transaksi SPP';
+    protected static UnitEnum|string|null $navigationGroup = 'Laporan';
 
     protected static ?string $navigationLabel = 'Laporan Pembayaran';
 
     protected static ?string $title = 'Laporan & Rekapitulasi Pembayaran';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.laporan-pembayaran';
 
@@ -42,7 +42,7 @@ class LaporanPembayaran extends Page
     {
         $user = auth()->user();
 
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::LAPORAN);
     }
 
     public function mount(): void

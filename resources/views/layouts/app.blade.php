@@ -1,9 +1,11 @@
+@php($profilAplikasi = \App\Models\ProfilSekolah::current())
 <!DOCTYPE html>
 <html lang="id" class="h-full bg-zinc-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Sistem Pembayaran SPP') - E-SPP</title>
+    <title>@yield('title', 'Sistem Pembayaran SPP') - {{ $profilAplikasi->appName() }}</title>
+    @include('partials.app-icon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @media print {

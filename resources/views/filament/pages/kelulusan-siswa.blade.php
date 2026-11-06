@@ -116,17 +116,15 @@
 
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     @if (auth()->user()?->isStaff())
-                        <button type="button" wire:click="pratinjau"
-                            class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                        <x-filament::button type="button" color="gray" size="sm" wire:click="pratinjau">
                             Pratinjau
-                        </button>
+                        </x-filament::button>
 
                         @if ($pratinjau)
-                            <button type="button" wire:click="eksekusi"
-                                wire:confirm="Luluskan {{ $jumlahPilih }} siswa dan arsipkan? Total tunggakan Rp {{ number_format($totalTunggakan, 0, ',', '.') }} tetap tercatat."
-                                class="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800">
+                            <x-filament::button type="button" size="sm" wire:click="eksekusi"
+                                wire:confirm="Luluskan {{ $jumlahPilih }} siswa dan arsipkan? Total tunggakan Rp {{ number_format($totalTunggakan, 0, ',', '.') }} tetap tercatat.">
                                 Simpan Kelulusan
-                            </button>
+                            </x-filament::button>
                         @endif
                     @else
                         <p class="text-xs text-zinc-500">Hanya staf yang dapat menyimpan kelulusan.</p>

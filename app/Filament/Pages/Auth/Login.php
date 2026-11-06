@@ -5,6 +5,7 @@ namespace App\Filament\Pages\Auth;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
+use Illuminate\Validation\ValidationException;
 use SensitiveParameter;
 
 class Login extends BaseLogin
@@ -34,5 +35,15 @@ class Login extends BaseLogin
             'username' => $data['username'],
             'password' => $data['password'],
         ];
+    }
+
+    /**
+     * Attach the failed login message to the username field.
+     */
+    protected function throwFailureValidationException(): never
+    {
+        throw ValidationException::withMessages([
+            'data.username' => 'Username atau kata sandi tidak sesuai.',
+        ]);
     }
 }

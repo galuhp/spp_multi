@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rekap Gabungan {{ $gabungan->kode }}</title>
+    @include('partials.app-icon')
     @vite(['resources/css/app.css'])
     <style>
         @media print {
@@ -18,17 +19,22 @@
         <a href="{{ route('filament.admin.resources.pembayaran-gabungans.edit', $gabungan) }}" class="text-xs font-semibold text-zinc-600 hover:text-zinc-900">
             &larr; Kembali ke Gabungan
         </a>
-        <button onclick="window.print()" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer">
+        <x-print-button onclick="window.print()">
             Cetak Rekap
-        </button>
+        </x-print-button>
     </div>
 
     <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-zinc-200">
         <div class="flex items-start justify-between border-b-2 border-black pb-4">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-black text-2xl uppercase">
-                    {{ substr($sekolah->nama_sekolah, 0, 1) }}
-                </div>
+                @if ($sekolah->logoUrl())
+                    <img src="{{ $sekolah->logoUrl() }}" alt="Logo {{ $sekolah->nama_sekolah }}"
+                        class="w-12 h-12 shrink-0 rounded-xl border border-zinc-200 bg-white object-contain p-1">
+                @else
+                    <div class="w-12 h-12 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-black text-2xl uppercase">
+                        {{ substr($sekolah->nama_sekolah, 0, 1) }}
+                    </div>
+                @endif
                 <div>
                     <h1 class="text-base font-black tracking-wide uppercase">{{ $sekolah->nama_sekolah }}</h1>
                     <p class="text-xs text-zinc-600">{{ $sekolah->alamatLengkap() }}</p>

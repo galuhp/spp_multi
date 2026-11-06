@@ -1,10 +1,16 @@
+@php($profilSekolah = \App\Models\ProfilSekolah::current())
 <div class="p-5 flex items-center justify-between gap-3 border-b border-zinc-200 bg-white">
     <div class="flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-md shrink-0">
-            S
-        </div>
+        @if ($profilSekolah->logoUrl())
+            <img src="{{ $profilSekolah->logoUrl() }}" alt="Logo {{ $profilSekolah->nama_sekolah }}"
+                class="w-10 h-10 rounded-xl border border-zinc-200 bg-white object-contain p-1 shadow-sm shrink-0">
+        @else
+            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-md shrink-0">
+                S
+            </div>
+        @endif
         <div class="min-w-0">
-            <h1 class="font-bold text-zinc-900 text-base tracking-wide truncate">E-SPP SEKOLAH</h1>
+            <h1 class="font-bold text-zinc-900 text-base tracking-wide truncate">{{ $profilSekolah->appName() }}</h1>
             <p class="text-xs text-zinc-500 truncate">Sistem Manajemen Pembayaran</p>
         </div>
     </div>

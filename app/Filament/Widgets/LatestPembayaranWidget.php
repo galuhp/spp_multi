@@ -71,8 +71,12 @@ class LatestPembayaranWidget extends TableWidget
             ])
             ->recordActions([
                 Action::make('cetak')
-                    ->label('Kwitansi')
+                    ->label('Cetak Kuitansi')
                     ->icon(Heroicon::OutlinedPrinter)
+                    ->color('gray')
+                    ->outlined()
+                    ->size('sm')
+                    ->button()
                     ->url(fn (Pembayaran $record): string => route('pembayaran.cetak', $record->id))
                     ->openUrlInNewTab(),
             ]);

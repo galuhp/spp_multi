@@ -12,6 +12,8 @@ use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -50,6 +52,26 @@ class FilamentPanelTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_wrong_password_shows_error_on_username_field(): void
+    {
+        User::factory()->create([
+            'username' => 'admin_test',
+            'password' => bcrypt('password123'),
+            'role' => UserRole::Admin,
+        ]);
+
+        Livewire::test(Login::class)
+            ->fillForm([
+                'username' => 'admin_test',
+                'password' => 'password-salah',
+            ])
+            ->call('authenticate')
+            ->assertHasFormErrors(['username'])
+            ->assertSee('Username atau kata sandi tidak sesuai.');
+
+        $this->assertGuest();
     }
 
     public function test_admin_can_access_dashboard_and_all_resources(): void
@@ -191,5 +213,38 @@ class FilamentPanelTest extends TestCase
             'nama_sekolah' => 'SMK Negeri 99 Bandung',
             'npsn' => '99887766',
         ]);
+    }
+
+    public function test_admin_can_save_app_name_and_school_logo(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::factory()->create([
+            'role' => UserRole::Admin,
+        ]);
+
+        ProfilSekolah::current();
+
+        $this->actingAs($admin);
+
+        Livewire::test(ProfilSekolahSettings::class)
+            ->set('data.app_name', 'SIPENA SEKOLAH')
+            ->set('data.logo', UploadedFile::fake()->image('logo-sekolah.png', 200, 200))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $profil = ProfilSekolah::current();
+
+        $this->assertSame('SIPENA SEKOLAH', $profil->app_name);
+        $this->assertNotNull($profil->logo);
+        Storage::disk('public')->assertExists($profil->logo);
+
+        $this->get('/admin')
+            ->assertOk()
+            ->assertSee('SIPENA SEKOLAH')
+            ->assertSee($profil->logoUrl())
+            ->assertSee('<link rel="icon" href="'.$profil->logoUrl().'"', false)
+            ->assertSee('Profil Saya')
+            ->assertSee('Keluar');
     }
 }

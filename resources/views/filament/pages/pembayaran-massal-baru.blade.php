@@ -148,12 +148,12 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" wire:click="pilihSemua" class="pm-button pm-button-secondary">
+                        <x-filament::button type="button" color="gray" size="sm" outlined wire:click="pilihSemua">
                             Centang Semua
-                        </button>
-                        <button type="button" wire:click="kosongkan" class="pm-button pm-button-secondary">
+                        </x-filament::button>
+                        <x-filament::button type="button" color="gray" size="sm" outlined wire:click="kosongkan">
                             Kosongkan
-                        </button>
+                        </x-filament::button>
                     </div>
                 </div>
 
@@ -202,12 +202,11 @@
                         dari {{ $siswaList->count() }} siswa dipilih.
                     </p>
 
-                    <button type="button"
+                    <x-filament::button type="button" size="sm"
                         wire:click="bukaModal"
-                        @disabled($jumlahTerpilih === 0)
-                        class="pm-button pm-button-primary px-5">
+                        :disabled="$jumlahTerpilih === 0">
                         Bayar
-                    </button>
+                    </x-filament::button>
                 </div>
 
                 @if ($galat && ! $modal)
@@ -231,18 +230,18 @@
                             {{ $kelasTerpilih?->nama_kelas ? $kelasTerpilih->nama_kelas.' • ' : '' }}{{ $jumlahTerpilih }} siswa terpilih. Centang bulan SPP yang akan dibayar.
                         </p>
                     </div>
-                    <button type="button" wire:click="tutupModal"
-                        class="pm-button pm-button-ghost !px-2 !py-1" aria-label="Tutup">&times;</button>
+                    <x-filament::icon-button icon="heroicon-o-x-mark" color="gray" size="sm"
+                        label="Tutup" wire:click="tutupModal" />
                 </div>
 
                 <div class="max-h-[55vh] space-y-4 overflow-y-auto px-5 py-4">
                     <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" wire:click="pilihSemuaBulan" class="pm-button pm-button-secondary">
+                        <x-filament::button type="button" color="gray" size="sm" outlined wire:click="pilihSemuaBulan">
                             Semua Bulan
-                        </button>
-                        <button type="button" wire:click="kosongkanBulan" class="pm-button pm-button-secondary">
+                        </x-filament::button>
+                        <x-filament::button type="button" color="gray" size="sm" outlined wire:click="kosongkanBulan">
                             Kosongkan
-                        </button>
+                        </x-filament::button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -277,18 +276,17 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-2">
-                        <button type="button" wire:click="tutupModal" class="pm-button pm-button-secondary">
+                        <x-filament::button type="button" color="gray" size="sm" outlined wire:click="tutupModal">
                             Batal
-                        </button>
-                        <button type="button"
+                        </x-filament::button>
+                        <x-filament::button type="button" size="sm" :loading-indicator="false"
                             wire:click="simpan"
                             wire:loading.attr="disabled"
                             wire:target="simpan"
-                            @disabled($this->bulan === [])
-                            class="pm-button pm-button-primary px-5">
+                            :disabled="$this->bulan === []">
                             <span wire:loading.remove wire:target="simpan">Simpan &amp; Cetak Kuitansi</span>
                             <span wire:loading wire:target="simpan">Memproses...</span>
-                        </button>
+                        </x-filament::button>
                     </div>
                 </div>
             </div>

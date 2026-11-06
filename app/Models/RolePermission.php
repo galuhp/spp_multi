@@ -13,6 +13,8 @@ class RolePermission extends Model
 
     public const TRANSAKSI_SPP = 'transaksi_spp';
 
+    public const LAPORAN = 'laporan';
+
     public const PORTAL_SISWA = 'portal_siswa';
 
     public const KESISWAAN = 'kesiswaan';
@@ -29,6 +31,7 @@ class RolePermission extends Model
     public const AVAILABLE = [
         self::DASHBOARD => 'Dashboard',
         self::TRANSAKSI_SPP => 'Transaksi SPP',
+        self::LAPORAN => 'Laporan',
         self::PORTAL_SISWA => 'Portal Siswa',
         self::KESISWAAN => 'Kesiswaan',
         self::MASTER_DATA => 'Master Data',

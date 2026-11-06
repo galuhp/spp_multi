@@ -5,8 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
+    'app_name',
+    'logo',
     'nama_sekolah',
     'npsn',
     'jenjang',
@@ -40,6 +43,7 @@ class ProfilSekolah extends Model
 
         if ($profile === null) {
             $profile = static::create([
+                'app_name' => 'E-SPP SEKOLAH',
                 'nama_sekolah' => 'SMK Negeri Contoh',
                 'npsn' => '20100001',
                 'jenjang' => 'SMK',
@@ -67,6 +71,26 @@ class ProfilSekolah extends Model
     public static function clearCache(): void
     {
         static::$cachedCurrent = null;
+    }
+
+    /**
+     * Application name shown on the panel, login page, and documents.
+     */
+    public function appName(): string
+    {
+        return $this->app_name ?: 'E-SPP SEKOLAH';
+    }
+
+    /**
+     * Public URL of the uploaded school logo.
+     */
+    public function logoUrl(): ?string
+    {
+        if (blank($this->logo)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->logo);
     }
 
     /**

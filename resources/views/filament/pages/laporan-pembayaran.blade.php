@@ -139,10 +139,10 @@
                                 {{ $p->user?->name ?? 'Kasir' }}
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <a href="{{ route('pembayaran.cetak', $p->id) }}" target="_blank"
-                                    class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50">
-                                    Cetak Kwitansi
-                                </a>
+                                <x-filament::button tag="a" href="{{ route('pembayaran.cetak', $p->id) }}" target="_blank"
+                                    color="gray" size="sm" outlined icon="heroicon-o-printer" class="whitespace-nowrap">
+                                    Cetak Kuitansi
+                                </x-filament::button>
                             </td>
                         </tr>
                     @empty

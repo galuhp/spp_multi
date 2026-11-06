@@ -24,9 +24,9 @@
                             Hanya baris valid dan baris berperingatan yang disimpan. Baris error dilewati.
                         </p>
                     </div>
-                    <a href="{{ route('impor-siswa.template') }}" class="inline-flex items-center rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                    <x-filament::button tag="a" href="{{ route('impor-siswa.template') }}" color="gray" size="sm">
                         Unduh Template
-                    </a>
+                    </x-filament::button>
                 </div>
 
                 <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -54,9 +54,9 @@
                         Format .xlsx, maksimal 5 MB dan 2.000 baris. Data dibaca per 500 baris ke tabel staging.
                     </p>
                 </div>
-                <a href="{{ route('impor-siswa.template') }}" class="inline-flex items-center rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800">
+                <x-filament::button tag="a" href="{{ route('impor-siswa.template') }}" color="gray" size="sm">
                     Unduh Template Excel
-                </a>
+                </x-filament::button>
             </div>
 
             <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -127,20 +127,20 @@
             </div>
 
             <div class="mt-4 flex flex-wrap items-center gap-2">
-                <button type="button" wire:click="unggah" wire:loading.attr="disabled" wire:target="unggah,berkas"
-                    class="inline-flex items-center rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
-                    @disabled($batchId !== null)>
+                <x-filament::button type="button" size="sm" :loading-indicator="false"
+                    wire:click="unggah" wire:loading.attr="disabled" wire:target="unggah,berkas"
+                    :disabled="$batchId !== null">
                     <span wire:loading.remove wire:target="unggah">Unggah dan Validasi</span>
                     <span wire:loading wire:target="unggah">Memproses...</span>
-                </button>
+                </x-filament::button>
 
                 @if ($batchId !== null)
-                    <button type="button" wire:click="batalkan" class="inline-flex items-center rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                    <x-filament::button type="button" color="gray" size="sm" wire:click="batalkan">
                         Batalkan Pratinjau
-                    </button>
-                    <a href="{{ route('impor-siswa.error', $batchId) }}" class="inline-flex items-center rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                    </x-filament::button>
+                    <x-filament::button tag="a" href="{{ route('impor-siswa.error', $batchId) }}" color="gray" size="sm">
                         Unduh Laporan Error
-                    </a>
+                    </x-filament::button>
                 @endif
             </div>
         </div>
@@ -180,12 +180,14 @@
                         </p>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-1">
+                    <div class="flex flex-wrap items-center gap-1.5">
                         @foreach (['semua' => 'Semua', 'error' => 'Error', 'peringatan' => 'Peringatan', 'valid' => 'Valid'] as $nilai => $label)
-                            <button type="button" wire:click="gantiFilter('{{ $nilai }}')"
-                                class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium {{ $filter === $nilai ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100' }}">
+                            <x-filament::button type="button" size="sm"
+                                :color="$filter === $nilai ? 'primary' : 'gray'"
+                                :outlined="$filter !== $nilai"
+                                wire:click="gantiFilter('{{ $nilai }}')">
                                 {{ $label }}
-                            </button>
+                            </x-filament::button>
                         @endforeach
                     </div>
                 </div>
@@ -240,33 +242,33 @@
                         Halaman {{ $halaman }} dari {{ $this->totalHalaman }}
                     </p>
                     <div class="flex items-center gap-2">
-                        <button type="button" wire:click="keHalaman({{ $halaman - 1 }})"
-                            class="inline-flex items-center rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
-                            @disabled($halaman <= 1)>
+                        <x-filament::button type="button" color="gray" size="sm" outlined
+                            wire:click="keHalaman({{ $halaman - 1 }})"
+                            :disabled="$halaman <= 1">
                             Sebelumnya
-                        </button>
-                        <button type="button" wire:click="keHalaman({{ $halaman + 1 }})"
-                            class="inline-flex items-center rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
-                            @disabled($halaman >= $this->totalHalaman)>
+                        </x-filament::button>
+                        <x-filament::button type="button" color="gray" size="sm" outlined
+                            wire:click="keHalaman({{ $halaman + 1 }})"
+                            :disabled="$halaman >= $this->totalHalaman">
                             Berikutnya
-                        </button>
+                        </x-filament::button>
                     </div>
                 </div>
 
                 <div class="mt-4 border-t border-zinc-200 pt-4">
                     @if ($perbarui)
-                        <button type="button" wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan"
-                            class="inline-flex items-center rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+                        <x-filament::button type="button" size="sm" :loading-indicator="false"
+                            wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan"
                             wire:confirm="Simpan impor dan timpa {{ $jumlahAkanDitimpa }} data siswa yang sudah ada?">
                             <span wire:loading.remove wire:target="simpan">Simpan Baris Valid</span>
                             <span wire:loading wire:target="simpan">Menyimpan...</span>
-                        </button>
+                        </x-filament::button>
                     @else
-                        <button type="button" wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan"
-                            class="inline-flex items-center rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50">
+                        <x-filament::button type="button" size="sm" :loading-indicator="false"
+                            wire:click="simpan" wire:loading.attr="disabled" wire:target="simpan">
                             <span wire:loading.remove wire:target="simpan">Simpan Baris Valid</span>
                             <span wire:loading wire:target="simpan">Menyimpan...</span>
-                        </button>
+                        </x-filament::button>
                     @endif
                     <p class="mt-2 text-[11px] text-zinc-500">
                         Penyimpanan dilakukan per 500 baris dalam transaksi database. Baris error tidak disimpan.

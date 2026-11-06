@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\LaporanPembayaran;
+use App\Filament\Pages\LaporanTunggakan;
 use App\Filament\Pages\ManajemenRole;
+use App\Filament\Pages\RekapPotensiPenerimaan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -83,5 +86,35 @@ class ManajemenRoleTest extends TestCase
         $this->actingAs($petugas)
             ->get('/admin/siswas')
             ->assertForbidden();
+    }
+
+    public function test_hak_akses_laporan_mengatur_halaman_laporan_staff(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $petugas = User::factory()->create(['role' => UserRole::Petugas]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ManajemenRole::class)
+            ->set('akses.petugas.laporan', false)
+            ->call('simpanAkses')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseMissing('role_permissions', [
+            'role' => 'petugas',
+            'permission' => 'laporan',
+        ]);
+
+        foreach ([LaporanPembayaran::class, LaporanTunggakan::class, RekapPotensiPenerimaan::class] as $halaman) {
+            $this->actingAs($petugas)
+                ->get($halaman::getUrl())
+                ->assertForbidden();
+        }
+
+        foreach (['laporan.cetak', 'laporan.tunggakan.cetak', 'laporan.potensi.cetak'] as $rute) {
+            $this->actingAs($petugas)
+                ->get(route($rute))
+                ->assertForbidden();
+        }
     }
 }

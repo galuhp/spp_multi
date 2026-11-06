@@ -76,6 +76,21 @@ class KenaikanKelas extends Page
     /**
      * @return array<int, string>
      */
+    public function getTahunAjaranTujuanOptionsProperty(): array
+    {
+        return TahunAjaran::query()
+            ->when(
+                $this->tahun_ajaran_asal_id,
+                fn ($query) => $query->whereKeyNot($this->tahun_ajaran_asal_id),
+            )
+            ->orderByDesc('nama')
+            ->pluck('nama', 'id')
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
     public function getKelasAsalOptionsProperty(): array
     {
         if (! $this->tahun_ajaran_asal_id) {
@@ -120,7 +135,7 @@ class KenaikanKelas extends Page
      */
     public function getSiswaProperty(): Collection
     {
-        if (! $this->kelas_asal_id || ! $this->tahun_ajaran_tujuan_id) {
+        if (! $this->kelas_asal_id || ! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
             return collect();
         }
 
@@ -153,6 +168,11 @@ class KenaikanKelas extends Page
         $this->keputusan = [];
         $this->pratinjau = false;
         $this->hasil = null;
+        $this->galat = null;
+
+        if (! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_tujuan_id === $this->tahun_ajaran_asal_id) {
+            $this->tahun_ajaran_tujuan_id = $this->tebakTahunAjaranTujuan($this->tahun_ajaran_asal_id);
+        }
     }
 
     public function updatedTahunAjaranTujuanId(): void
@@ -160,6 +180,12 @@ class KenaikanKelas extends Page
         $this->keputusan = [];
         $this->pratinjau = false;
         $this->hasil = null;
+        $this->galat = null;
+
+        if ($this->tahun_ajaran_asal_id && $this->tahun_ajaran_tujuan_id === $this->tahun_ajaran_asal_id) {
+            $this->tahun_ajaran_tujuan_id = null;
+            $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
+        }
     }
 
     public function updatedKelasAsalId(): void
@@ -185,7 +211,7 @@ class KenaikanKelas extends Page
     {
         $kelas = $this->kelas_asal_id ? Kelas::query()->find($this->kelas_asal_id) : null;
 
-        if (! $kelas || ! $this->tahun_ajaran_tujuan_id) {
+        if (! $kelas || ! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
             return;
         }
 
@@ -218,7 +244,7 @@ class KenaikanKelas extends Page
 
         $kelas = $this->kelas_asal_id ? Kelas::query()->find($this->kelas_asal_id) : null;
 
-        if (! $kelas || ! $this->tahun_ajaran_tujuan_id) {
+        if (! $kelas || ! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
             return;
         }
 
@@ -252,7 +278,7 @@ class KenaikanKelas extends Page
         }
 
         if ($this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
-            $this->galat = 'Tahun ajaran asal dan tujuan tidak boleh sama.';
+            $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
 
             return;
         }

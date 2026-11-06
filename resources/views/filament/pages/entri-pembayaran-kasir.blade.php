@@ -26,10 +26,9 @@
                         </div>
                     </div>
 
-                    <button type="button" wire:click="gantiSiswa"
-                        class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800">
+                    <x-filament::button type="button" color="gray" size="sm" wire:click="gantiSiswa">
                         Ganti Siswa
-                    </button>
+                    </x-filament::button>
                 </div>
             @else
                 <div class="flex flex-col gap-2">
@@ -40,13 +39,14 @@
 
                     <div class="mt-2">
                         <p class="text-xs font-medium text-gray-600 dark:text-gray-300">Tingkat Kelas</p>
-                        <div class="mt-2 flex flex-wrap gap-2" role="group" aria-label="Filter tingkat kelas">
+                        <div class="mt-2 inline-flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800" role="group" aria-label="Filter tingkat kelas">
                             @foreach ($this->tingkatOptions as $nilai => $label)
                                 <button type="button" wire:click="pilihTingkat('{{ $nilai }}')"
+                                    aria-pressed="{{ $tingkat === (string) $nilai ? 'true' : 'false' }}"
                                     @class([
-                                        'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-                                        'border-indigo-600 bg-indigo-600 text-white shadow-sm' => $tingkat === (string) $nilai,
-                                        'border-gray-300 bg-white text-gray-700 hover:border-indigo-400 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-indigo-500 dark:hover:text-indigo-400' => $tingkat !== (string) $nilai,
+                                        'rounded-md px-3.5 py-1.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
+                                        'bg-white text-gray-900 shadow-sm dark:bg-gray-950 dark:text-white' => $tingkat === (string) $nilai,
+                                        'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' => $tingkat !== (string) $nilai,
                                     ])>
                                     {{ $label }}
                                 </button>
@@ -59,6 +59,7 @@
                             <x-heroicon-o-magnifying-glass class="size-4" />
                         </span>
                         <input type="search" wire:model.live.debounce.300ms="cari"
+                            x-init="$nextTick(() => $el.focus())" x-on:focus-cari.window="$nextTick(() => $el.focus())" autofocus
                             placeholder="Ketik nama atau NISN..."
                             class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                     </div>
@@ -111,13 +112,13 @@
                         <div class="inline-flex rounded-lg bg-gray-100 p-1 text-sm dark:bg-gray-800" role="tablist">
                             <button type="button" @click="tab = 'spp'"
                                 :class="tab === 'spp' ? 'bg-white shadow-sm font-medium text-gray-900 dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
-                                class="flex items-center gap-2 rounded-md px-4 py-2 transition">
+                                class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                                 Iuran SPP Bulanan
                                 <span :class="selected.length ? '' : 'hidden'" x-cloak class="rounded-full bg-indigo-600 px-1.5 text-xs text-white" x-text="selected.length"></span>
                             </button>
                             <button type="button" @click="tab = 'lain'"
                                 :class="tab === 'lain' ? 'bg-white shadow-sm font-medium text-gray-900 dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
-                                class="flex items-center gap-2 rounded-md px-4 py-2 transition">
+                                class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                                 Biaya Lainnya
                                 <span :class="selectedLain.length ? '' : 'hidden'" x-cloak class="rounded-full bg-indigo-600 px-1.5 text-xs text-white" x-text="selectedLain.length"></span>
                             </button>
@@ -130,10 +131,16 @@
                                     Bulan SPP yang dibayar
                                     <span class="font-normal text-gray-500 dark:text-gray-400">&bull; <span x-text="rp(tarif)"></span> / bulan</span>
                                 </p>
-                                <div class="flex flex-wrap gap-3 text-xs">
-                                    <button type="button" @click="preset('tunggakan')" class="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Tunggakan saja</button>
-                                    <button type="button" @click="preset('sem1')" class="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Sampai Februari</button>
-                                    <button type="button" @click="preset('reset')" class="text-gray-500 hover:underline dark:text-gray-400">Kosongkan</button>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <x-filament::link tag="button" size="sm" @click="preset('tunggakan')">
+                                        Tunggakan saja
+                                    </x-filament::link>
+                                    <x-filament::link tag="button" size="sm" @click="preset('sem1')">
+                                        Sampai Februari
+                                    </x-filament::link>
+                                    <x-filament::link tag="button" color="gray" size="sm" @click="preset('reset')">
+                                        Kosongkan
+                                    </x-filament::link>
                                 </div>
                             </div>
 
@@ -177,10 +184,14 @@
                                         </div>
                                         <div class="flex shrink-0 items-center gap-3">
                                             <span class="text-sm text-gray-800 dark:text-gray-200" x-text="rp(x.sisa)"></span>
-                                            <button type="button" @click="toggleLain(x.key)"
-                                                :class="hasLain(x.key) ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 text-gray-700 hover:border-indigo-500 dark:border-gray-700 dark:text-gray-200'"
-                                                class="w-24 rounded-md border px-3 py-1.5 text-xs font-medium transition"
-                                                x-text="hasLain(x.key) ? 'Ditambahkan' : 'Tambah'"></button>
+                                            <x-filament::button type="button" color="gray" size="sm" outlined
+                                                class="w-28 whitespace-nowrap" x-show="! hasLain(x.key)" @click="toggleLain(x.key)">
+                                                Tambah
+                                            </x-filament::button>
+                                            <x-filament::button type="button" size="sm"
+                                                class="w-28 whitespace-nowrap" x-show="hasLain(x.key)" x-cloak @click="toggleLain(x.key)">
+                                                Ditambahkan
+                                            </x-filament::button>
                                         </div>
                                     </li>
                                 </template>
@@ -221,10 +232,9 @@
                         <span class="text-xl font-semibold text-gray-950 dark:text-white" x-text="rp(total)"></span>
                     </div>
 
-                    <button type="button" @click="bayar = true" :disabled="! total"
-                        class="mt-4 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-indigo-500 dark:hover:bg-indigo-400">
+                    <x-filament::button type="button" size="md" class="mt-4 w-full" @click="bayar = true" x-bind:disabled="! total">
                         Lanjut ke Pembayaran
-                    </button>
+                    </x-filament::button>
                 </aside>
 
                 {{-- Payment modal --}}
@@ -236,7 +246,8 @@
                                 <h3 class="text-base font-semibold text-gray-950 dark:text-white">Konfirmasi Pembayaran</h3>
                                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $siswa->nama }} &bull; {{ $siswa->kelas?->nama_kelas }}</p>
                             </div>
-                            <button type="button" @click="bayar = false" class="rounded-lg px-2 py-1 text-xl leading-none text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Tutup">&times;</button>
+                            <x-filament::icon-button icon="heroicon-o-x-mark" color="gray" size="sm"
+                                label="Tutup" @click="bayar = false" />
                         </div>
 
                         <div class="space-y-4 px-5 py-4">
@@ -274,15 +285,13 @@
                         </div>
 
                         <div class="flex items-center justify-end gap-2 border-t border-gray-200 px-5 py-4 dark:border-gray-800">
-                            <button type="button" @click="bayar = false"
-                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800">
+                            <x-filament::button type="button" color="gray" size="sm" @click="bayar = false">
                                 Batal
-                            </button>
-                            <button type="button" @click="submit()" :disabled="loading || ! total"
-                                class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-indigo-500 dark:hover:bg-indigo-400">
+                            </x-filament::button>
+                            <x-filament::button type="button" size="sm" @click="submit()" x-bind:disabled="loading || ! total">
                                 <span :class="! loading ? '' : 'hidden'">Simpan &amp; Cetak Kuitansi</span>
                                 <span :class="loading ? '' : 'hidden'" x-cloak>Menyimpan...</span>
-                            </button>
+                            </x-filament::button>
                         </div>
                     </div>
                 </div>

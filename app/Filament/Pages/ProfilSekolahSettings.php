@@ -6,6 +6,7 @@ use App\Models\LogAktivitas;
 use App\Models\ProfilSekolah;
 use App\Models\RolePermission;
 use BackedEnum;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -50,8 +51,30 @@ class ProfilSekolahSettings extends Page
         return $schema
             ->statePath('data')
             ->components([
+                Section::make('Identitas Aplikasi')
+                    ->description('Nama dan logo yang tampil di panel, halaman login, serta dokumen cetak.')
+                    ->components([
+                        Grid::make(2)
+                            ->components([
+                                TextInput::make('app_name')
+                                    ->label('Nama Aplikasi')
+                                    ->placeholder('Contoh: E-SPP SEKOLAH')
+                                    ->required()
+                                    ->maxLength(100),
+                                FileUpload::make('logo')
+                                    ->label('Logo Sekolah')
+                                    ->helperText('Gunakan gambar PNG, JPG, atau WebP. Maksimal 2 MB.')
+                                    ->image()
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                    ->disk('public')
+                                    ->directory('sekolah')
+                                    ->visibility('public')
+                                    ->maxSize(2048)
+                                    ->imagePreviewHeight('96'),
+                            ]),
+                    ]),
                 Section::make('Identitas Instansi & Dinas')
-                    ->description('Digunakan untuk kop surat resmi pada kwitansi dan laporan SPP.')
+                    ->description('Digunakan untuk kop surat resmi pada kuitansi dan laporan SPP.')
                     ->components([
                         TextInput::make('pemerintah_daerah')
                             ->label('Pemerintah Daerah')
@@ -103,7 +126,7 @@ class ProfilSekolahSettings extends Page
                             ]),
                     ]),
                 Section::make('Pejabat Penandatangan')
-                    ->description('Data Kepala Sekolah untuk tanda tangan digital dan pengesahan kwitansi.')
+                    ->description('Data Kepala Sekolah untuk tanda tangan digital dan pengesahan kuitansi.')
                     ->components([
                         Grid::make(2)
                             ->components([
@@ -122,6 +145,7 @@ class ProfilSekolahSettings extends Page
         $state = $this->form->getState();
         $profil = ProfilSekolah::current();
         $profil->update($state);
+        ProfilSekolah::clearCache();
 
         LogAktivitas::create([
             'user_id' => auth()->id(),

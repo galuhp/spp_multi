@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     @php $sekolah = \App\Models\ProfilSekolah::current(); @endphp
     <title>{{ $valid ? 'Bukti Pembayaran SPP - ' . $pembayaran->kode_transaksi : 'Verifikasi Bukti Pembayaran SPP' }}</title>
+    @include('partials.app-icon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @media print {
@@ -19,9 +20,14 @@
     <div class="w-full max-w-xl my-8 space-y-5">
         <!-- School Brand Header -->
         <div class="text-center">
-            <div class="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center text-white font-black text-xl shadow-md mx-auto mb-3">
-                S
-            </div>
+            @if ($sekolah->logoUrl())
+                <img src="{{ $sekolah->logoUrl() }}" alt="Logo {{ $sekolah->nama_sekolah }}"
+                    class="w-14 h-14 mx-auto mb-3 rounded-xl border border-zinc-200 bg-white object-contain p-1 shadow-md">
+            @else
+                <div class="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center text-white font-black text-xl uppercase shadow-md mx-auto mb-3">
+                    {{ substr($sekolah->nama_sekolah, 0, 1) }}
+                </div>
+            @endif
             <h1 class="text-lg sm:text-xl font-black text-zinc-900 uppercase tracking-wide">{{ $sekolah->nama_sekolah }}</h1>
             <p class="text-xs text-zinc-500 mt-0.5">Portal Verifikasi Keaslian Bukti Pembayaran SPP</p>
         </div>
@@ -157,12 +163,9 @@
                         <p class="text-[11px] text-zinc-500 text-center sm:text-left">
                             Simpan halaman ini atau cetak sebagai arsip bukti pembayaran orang tua/wali.
                         </p>
-                        <button type="button" onclick="window.print()" class="w-full sm:w-auto shrink-0 px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                            </svg>
+                        <x-print-button onclick="window.print()" class="w-full shrink-0 sm:w-auto">
                             Simpan PDF / Cetak
-                        </button>
+                        </x-print-button>
                     </div>
                 </div>
             </div>
@@ -193,7 +196,7 @@
         @endif
 
         <p class="text-center text-[11px] text-zinc-500">
-            &copy; {{ date('Y') }} Sistem Informasi Manajemen SPP &bull; {{ $sekolah->nama_sekolah }}
+            &copy; {{ date('Y') }} {{ $sekolah->appName() }} &bull; {{ $sekolah->nama_sekolah }}
         </p>
     </div>
 </body>

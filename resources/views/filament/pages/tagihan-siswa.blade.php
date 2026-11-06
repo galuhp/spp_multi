@@ -175,10 +175,11 @@
                                     </div>
                                     @if($item['pembayaran'])
                                         <div class="mt-2">
-                                            <a href="{{ route('pembayaran.cetak', $item['pembayaran']->id) }}" target="_blank"
-                                                class="inline-block text-[11px] font-medium text-zinc-900 hover:underline">
-                                                Kwitansi &raquo;
-                                            </a>
+                                            <x-filament::button tag="a" href="{{ route('pembayaran.cetak', $item['pembayaran']->id) }}"
+                                                target="_blank" color="gray" size="sm" outlined icon="heroicon-o-printer"
+                                                class="w-full whitespace-nowrap">
+                                                Cetak Kuitansi
+                                            </x-filament::button>
                                         </div>
                                     @endif
                                 @else

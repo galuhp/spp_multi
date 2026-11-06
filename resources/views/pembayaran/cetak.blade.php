@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @php $sekolah = \App\Models\ProfilSekolah::current(); @endphp
     <title>Kuitansi SPP - {{ $pembayaran->kode_transaksi }} - {{ $sekolah->nama_sekolah }}</title>
+    @include('partials.app-icon')
     @vite(['resources/css/app.css'])
     <style>
         @media print {
@@ -20,13 +21,12 @@
             &larr; Kembali ke Aplikasi
         </a>
         <div class="flex items-center gap-2">
-            <a href="{{ $pembayaran->buktiUrl() }}" target="_blank" class="px-3.5 py-2 bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-300 rounded-xl text-xs font-semibold transition shadow-sm inline-flex items-center gap-1.5">
+            <x-print-button variant="secondary" href="{{ $pembayaran->buktiUrl() }}" target="_blank" icon="arrow-top-right-on-square">
                 Cek Link Bukti Digital
-            </a>
-            <button onclick="window.print()" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition shadow-sm inline-flex items-center gap-2 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            </x-print-button>
+            <x-print-button onclick="window.print()">
                 Cetak Kuitansi
-            </button>
+            </x-print-button>
         </div>
     </div>
 
@@ -35,9 +35,14 @@
         <!-- School Header -->
         <div class="flex items-center justify-between border-b-2 border-black pb-4">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-black text-2xl uppercase">
-                    {{ substr($sekolah->nama_sekolah, 0, 1) }}
-                </div>
+                @if ($sekolah->logoUrl())
+                    <img src="{{ $sekolah->logoUrl() }}" alt="Logo {{ $sekolah->nama_sekolah }}"
+                        class="w-12 h-12 shrink-0 rounded-xl border border-zinc-200 bg-white object-contain p-1">
+                @else
+                    <div class="w-12 h-12 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-black text-2xl uppercase">
+                        {{ substr($sekolah->nama_sekolah, 0, 1) }}
+                    </div>
+                @endif
                 <div>
                     <h1 class="text-base font-black tracking-wide uppercase">{{ $sekolah->nama_sekolah }}</h1>
                     <p class="text-xs text-zinc-600">{{ $sekolah->alamatLengkap() }} &bull; Telp. {{ $sekolah->no_telp }}</p>

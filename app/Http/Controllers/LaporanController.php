@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\RolePermission;
+use App\Models\Siswa;
 use App\Models\Spp;
+use App\Support\Laporan\LaporanSppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,6 +20,8 @@ class LaporanController extends Controller
      */
     public function index(Request $request): View
     {
+        $this->pastikanAkses();
+
         $tglAwal = $request->query('tgl_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tglAkhir = $request->query('tgl_akhir', Carbon::now()->format('Y-m-d'));
         $kelasId = $request->query('kelas_id');
@@ -68,6 +74,8 @@ class LaporanController extends Controller
      */
     public function cetak(Request $request): View
     {
+        $this->pastikanAkses();
+
         $tglAwal = $request->query('tgl_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tglAkhir = $request->query('tgl_akhir', Carbon::now()->format('Y-m-d'));
         $kelasId = $request->query('kelas_id');
@@ -110,5 +118,77 @@ class LaporanController extends Controller
             'metode' => $metode,
             'kategori' => $kategori,
         ]);
+    }
+
+    /**
+     * Printable outstanding SPP report.
+     */
+    public function cetakTunggakan(Request $request, LaporanSppService $service): View
+    {
+        $this->pastikanAkses();
+
+        $filters = [
+            'tahun_ajaran_id' => $request->query('tahun_ajaran_id'),
+            'kelas_id' => $request->query('kelas_id'),
+            'tingkat' => $request->query('tingkat'),
+            'status' => (string) $request->query('status', 'menunggak'),
+            'urutkan' => (string) $request->query('urutkan', 'kelas'),
+        ];
+
+        return view('laporan.tunggakan-cetak', [
+            'laporan' => $service->tunggakan($filters),
+            'filters' => $filters,
+            'selectedKelas' => filled($filters['kelas_id']) ? Kelas::find($filters['kelas_id']) : null,
+        ]);
+    }
+
+    /**
+     * Printable received-vs-potential SPP report.
+     */
+    public function cetakPotensi(Request $request, LaporanSppService $service): View
+    {
+        $this->pastikanAkses();
+
+        $filters = [
+            'tahun_ajaran_id' => $request->query('tahun_ajaran_id'),
+            'kelompok' => (string) $request->query('kelompok', LaporanSppService::KELOMPOK_KELAS),
+            'tingkat' => $request->query('tingkat'),
+            'jurusan_id' => $request->query('jurusan_id'),
+            'kelas_id' => $request->query('kelas_id'),
+        ];
+
+        return view('laporan.potensi-cetak', [
+            'laporan' => $service->rekapPotensi($filters, $filters['kelompok']),
+            'filters' => $filters,
+            'selectedKelas' => filled($filters['kelas_id']) ? Kelas::find($filters['kelas_id']) : null,
+            'selectedJurusan' => filled($filters['jurusan_id']) ? Jurusan::find($filters['jurusan_id']) : null,
+            'selectedTingkat' => filled($filters['tingkat']) ? Spp::labelTingkat((string) $filters['tingkat']) : null,
+        ]);
+    }
+
+    /**
+     * Printable student payment ledger.
+     */
+    public function cetakKartu(Request $request, LaporanSppService $service): View
+    {
+        $this->pastikanAkses();
+
+        $siswa = Siswa::query()->findOrFail($request->integer('siswa_id'));
+        $tahunAjaran = $service->resolveTahunAjaran($request->query('tahun_ajaran_id'));
+
+        abort_if(! $tahunAjaran, 404, 'Tahun ajaran tidak ditemukan.');
+
+        return view('laporan.kartu-cetak', [
+            'kartu' => $service->kartuPembayaran($siswa, $tahunAjaran),
+        ]);
+    }
+
+    protected function pastikanAkses(): void
+    {
+        $user = request()->user();
+
+        if (! $user?->isStaff() || ! RolePermission::allowed($user->role, RolePermission::LAPORAN)) {
+            abort(403);
+        }
     }
 }

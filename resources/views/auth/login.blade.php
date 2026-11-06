@@ -3,17 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk Sistem - E-SPP</title>
+    @php($profilLogin = \App\Models\ProfilSekolah::current())
+    <title>Masuk Sistem - {{ $profilLogin->appName() }}</title>
+    @include('partials.app-icon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full flex items-center justify-center p-4 antialiased text-zinc-900">
     <div class="w-full max-w-md">
         <!-- Logo & Title -->
         <div class="text-center mb-8">
-            <div class="w-16 h-16 mx-auto rounded-xl bg-zinc-900 flex items-center justify-center text-white font-black text-3xl shadow-xl mb-3">
-                S
-            </div>
-            <h1 class="text-2xl font-bold tracking-tight">Sistem Pembayaran SPP</h1>
+            @if ($profilLogin->logoUrl())
+                <img src="{{ $profilLogin->logoUrl() }}" alt="Logo {{ $profilLogin->nama_sekolah }}"
+                    class="w-16 h-16 mx-auto rounded-xl border border-zinc-200 bg-white object-contain p-2 shadow-xl mb-3">
+            @else
+                <div class="w-16 h-16 mx-auto rounded-xl bg-zinc-900 flex items-center justify-center text-white font-black text-3xl shadow-xl mb-3">
+                    S
+                </div>
+            @endif
+            <h1 class="text-2xl font-bold tracking-tight">{{ $profilLogin->appName() }}</h1>
             <p class="text-zinc-500 text-sm mt-1">Silakan masuk menggunakan akun Anda</p>
         </div>
 

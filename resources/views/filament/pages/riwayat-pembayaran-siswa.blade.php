@@ -92,9 +92,10 @@
                                     {{ $item->user?->name ?? '-' }}
                                 </x-ui.table.cell>
                                 <x-ui.table.cell class="text-center">
-                                    <x-ui.button as="a" href="{{ route('portal.kuitansi', $item->id) }}" target="_blank" variant="outline" size="sm">
+                                    <x-filament::button tag="a" href="{{ route('portal.kuitansi', $item->id) }}" target="_blank"
+                                        color="gray" size="sm" outlined icon="heroicon-o-printer" class="whitespace-nowrap">
                                         Cetak Kuitansi
-                                    </x-ui.button>
+                                    </x-filament::button>
                                 </x-ui.table.cell>
                             </x-ui.table.row>
                         @empty

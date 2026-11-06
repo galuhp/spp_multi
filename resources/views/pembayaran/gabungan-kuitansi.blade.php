@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kuitansi Gabungan {{ $gabungan->kode }}</title>
+    @include('partials.app-icon')
     @vite(['resources/css/app.css'])
     <style>
         @media print {
@@ -20,9 +21,9 @@
         <a href="{{ route('filament.admin.resources.pembayaran-gabungans.edit', $gabungan) }}" class="text-xs font-semibold text-zinc-600 hover:text-zinc-900">
             &larr; Kembali ke Gabungan
         </a>
-        <button onclick="window.print()" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer">
+        <x-print-button onclick="window.print()">
             Cetak Semua Kuitansi
-        </button>
+        </x-print-button>
     </div>
 
     @if (session('massal_info'))

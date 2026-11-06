@@ -4,6 +4,9 @@
 
 @source '../views/components/ui';
 @source '../views/filament/pages/laporan-pembayaran.blade.php';
+@source '../views/filament/pages/laporan-tunggakan.blade.php';
+@source '../views/filament/pages/rekap-potensi-penerimaan.blade.php';
+@source '../views/filament/pages/kartu-pembayaran-siswa.blade.php';
 
 @layer components {
     .laporan-field {

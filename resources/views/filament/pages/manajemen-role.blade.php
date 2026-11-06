@@ -32,10 +32,9 @@
                     <h3 class="text-base font-semibold text-zinc-900">Matriks Hak Akses</h3>
                     <p class="mt-0.5 text-xs text-zinc-500">Centang modul yang boleh diakses tiap role. Manajemen Role tetap khusus Administrator.</p>
                 </div>
-                <button type="button" wire:click="simpanAkses"
-                    class="rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white hover:bg-zinc-800">
+                <x-filament::button type="button" size="sm" wire:click="simpanAkses">
                     Simpan Hak Akses
-                </button>
+                </x-filament::button>
             </div>
 
             <div class="mt-4 overflow-x-auto">

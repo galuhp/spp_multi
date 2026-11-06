@@ -50,7 +50,7 @@ class ProfilUserTest extends TestCase
         $response->assertOk();
         $response->assertSee('Bambang Sudirman');
         $response->assertSee('bambang@sekolah.sch.id');
-        $response->assertSee('Profile');
+        $response->assertSee('Profil Saya');
     }
 
     public function test_user_can_update_profile_info(): void
@@ -111,8 +111,8 @@ class ProfilUserTest extends TestCase
         // Admin sees the Filament profile menu and school profile navigation.
         $responseAdmin = $this->actingAs($this->admin)->followingRedirects()->get(route('dashboard'));
         $responseAdmin->assertOk();
-        $responseAdmin->assertSee('Profile');
-        $responseAdmin->assertSee('Sign out');
+        $responseAdmin->assertSee('Profil Saya');
+        $responseAdmin->assertSee('Keluar');
         $responseAdmin->assertSee('Profil & Kop Sekolah');
     }
 
@@ -120,7 +120,7 @@ class ProfilUserTest extends TestCase
     {
         $responsePetugas = $this->actingAs($this->petugas)->followingRedirects()->get(route('dashboard'));
         $responsePetugas->assertOk();
-        $responsePetugas->assertSee('Profile');
+        $responsePetugas->assertSee('Profil Saya');
         $responsePetugas->assertDontSee('Profil & Kop Sekolah');
     }
 }

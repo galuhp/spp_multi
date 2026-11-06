@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use DutchCodingCompany\FilamentSocialite\Models\SocialiteUser;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -82,6 +83,14 @@ class User extends Authenticatable implements FilamentUser
     public function siswa(): HasOne
     {
         return $this->hasOne(Siswa::class);
+    }
+
+    /**
+     * Socialite accounts linked to this user.
+     */
+    public function socialiteUsers(): HasMany
+    {
+        return $this->hasMany(SocialiteUser::class);
     }
 
     /**

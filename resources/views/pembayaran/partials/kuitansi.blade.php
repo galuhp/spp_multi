@@ -2,9 +2,14 @@
     <!-- School Header -->
     <div class="flex items-center justify-between border-b-2 border-black pb-4">
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-black text-2xl uppercase">
-                {{ substr($sekolah->nama_sekolah, 0, 1) }}
-            </div>
+            @if ($sekolah->logoUrl())
+                <img src="{{ $sekolah->logoUrl() }}" alt="Logo {{ $sekolah->nama_sekolah }}"
+                    class="w-12 h-12 shrink-0 rounded-xl border border-zinc-200 bg-white object-contain p-1">
+            @else
+                <div class="w-12 h-12 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-black text-2xl uppercase">
+                    {{ substr($sekolah->nama_sekolah, 0, 1) }}
+                </div>
+            @endif
             <div>
                 <h1 class="text-base font-black tracking-wide uppercase">{{ $sekolah->nama_sekolah }}</h1>
                 <p class="text-xs text-zinc-600">{{ $sekolah->alamatLengkap() }} &bull; Telp. {{ $sekolah->no_telp }}</p>

@@ -3,11 +3,21 @@
         "opencode"
     ],
     "cloud": true,
+    "packages": [
+        "filament/filament",
+        "maatwebsite/excel",
+        "pushery/wirekit"
+    ],
     "skills": [
         "infer-conventions",
         "deploying-to-cloud",
         "laravel-best-practices",
         "testing-best-practices",
-        "tailwindcss-development"
+        "socialite-development",
+        "fluxui-development",
+        "tailwindcss-development",
+        "filament-development",
+        "laravel-excel",
+        "wirekit-development"
     ]
 }

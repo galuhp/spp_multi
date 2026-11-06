@@ -316,5 +316,7 @@ class KategoriTarifTest extends TestCase
         $printReportResponse->assertStatus(200);
         $printReportResponse->assertSee('Uang Gedung');
         $printReportResponse->assertSee('GDG-20261103-9002');
+        $printReportResponse->assertSee('Terbilang:');
+        $printReportResponse->assertSee('Dua juta rupiah');
     }
 }
