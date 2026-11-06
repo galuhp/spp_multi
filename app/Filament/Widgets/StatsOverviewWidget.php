@@ -19,7 +19,9 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
         $user = auth()->user();
 
         if ($user?->isSiswa()) {
-            $siswa = $user->siswa ?? Siswa::where('nisn', $user->username)->first();
+            $siswa = ($user->relationLoaded('siswa') ? $user->siswa : $user->siswa()->with('spp')->first())
+                ?? Siswa::with('spp')->where('nisn', $user->username)->first();
+            $siswa?->loadMissing('spp');
             $totalDibayar = $siswa ? $siswa->totalDibayar() : 0;
             $nominalSpp = (int) ($siswa?->spp?->nominal ?? 0);
             $bulanLunasCount = 0;
@@ -54,11 +56,21 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
         $today = Carbon::today();
         $startOfMonth = Carbon::now()->startOfMonth();
 
-        $transaksiHariIni = Pembayaran::query()->whereNull('void_at')->whereDate('tgl_bayar', $today)->count();
-        $nominalHariIni = (int) Pembayaran::query()->whereNull('void_at')->whereDate('tgl_bayar', $today)->sum('jumlah_bayar');
+        $hariIni = Pembayaran::query()
+            ->whereNull('void_at')
+            ->whereDate('tgl_bayar', $today)
+            ->selectRaw('COUNT(*) as transaksi, COALESCE(SUM(jumlah_bayar), 0) as nominal')
+            ->first();
+        $transaksiHariIni = (int) ($hariIni?->transaksi ?? 0);
+        $nominalHariIni = (int) ($hariIni?->nominal ?? 0);
 
-        $nominalBulanIni = (int) Pembayaran::query()->whereNull('void_at')->where('tgl_bayar', '>=', $startOfMonth)->sum('jumlah_bayar');
-        $transaksiBulanIni = Pembayaran::query()->whereNull('void_at')->where('tgl_bayar', '>=', $startOfMonth)->count();
+        $bulanIni = Pembayaran::query()
+            ->whereNull('void_at')
+            ->where('tgl_bayar', '>=', $startOfMonth)
+            ->selectRaw('COUNT(*) as transaksi, COALESCE(SUM(jumlah_bayar), 0) as nominal')
+            ->first();
+        $nominalBulanIni = (int) ($bulanIni?->nominal ?? 0);
+        $transaksiBulanIni = (int) ($bulanIni?->transaksi ?? 0);
 
         $totalSiswa = Siswa::count();
         $totalTarif = Spp::count();

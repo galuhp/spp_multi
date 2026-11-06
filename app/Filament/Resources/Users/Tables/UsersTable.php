@@ -65,8 +65,15 @@ class UsersTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->visible(fn (User $record): bool => $record->id !== auth()->id()
-                        && ! $record->pembayarans()->exists()),
+                    ->visible(function (User $record): bool {
+                        if ($record->id === auth()->id()) {
+                            return false;
+                        }
+
+                        return array_key_exists('pembayarans_count', $record->getAttributes())
+                            ? (int) $record->getAttribute('pembayarans_count') === 0
+                            : ! $record->pembayarans()->exists();
+                    }),
             ]);
     }
 }

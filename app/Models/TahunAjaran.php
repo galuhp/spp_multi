@@ -52,7 +52,17 @@ class TahunAjaran extends Model
      */
     public function sedangDipakai(): bool
     {
-        return $this->kelas()->exists() || $this->riwayatKelas()->exists();
+        $kelasDipakai = array_key_exists('kelas_count', $this->attributes)
+            ? (int) $this->attributes['kelas_count'] > 0
+            : $this->kelas()->exists();
+
+        if ($kelasDipakai) {
+            return true;
+        }
+
+        return array_key_exists('riwayat_kelas_count', $this->attributes)
+            ? (int) $this->attributes['riwayat_kelas_count'] > 0
+            : $this->riwayatKelas()->exists();
     }
 
     /**

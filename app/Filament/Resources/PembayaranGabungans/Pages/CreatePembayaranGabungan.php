@@ -404,6 +404,7 @@ class CreatePembayaranGabungan extends CreateRecord
     protected function siswaTerpilih(): Collection
     {
         return Siswa::query()
+            ->with(['spp', 'kelas'])
             ->where('kelas_id', $this->kelas_id)
             ->whereIn('id', $this->siswa_ids)
             ->aktif()

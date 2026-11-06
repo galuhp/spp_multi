@@ -18,6 +18,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class BarisRelationManager extends RelationManager
 {
@@ -39,6 +40,7 @@ class BarisRelationManager extends RelationManager
             Select::make('siswa_id')
                 ->label('Siswa')
                 ->options(fn (): array => Siswa::query()
+                    ->with('kelas')
                     ->aktif()
                     ->orderBy('nama')
                     ->get()
@@ -74,6 +76,7 @@ class BarisRelationManager extends RelationManager
 
         return $table
             ->recordTitleAttribute('siswa.nama')
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['siswa', 'pembayaran']))
             ->columns([
                 TextColumn::make('siswa.nama')
                     ->label('Siswa')

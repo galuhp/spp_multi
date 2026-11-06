@@ -53,7 +53,7 @@ class LaporanController extends Controller
             ->get();
 
         $totalPenerimaan = $pembayarans->sum('jumlah_bayar');
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $kelasList = Kelas::with('jurusan')->orderBy('nama_kelas')->get();
         $kategoriList = Spp::select('kategori')->distinct()->pluck('kategori')->all();
 
         return view('laporan.index', [

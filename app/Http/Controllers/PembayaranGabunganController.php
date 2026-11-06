@@ -23,21 +23,27 @@ class PembayaranGabunganController extends Controller
     {
         $this->pastikanAkses();
 
-        $groups = $gabungan->baris()
+        $barisList = $gabungan->baris()
             ->whereNull('void_at')
             ->with('siswa.kelas.jurusan')
             ->orderBy('id')
-            ->get()
-            ->map(function ($baris): array {
-                $payments = Pembayaran::query()
-                    ->with(['siswa.kelas.jurusan', 'spp', 'user'])
-                    ->where('gabungan_baris_id', $baris->id)
-                    ->whereNull('void_at')
-                    ->orderBy('id')
-                    ->get();
+            ->get();
 
-                return ['baris' => $baris, 'payments' => $payments];
-            })
+        $paymentsByBaris = $barisList->isEmpty()
+            ? collect()
+            : Pembayaran::query()
+                ->with(['siswa.kelas.jurusan', 'spp', 'user'])
+                ->whereIn('gabungan_baris_id', $barisList->pluck('id')->all())
+                ->whereNull('void_at')
+                ->orderBy('id')
+                ->get()
+                ->groupBy('gabungan_baris_id');
+
+        $groups = $barisList
+            ->map(fn ($baris): array => [
+                'baris' => $baris,
+                'payments' => $paymentsByBaris->get($baris->id, collect()),
+            ])
             ->filter(fn (array $group): bool => $group['payments']->isNotEmpty())
             ->values();
 

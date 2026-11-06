@@ -38,11 +38,19 @@ class DashboardController extends Controller
         $totalKelas = Kelas::count();
         $totalSpp = Spp::count();
 
-        $transaksiHariIni = Pembayaran::whereDate('tgl_bayar', $today)->count();
-        $nominalHariIni = Pembayaran::whereDate('tgl_bayar', $today)->sum('jumlah_bayar');
+        $hariIni = Pembayaran::query()
+            ->whereDate('tgl_bayar', $today)
+            ->selectRaw('COUNT(*) as transaksi, COALESCE(SUM(jumlah_bayar), 0) as nominal')
+            ->first();
+        $transaksiHariIni = (int) ($hariIni?->transaksi ?? 0);
+        $nominalHariIni = (int) ($hariIni?->nominal ?? 0);
 
-        $nominalBulanIni = Pembayaran::where('tgl_bayar', '>=', $startOfMonth)->sum('jumlah_bayar');
-        $transaksiBulanIni = Pembayaran::where('tgl_bayar', '>=', $startOfMonth)->count();
+        $bulanIni = Pembayaran::query()
+            ->where('tgl_bayar', '>=', $startOfMonth)
+            ->selectRaw('COUNT(*) as transaksi, COALESCE(SUM(jumlah_bayar), 0) as nominal')
+            ->first();
+        $nominalBulanIni = (int) ($bulanIni?->nominal ?? 0);
+        $transaksiBulanIni = (int) ($bulanIni?->transaksi ?? 0);
 
         $transaksiTerbaru = Pembayaran::with(['siswa.kelas', 'user', 'spp'])
             ->latest('id')
@@ -77,6 +85,8 @@ class DashboardController extends Controller
         $totalDibayar = 0;
 
         if ($siswa) {
+            $siswa->loadMissing(['kelas.jurusan', 'spp']);
+
             $riwayatPembayaran = $siswa->pembayarans()
                 ->with(['user', 'spp'])
                 ->latest('tgl_bayar')

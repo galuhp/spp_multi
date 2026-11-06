@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
@@ -42,13 +43,25 @@ class UserResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        return $record->id !== auth()->id()
-            && ! $record->pembayarans()->exists();
+        if ($record->id === auth()->id()) {
+            return false;
+        }
+
+        if ($record instanceof User && array_key_exists('pembayarans_count', $record->getAttributes())) {
+            return (int) $record->getAttribute('pembayarans_count') === 0;
+        }
+
+        return ! $record->pembayarans()->exists();
     }
 
     public static function canDeleteAny(): bool
     {
         return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount('pembayarans');
     }
 
     public static function form(Schema $schema): Schema

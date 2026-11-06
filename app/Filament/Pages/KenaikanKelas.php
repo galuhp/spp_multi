@@ -149,13 +149,21 @@ class KenaikanKelas extends Page
         $default = $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id);
         $tingkatAkhir = in_array($service->normalisasiTingkat($kelas->tingkat), ProsesKelasService::TINGKAT_AKHIR, true);
 
-        return $service->siswaKelas($this->kelas_asal_id)->map(function ($siswa) use ($default, $tingkatAkhir): array {
+        $siswaList = $service->siswaKelas($this->kelas_asal_id);
+        $sudahAdaIds = $siswaList->isEmpty()
+            ? []
+            : array_flip(
+                RiwayatKelas::query()
+                    ->where('tahun_ajaran_id', $this->tahun_ajaran_tujuan_id)
+                    ->whereIn('siswa_id', $siswaList->pluck('id')->all())
+                    ->pluck('siswa_id')
+                    ->all(),
+            );
+
+        return $siswaList->map(function ($siswa) use ($default, $tingkatAkhir, $sudahAdaIds): array {
             return [
                 'siswa' => $siswa,
-                'sudah_ada' => RiwayatKelas::query()
-                    ->where('siswa_id', $siswa->id)
-                    ->where('tahun_ajaran_id', $this->tahun_ajaran_tujuan_id)
-                    ->exists(),
+                'sudah_ada' => isset($sudahAdaIds[$siswa->id]),
                 'tingkat_akhir' => $tingkatAkhir,
                 'default_kelas_id' => $default?->id,
             ];

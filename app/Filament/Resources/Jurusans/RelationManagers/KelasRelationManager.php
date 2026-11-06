@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Unique;
 
 class KelasRelationManager extends RelationManager
@@ -61,6 +62,7 @@ class KelasRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('nama_kelas')
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('tahunAjaran'))
             ->columns([
                 TextColumn::make('tahunAjaran.nama')
                     ->label('Tahun Ajaran')

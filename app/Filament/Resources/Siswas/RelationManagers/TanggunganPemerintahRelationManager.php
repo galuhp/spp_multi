@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TanggunganPemerintahRelationManager extends RelationManager
 {
@@ -52,6 +53,7 @@ class TanggunganPemerintahRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('cakupan')
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('spp'))
             ->columns([
                 TextColumn::make('cakupan')
                     ->label('Cakupan')
@@ -123,6 +125,7 @@ class TanggunganPemerintahRelationManager extends RelationManager
     protected function posOptions(): array
     {
         $siswa = $this->getOwnerRecord();
+        $siswa->loadMissing(['spp', 'kelas']);
         $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
         $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);

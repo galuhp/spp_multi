@@ -104,7 +104,7 @@ class PembayaranMassalService
     {
         $this->pastikanDraft($gabungan);
 
-        foreach ($gabungan->baris()->with('siswa')->get() as $baris) {
+        foreach ($gabungan->baris()->with(['siswa.spp', 'siswa.kelas'])->get() as $baris) {
             $validasi = $this->pembayaran->validasiBaris($baris->siswa, (int) $baris->jumlah, $baris->alokasi);
 
             $duplikat = $gabungan->baris()

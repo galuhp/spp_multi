@@ -39,14 +39,52 @@ class RolePermission extends Model
     ];
 
     /**
+     * In-memory cache of permissions keyed by role value.
+     *
+     * @var array<string, array<string, bool>>|null
+     */
+    protected static ?array $cachedPermissions = null;
+
+    protected static function booted(): void
+    {
+        static::saved(fn (): null => static::$cachedPermissions = null);
+        static::deleted(fn (): null => static::$cachedPermissions = null);
+    }
+
+    /**
+     * Clear the in-memory permission cache.
+     */
+    public static function clearCache(): void
+    {
+        static::$cachedPermissions = null;
+    }
+
+    /**
+     * Load all role permissions into memory once.
+     *
+     * @return array<string, array<string, bool>>
+     */
+    protected static function permissionsMap(): array
+    {
+        if (static::$cachedPermissions !== null) {
+            return static::$cachedPermissions;
+        }
+
+        $map = [];
+
+        foreach (static::query()->get(['role', 'permission']) as $row) {
+            $map[(string) $row->role][(string) $row->permission] = true;
+        }
+
+        return static::$cachedPermissions = $map;
+    }
+
+    /**
      * Determine whether a role may access a permission.
      */
     public static function allowed(UserRole $role, string $permission): bool
     {
-        return static::query()
-            ->where('role', $role->value)
-            ->where('permission', $permission)
-            ->exists();
+        return isset(static::permissionsMap()[$role->value][$permission]);
     }
 
     /**
@@ -56,10 +94,7 @@ class RolePermission extends Model
      */
     public static function forRole(UserRole $role): array
     {
-        return static::query()
-            ->where('role', $role->value)
-            ->pluck('permission')
-            ->all();
+        return array_keys(static::permissionsMap()[$role->value] ?? []);
     }
 
     /**
@@ -82,5 +117,7 @@ class RolePermission extends Model
                 'permission' => $permission,
             ]);
         }
+
+        static::clearCache();
     }
 }

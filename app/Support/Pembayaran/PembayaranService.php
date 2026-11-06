@@ -27,9 +27,8 @@ class PembayaranService
     public function tagihanTerbuka(Siswa $siswa): array
     {
         $items = [];
+        $siswa->loadMissing(['spp', 'kelas']);
         $tarif = $siswa->spp;
-
-        $siswa->loadMissing('kelas');
 
         if ($tarif) {
             if ($tarif->isBulanan()) {
@@ -129,6 +128,18 @@ class PembayaranService
             ->orderBy('id')
             ->get();
 
+        $dibayarPerPos = $nonSpp->isEmpty()
+            ? []
+            : Pembayaran::query()
+                ->where('siswa_id', $siswa->id)
+                ->whereIn('spp_id', $nonSpp->pluck('id')->all())
+                ->whereNull('void_at')
+                ->selectRaw('spp_id, SUM(jumlah_bayar) as total')
+                ->groupBy('spp_id')
+                ->pluck('total', 'spp_id')
+                ->map(fn ($total): int => (int) $total)
+                ->all();
+
         foreach ($nonSpp as $tarifLain) {
             if ($tarif && $tarifLain->id === $tarif->id) {
                 continue;
@@ -138,7 +149,7 @@ class PembayaranService
                 continue;
             }
 
-            $dibayar = $this->totalDibayar($siswa, $tarifLain);
+            $dibayar = (int) ($dibayarPerPos[$tarifLain->id] ?? 0);
             $nominal = (int) $tarifLain->nominal;
             $sisa = max(0, $nominal - $dibayar);
 

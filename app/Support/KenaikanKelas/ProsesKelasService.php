@@ -26,6 +26,7 @@ class ProsesKelasService
     public function siswaKelas(int $kelasId): Collection
     {
         return Siswa::query()
+            ->with('spp')
             ->where('kelas_id', $kelasId)
             ->aktif()
             ->orderBy('nama')

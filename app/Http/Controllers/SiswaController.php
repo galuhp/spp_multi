@@ -157,8 +157,8 @@ class SiswaController extends Controller
                     ->orWhere('tahun_ajaran', $activeTahunAjaran);
             })
             ->get()
-            ->map(function (Spp $tarif) use ($siswa) {
-                $dibayar = (int) $siswa->pembayarans
+            ->map(function (Spp $tarif) use ($riwayatPembayaran) {
+                $dibayar = (int) $riwayatPembayaran
                     ->where('spp_id', $tarif->id)
                     ->sum('jumlah_bayar');
                 $sisa = max(0, $tarif->nominal - $dibayar);
