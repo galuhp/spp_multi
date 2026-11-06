@@ -218,46 +218,98 @@
         @endif
     </div>
 
-    {{-- Month selection modal --}}
+    {{-- Payment item selection modal --}}
     @if ($modal)
+        @php
+            $nonSppList = $this->nonSppOptions;
+            $nonSppTerpilih = array_map('intval', $this->non_spp_ids);
+        @endphp
         <div class="fixed inset-0 z-50 flex items-end justify-center bg-gray-900/60 p-4 sm:items-center"
             wire:key="modal-bulan" role="dialog" aria-modal="true" aria-labelledby="pm-modal-title">
             <div class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl">
                 <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
                     <div>
-                        <h3 id="pm-modal-title" class="text-base font-semibold text-gray-900">Pilih Bulan Pembayaran</h3>
+                        <h3 id="pm-modal-title" class="text-base font-semibold text-gray-900">Pilih Item Pembayaran</h3>
                         <p class="mt-0.5 text-xs text-gray-500">
-                            {{ $kelasTerpilih?->nama_kelas ? $kelasTerpilih->nama_kelas.' • ' : '' }}{{ $jumlahTerpilih }} siswa terpilih. Centang bulan SPP yang akan dibayar.
+                            {{ $kelasTerpilih?->nama_kelas ? $kelasTerpilih->nama_kelas.' • ' : '' }}{{ $jumlahTerpilih }} siswa terpilih. Centang bulan SPP dan/atau tarif biaya lain yang akan dibayar.
                         </p>
                     </div>
                     <x-filament::icon-button icon="heroicon-o-x-mark" color="gray" size="sm"
                         label="Tutup" wire:click="tutupModal" />
                 </div>
 
-                <div class="max-h-[55vh] space-y-4 overflow-y-auto px-5 py-4">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <x-filament::button type="button" color="gray" size="sm" outlined wire:click="pilihSemuaBulan">
-                            Semua Bulan
-                        </x-filament::button>
-                        <x-filament::button type="button" color="gray" size="sm" outlined wire:click="kosongkanBulan">
-                            Kosongkan
-                        </x-filament::button>
+                <div class="max-h-[60vh] space-y-5 overflow-y-auto px-5 py-4">
+                    {{-- SPP Bulanan --}}
+                    <div class="space-y-2.5">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Bulan SPP</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <x-filament::button type="button" color="gray" size="xs" outlined wire:click="pilihSemuaBulan">
+                                    Semua Bulan
+                                </x-filament::button>
+                                <x-filament::button type="button" color="gray" size="xs" outlined wire:click="kosongkanBulan">
+                                    Kosongkan
+                                </x-filament::button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                            @foreach ($this->bulanOptions as $namaBulan)
+                                <label class="pm-month" wire:key="bulan-{{ $namaBulan }}">
+                                    <input type="checkbox"
+                                        wire:model.live="bulan"
+                                        value="{{ $namaBulan }}"
+                                        @checked(in_array($namaBulan, $this->bulan, true))>
+                                    <span class="font-medium">{{ $namaBulan }}</span>
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                        @foreach ($this->bulanOptions as $namaBulan)
-                            <label class="pm-month" wire:key="bulan-{{ $namaBulan }}">
-                                <input type="checkbox"
-                                    wire:model.live="bulan"
-                                    value="{{ $namaBulan }}"
-                                    @checked(in_array($namaBulan, $this->bulan, true))>
-                                <span class="font-medium">{{ $namaBulan }}</span>
-                            </label>
-                        @endforeach
+                    {{-- Tarif / Pos Biaya Lain (Non-SPP) --}}
+                    <div class="space-y-2.5 border-t border-gray-100 pt-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-700">Tarif / Biaya Lainnya (Non-SPP)</span>
+                            @if ($nonSppList->isNotEmpty())
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <x-filament::button type="button" color="gray" size="xs" outlined wire:click="pilihSemuaNonSpp">
+                                        Semua Tarif
+                                    </x-filament::button>
+                                    <x-filament::button type="button" color="gray" size="xs" outlined wire:click="kosongkanNonSpp">
+                                        Kosongkan
+                                    </x-filament::button>
+                                </div>
+                            @endif
+                        </div>
+
+                        @if ($nonSppList->isNotEmpty())
+                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                @foreach ($nonSppList as $tarif)
+                                    <label class="pm-month justify-between" wire:key="non-spp-{{ $tarif->id }}">
+                                        <span class="flex min-w-0 items-center gap-2">
+                                            <input type="checkbox"
+                                                wire:model.live="non_spp_ids"
+                                                value="{{ $tarif->id }}"
+                                                @checked(in_array((int) $tarif->id, $nonSppTerpilih, true))>
+                                            <span class="truncate font-medium">
+                                                {{ $tarif->kategori }}{{ $tarif->nama ? ' — '.$tarif->nama : '' }}
+                                            </span>
+                                        </span>
+                                        <span class="shrink-0 font-mono text-xs text-gray-500">
+                                            Rp {{ number_format((int) $tarif->nominal, 0, ',', '.') }}
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-xs text-gray-500">
+                                Tidak ada pos biaya lain (Non-SPP) untuk tingkat dan tahun ajaran kelas ini.
+                            </p>
+                        @endif
                     </div>
 
                     <p class="text-[11px] leading-relaxed text-gray-500">
-                        Bulan yang sudah lunas untuk seorang siswa akan dilewati otomatis. Siswa yang seluruh bulannya sudah lunas tidak disertakan.
+                        Tagihan yang sudah lunas atau ditanggung pemerintah untuk seorang siswa akan dilewati otomatis. Siswa yang seluruh item pilihannya sudah lunas tidak disertakan.
                     </p>
 
                     @if ($galat)
@@ -283,7 +335,7 @@
                             wire:click="simpan"
                             wire:loading.attr="disabled"
                             wire:target="simpan"
-                            :disabled="$this->bulan === []">
+                            :disabled="$this->bulan === [] && $this->non_spp_ids === []">
                             <span wire:loading.remove wire:target="simpan">Simpan &amp; Cetak Kuitansi</span>
                             <span wire:loading wire:target="simpan">Memproses...</span>
                         </x-filament::button>

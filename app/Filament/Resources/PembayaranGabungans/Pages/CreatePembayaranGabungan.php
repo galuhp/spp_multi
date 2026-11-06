@@ -8,6 +8,7 @@ use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\PembayaranGabungan;
 use App\Models\Siswa;
+use App\Models\Spp;
 use App\Support\Pembayaran\PembayaranService;
 use App\Support\PembayaranMassal\PembayaranMassalService;
 use Filament\Resources\Pages\CreateRecord;
@@ -38,6 +39,11 @@ class CreatePembayaranGabungan extends CreateRecord
      * @var array<int, string>
      */
     public array $bulan = [];
+
+    /**
+     * @var array<int, int|string>
+     */
+    public array $non_spp_ids = [];
 
     public bool $modal = false;
 
@@ -140,6 +146,67 @@ class CreatePembayaranGabungan extends CreateRecord
         ) ?: [];
     }
 
+    /**
+     * Non-SPP tariffs applicable to the selected class.
+     *
+     * @return Collection<int, Spp>
+     */
+    public function getNonSppOptionsProperty(): Collection
+    {
+        if (! $this->kelas_id) {
+            return collect();
+        }
+
+        $kelas = Kelas::query()->with('tahunAjaran')->find($this->kelas_id);
+
+        if (! $kelas) {
+            return collect();
+        }
+
+        $contohSiswa = Siswa::query()
+            ->with('spp')
+            ->where('kelas_id', $kelas->id)
+            ->aktif()
+            ->first();
+
+        $tahunAjaran = $contohSiswa?->spp?->tahun_ajaran ?? $kelas->tahunAjaran?->nama;
+        $tahunTarif = $contohSiswa?->spp?->tahun
+            ?? ($tahunAjaran && preg_match('/(\d{4})/', (string) $tahunAjaran, $m) ? (int) $m[1] : null);
+        $tingkat = Spp::normalisasiTingkat($kelas->tingkat);
+        $variasiTingkat = array_values(array_unique(array_filter([
+            $tingkat,
+            $tingkat ? (Spp::TINGKAT_LIST[$tingkat] ?? null) : null,
+        ])));
+
+        return Spp::query()
+            ->where('kategori', '!=', Spp::KATEGORI_SPP)
+            ->when($tahunTarif || $tahunAjaran, function ($query) use ($tahunTarif, $tahunAjaran): void {
+                $query->where(function ($subquery) use ($tahunTarif, $tahunAjaran): void {
+                    if ($tahunTarif) {
+                        $subquery->whereIn('tahun', [$tahunTarif, $tahunTarif + 1]);
+                    }
+
+                    if ($tahunAjaran) {
+                        if ($tahunTarif) {
+                            $subquery->orWhere('tahun_ajaran', $tahunAjaran);
+                        } else {
+                            $subquery->where('tahun_ajaran', $tahunAjaran);
+                        }
+                    }
+                });
+            })
+            ->where(function ($query) use ($variasiTingkat): void {
+                $query->whereNull('tingkat');
+
+                if ($variasiTingkat !== []) {
+                    $query->orWhereIn('tingkat', $variasiTingkat);
+                }
+            })
+            ->orderBy('kategori')
+            ->orderBy('nama')
+            ->get();
+    }
+
     public function updatedMode(): void
     {
         $this->jurusan_id = null;
@@ -165,6 +232,7 @@ class CreatePembayaranGabungan extends CreateRecord
             ->all();
 
         $this->bulan = [];
+        $this->non_spp_ids = [];
         $this->totalEstimasi = 0;
         $this->galat = null;
     }
@@ -175,6 +243,11 @@ class CreatePembayaranGabungan extends CreateRecord
     }
 
     public function updatedBulan(): void
+    {
+        $this->hitungTotal();
+    }
+
+    public function updatedNonSppIds(): void
     {
         $this->hitungTotal();
     }
@@ -215,7 +288,22 @@ class CreatePembayaranGabungan extends CreateRecord
     public function kosongkanBulan(): void
     {
         $this->bulan = [];
-        $this->totalEstimasi = 0;
+        $this->hitungTotal();
+    }
+
+    public function pilihSemuaNonSpp(): void
+    {
+        $this->non_spp_ids = $this->nonSppOptions
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+        $this->hitungTotal();
+    }
+
+    public function kosongkanNonSpp(): void
+    {
+        $this->non_spp_ids = [];
+        $this->hitungTotal();
     }
 
     public function bukaModal(): void
@@ -239,7 +327,10 @@ class CreatePembayaranGabungan extends CreateRecord
 
     public function hitungTotal(): void
     {
-        if ($this->bulan === [] || $this->siswa_ids === []) {
+        $bulan = array_values(array_unique($this->bulan));
+        $nonSppIds = array_values(array_unique(array_map('intval', $this->non_spp_ids)));
+
+        if (($bulan === [] && $nonSppIds === []) || $this->siswa_ids === []) {
             $this->totalEstimasi = 0;
 
             return;
@@ -249,10 +340,20 @@ class CreatePembayaranGabungan extends CreateRecord
         $total = 0;
 
         foreach ($this->siswaTerpilih() as $siswa) {
-            $items = collect($service->tagihanTerbuka($siswa))->keyBy('bulan');
+            $terbuka = collect($service->tagihanTerbuka($siswa));
+            $perBulan = $terbuka->where('tipe', 'spp')->keyBy('bulan');
+            $perPos = $terbuka->where('tipe', 'non_spp')->keyBy('spp_id');
 
-            foreach (array_unique($this->bulan) as $bulan) {
-                $item = $items->get($bulan);
+            foreach ($bulan as $namaBulan) {
+                $item = $perBulan->get($namaBulan);
+
+                if ($item) {
+                    $total += (int) $item['sisa'];
+                }
+            }
+
+            foreach ($nonSppIds as $sppId) {
+                $item = $perPos->get($sppId);
 
                 if ($item) {
                     $total += (int) $item['sisa'];
@@ -271,6 +372,8 @@ class CreatePembayaranGabungan extends CreateRecord
 
         $this->galat = null;
         $bulan = array_values(array_unique($this->bulan));
+        $nonSppIds = array_values(array_unique(array_map('intval', $this->non_spp_ids)));
+        $targetCount = count($bulan) + count($nonSppIds);
 
         if ($this->kelas_id === null) {
             $this->galat = 'Pilih kelas terlebih dahulu.';
@@ -284,8 +387,8 @@ class CreatePembayaranGabungan extends CreateRecord
             return;
         }
 
-        if ($bulan === []) {
-            $this->galat = 'Pilih minimal satu bulan pembayaran.';
+        if ($targetCount === 0) {
+            $this->galat = 'Pilih minimal satu bulan SPP atau tarif biaya lainnya.';
 
             return;
         }
@@ -301,11 +404,27 @@ class CreatePembayaranGabungan extends CreateRecord
             $sebagian = 0;
 
             foreach ($siswaList as $siswa) {
-                $items = collect($service->tagihanTerbuka($siswa))->keyBy('bulan');
+                $terbuka = collect($service->tagihanTerbuka($siswa));
+                $perBulan = $terbuka->where('tipe', 'spp')->keyBy('bulan');
+                $perPos = $terbuka->where('tipe', 'non_spp')->keyBy('spp_id');
                 $alokasi = [];
 
                 foreach ($bulan as $namaBulan) {
-                    $item = $items->get($namaBulan);
+                    $item = $perBulan->get($namaBulan);
+
+                    if (! $item) {
+                        continue;
+                    }
+
+                    $alokasi[] = [
+                        'tagihan' => $item['key'],
+                        'nominal' => (int) $item['sisa'],
+                    ];
+                    $total += (int) $item['sisa'];
+                }
+
+                foreach ($nonSppIds as $sppId) {
+                    $item = $perPos->get($sppId);
 
                     if (! $item) {
                         continue;
@@ -324,7 +443,7 @@ class CreatePembayaranGabungan extends CreateRecord
                     continue;
                 }
 
-                if (count($alokasi) < count($bulan)) {
+                if (count($alokasi) < $targetCount) {
                     $sebagian++;
                 }
 
@@ -332,7 +451,7 @@ class CreatePembayaranGabungan extends CreateRecord
             }
 
             if ($alokasiPerSiswa === []) {
-                $this->galat = 'Tidak ada tagihan terbuka untuk bulan yang dipilih pada siswa terpilih.';
+                $this->galat = 'Tidak ada tagihan terbuka untuk item yang dipilih pada siswa terpilih.';
 
                 return;
             }
@@ -417,6 +536,7 @@ class CreatePembayaranGabungan extends CreateRecord
         $this->kelas_id = null;
         $this->siswa_ids = [];
         $this->bulan = [];
+        $this->non_spp_ids = [];
         $this->modal = false;
         $this->totalEstimasi = 0;
         $this->galat = null;
