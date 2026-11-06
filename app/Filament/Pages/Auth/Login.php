@@ -24,6 +24,20 @@ class Login extends BaseLogin
     }
 
     /**
+     * Keep password visibility available on the custom login page.
+     */
+    protected function getPasswordFormComponent(): Component
+    {
+        return TextInput::make('password')
+            ->label('Kata Sandi')
+            ->password()
+            ->revealable()
+            ->autocomplete('current-password')
+            ->required()
+            ->extraInputAttributes(['tabindex' => 2]);
+    }
+
+    /**
      * Map the username field to credentials for authentication.
      *
      * @param  array<string, mixed>  $data
