@@ -1,7 +1,6 @@
 @import './theme.css';
 @import 'tailwindcss';
 
-@source '../../vendor/pushery/wirekit/resources/views/**/*.blade.php';
 @source '../views/components/ui';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';

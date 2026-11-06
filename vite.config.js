@@ -9,12 +9,6 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/css/impor-siswa.css',
-                'resources/css/demo-preline.css',
-                'resources/css/demo-mary.css',
-                'resources/css/demo-flux.css',
-                'resources/css/demo-wireui.css',
-                'resources/css/demo-wirekit.css',
-                'resources/css/demo-sheaf.css',
                 'resources/css/proses-kelas.css',
                 'resources/css/tagihan-siswa.css',
                 'resources/css/riwayat-pembayaran-siswa.css',
@@ -25,7 +19,6 @@ export default defineConfig({
                 'resources/css/sidebar.css',
                 'resources/css/entri-pembayaran-kasir.css',
                 'resources/js/app.js',
-                'resources/js/demo-preline.js',
             ],
             refresh: true,
             fonts: [
