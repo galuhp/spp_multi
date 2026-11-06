@@ -153,8 +153,10 @@ fi
 
 echo "==> Atur permission"
 
-chgrp -R www-data "$SHARED/storage" "$RELEASE_DIR/bootstrap/cache"
-chmod -R ug+rwX "$SHARED/storage" "$RELEASE_DIR/bootstrap/cache"
+# File cache/session di shared/storage dibuat oleh PHP-FPM (www-data).
+# User deploy bukan pemilik file-file itu, jadi jangan chgrp/chmod rekursif
+# pada shared storage. Permission dasarnya sudah diatur provision.sh.
+chmod -R ug+rwX "$RELEASE_DIR/bootstrap/cache"
 
 echo "==> Migrasi dan cache"
 
