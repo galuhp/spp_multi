@@ -112,6 +112,8 @@ apt-get install -y --no-install-recommends \
     "php${PHP_VERSION}-intl" \
     "php${PHP_VERSION}-bcmath" \
     "php${PHP_VERSION}-opcache" \
+    "php${PHP_VERSION}-redis" \
+    redis-server \
     ufw \
     logrotate \
     restic
@@ -268,6 +270,20 @@ ALTER USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
 FLUSH PRIVILEGES;
 SQL
+
+echo "==> Konfigurasi Redis"
+
+if [ -f /etc/redis/redis.conf ] && ! grep -q '^maxmemory 128mb' /etc/redis/redis.conf; then
+    cat >>/etc/redis/redis.conf <<'EOF'
+
+# SPP cache & session tuning
+maxmemory 128mb
+maxmemory-policy allkeys-lru
+EOF
+fi
+
+systemctl enable --now redis-server
+systemctl restart redis-server
 
 echo "==> Konfigurasi PHP-FPM"
 

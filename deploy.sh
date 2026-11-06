@@ -111,12 +111,21 @@ if [ ! -f "$ENV_FILE" ]; then
     set_env DB_USERNAME "$DB_USER" "$ENV_FILE"
     set_env DB_PASSWORD "$DB_PASS" "$ENV_FILE"
 
-    set_env SESSION_DRIVER file "$ENV_FILE"
+    set_env SESSION_DRIVER redis "$ENV_FILE"
     set_env SESSION_SECURE_COOKIE true "$ENV_FILE"
-    set_env CACHE_STORE file "$ENV_FILE"
+    set_env CACHE_STORE redis "$ENV_FILE"
+    set_env REDIS_CLIENT phpredis "$ENV_FILE"
+    set_env REDIS_HOST 127.0.0.1 "$ENV_FILE"
+    set_env REDIS_PORT 6379 "$ENV_FILE"
     set_env QUEUE_CONNECTION sync "$ENV_FILE"
     set_env FILESYSTEM_DISK local "$ENV_FILE"
     set_env BROADCAST_CONNECTION log "$ENV_FILE"
+fi
+
+if "$PHP_BIN" -m 2>/dev/null | grep -qi '^redis$' && command -v redis-cli >/dev/null 2>&1 && redis-cli -h 127.0.0.1 ping >/dev/null 2>&1; then
+    set_env SESSION_DRIVER redis "$ENV_FILE"
+    set_env CACHE_STORE redis "$ENV_FILE"
+    set_env REDIS_CLIENT phpredis "$ENV_FILE"
 fi
 
 chgrp www-data "$ENV_FILE"
