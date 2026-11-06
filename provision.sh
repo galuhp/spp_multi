@@ -70,6 +70,26 @@ if ! apt-cache show "php${PHP_VERSION}-fpm" >/dev/null 2>&1; then
     apt-get update
 fi
 
+# Jangan biarkan post-install script menyalakan service sebelum konfigurasi
+# selesai. Ini penting untuk VPS yang IPv6-nya dimatikan: default site Nginx
+# mendengarkan [::]:80 dan dapat membuat instalasi gagal.
+POLICY_RC_FILE="/usr/sbin/policy-rc.d"
+POLICY_RC_CREATED=0
+
+cleanup_policy_rc() {
+    if [ "$POLICY_RC_CREATED" = "1" ]; then
+        rm -f "$POLICY_RC_FILE"
+    fi
+}
+
+trap cleanup_policy_rc EXIT
+
+if [ ! -e "$POLICY_RC_FILE" ]; then
+    printf '#!/bin/sh\nexit 101\n' >"$POLICY_RC_FILE"
+    chmod +x "$POLICY_RC_FILE"
+    POLICY_RC_CREATED=1
+fi
+
 apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -95,6 +115,9 @@ apt-get install -y --no-install-recommends \
     ufw \
     logrotate \
     restic
+
+cleanup_policy_rc
+trap - EXIT
 
 echo "==> Install Node.js 22"
 
