@@ -97,6 +97,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn (): View => view('filament.partials.brand'))
             ->brandLogoHeight('2.5rem')
             ->favicon(fn (): ?string => ProfilSekolah::current()->logoUrl())
+            ->font('DM Sans')
             ->colors([
                 'primary' => Color::Indigo,
                 'gray' => Color::Slate,
