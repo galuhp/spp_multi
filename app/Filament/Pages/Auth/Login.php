@@ -7,6 +7,7 @@ use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
+use Filament\Support\Components\Attributes\Exposed;
 use Illuminate\Validation\ValidationException;
 use SensitiveParameter;
 use Throwable;
@@ -29,6 +30,7 @@ class Login extends BaseLogin
     /**
      * Show a visible notification whenever authentication fails.
      */
+    #[Exposed]
     public function authenticate(): ?LoginResponse
     {
         try {
