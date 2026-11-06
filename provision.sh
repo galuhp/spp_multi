@@ -346,7 +346,7 @@ server {
     location ~* \.(?:css|js|jpg|jpeg|png|gif|ico|svg|woff2?)$ {
         expires 7d;
         access_log off;
-        try_files \$uri =404;
+        try_files \$uri /index.php?\$query_string;
     }
 
     location ~ /\.(?!well-known).* {
