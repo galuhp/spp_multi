@@ -114,12 +114,19 @@ apt-get install -y --no-install-recommends \
     "php${PHP_VERSION}-opcache" \
     "php${PHP_VERSION}-redis" \
     redis-server \
+    systemd-timesyncd \
     ufw \
     logrotate \
     restic
 
 cleanup_policy_rc
 trap - EXIT
+
+echo "==> Konfigurasi timezone dan NTP"
+
+timedatectl set-timezone Asia/Jakarta || true
+systemctl enable --now systemd-timesyncd || true
+timedatectl set-ntp true || true
 
 echo "==> Install Node.js 22"
 
