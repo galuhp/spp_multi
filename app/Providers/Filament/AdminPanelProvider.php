@@ -7,9 +7,12 @@ use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
 use App\Filament\Widgets\LatestPembayaranWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
 use App\Models\ProfilSekolah;
+use App\Models\User;
+use App\Support\GlobalThemePreferenceStore;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
 use DutchCodingCompany\FilamentSocialite\Provider;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -30,6 +33,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
+use Saivra\MeUi\MeUiPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -51,12 +55,32 @@ class AdminPanelProvider extends PanelProvider
             $socialitePlugin->domainAllowList($allowedDomains);
         }
 
+        $meuiPlugin = MeUiPlugin::make()
+            ->density(fn (): string => GlobalThemePreferenceStore::option('density', 'comfortable'))
+            ->palette(fn (): string => GlobalThemePreferenceStore::option('palette', 'slate'))
+            ->accent(fn (): string => GlobalThemePreferenceStore::option('accent', 'panel'))
+            ->radius(fn (): string => GlobalThemePreferenceStore::option('radius', 'rounded'))
+            ->surface(fn (): string => GlobalThemePreferenceStore::option('surface', 'elevated'))
+            ->sidebarStyle(fn (): string => GlobalThemePreferenceStore::option('sidebar', 'soft'))
+            ->workspace(fn (): string => GlobalThemePreferenceStore::option('workspace', 'inset'))
+            ->contrast(fn (): string => GlobalThemePreferenceStore::option('contrast', 'standard'))
+            ->customizer(authorize: function (): bool {
+                $user = Filament::auth()->user();
+
+                return $user instanceof User && $user->isAdmin();
+            })
+            ->preferences(
+                load: fn (): array => GlobalThemePreferenceStore::read(),
+                save: fn (array $values) => GlobalThemePreferenceStore::write($values),
+            );
+
         return $panel
             ->default()
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
             ->plugin($socialitePlugin)
+            ->plugin($meuiPlugin)
             ->renderHook(
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): View => view('filament.partials.pembayaran-form-styles'),
@@ -68,10 +92,6 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::SCRIPTS_AFTER,
                 fn (): View => view('filament.partials.pembayaran-form-scripts'),
-            )
-            ->renderHook(
-                PanelsRenderHook::SIDEBAR_FOOTER,
-                fn (): View => view('filament.partials.sidebar-user-menu'),
             )
             ->brandName(fn (): string => ProfilSekolah::current()->appName())
             ->brandLogo(fn (): View => view('filament.partials.brand'))

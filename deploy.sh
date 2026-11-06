@@ -180,6 +180,7 @@ trap cleanup EXIT
 "$PHP_BIN" artisan storage:link --force
 "$PHP_BIN" artisan config:cache
 "$PHP_BIN" artisan view:cache
+"$PHP_BIN" artisan filament:assets
 "$PHP_BIN" artisan filament:optimize
 
 echo "==> Aktifkan release"

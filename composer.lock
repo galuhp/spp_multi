@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "00750c31c9807fef3e7a56d6466d4313",
+    "content-hash": "eec72b8167e90d9c18e553e7f080e80a",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -6040,6 +6040,75 @@
                 }
             ],
             "time": "2026-03-19T10:36:26+00:00"
+        },
+        {
+            "name": "saivra/meui-theme",
+            "version": "v0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Saivra/meui-theme.git",
+                "reference": "ad7333877d38679d1deab6842dc38177eecd83d7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Saivra/meui-theme/zipball/ad7333877d38679d1deab6842dc38177eecd83d7",
+                "reference": "ad7333877d38679d1deab6842dc38177eecd83d7",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^5.10.2",
+                "illuminate/support": "^12.0 || ^13.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.29",
+                "orchestra/testbench": "^10.0 || ^11.0",
+                "phpunit/phpunit": "^11.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Saivra\\MeUi\\MeUiServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Saivra\\MeUi\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Saivra Technologies",
+                    "homepage": "https://github.com/saivra"
+                },
+                {
+                    "name": "Ghulam Mustafa",
+                    "homepage": "https://github.com/GMustafa-s",
+                    "role": "Maintainer"
+                }
+            ],
+            "description": "A native light and dark application theme for Filament 5.",
+            "homepage": "https://github.com/saivra/meui-theme",
+            "keywords": [
+                "dark-mode",
+                "filament",
+                "filament-plugin",
+                "laravel",
+                "livewire",
+                "theme"
+            ],
+            "support": {
+                "issues": "https://github.com/saivra/meui-theme/issues",
+                "source": "https://github.com/saivra/meui-theme"
+            },
+            "time": "2026-10-24T11:40:27+00:00"
         },
         {
             "name": "scrivo/highlight.php",
