@@ -64,6 +64,7 @@
                 class="grid grid-cols-3 gap-1.5"
                 role="tablist"
                 aria-label="Jenis data master"
+                aria-orientation="horizontal"
                 x-data="{
                     fokusTab(indeks) {
                         const tabs = [...$el.querySelectorAll('[role=tab]')];
@@ -102,7 +103,7 @@
 
                         <span class="min-w-0">
                             <span class="block truncate text-[11px] font-semibold leading-tight sm:text-sm">{{ $tab['label'] }}</span>
-                            <span class="mt-0.5 hidden truncate text-[11px] font-normal text-slate-500 lg:block dark:text-gray-400">{{ $tab['deskripsi'] }}</span>
+                            <span class="mt-0.5 hidden truncate text-[11px] font-normal text-slate-600 lg:block dark:text-gray-400">{{ $tab['deskripsi'] }}</span>
                         </span>
                     </button>
                 @endforeach
@@ -215,7 +216,7 @@
                                     @endforeach
                                 </select>
 
-                                <x-heroicon-o-chevron-down class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-slate-400 dark:text-gray-500" aria-hidden="true" />
+                                <x-heroicon-o-chevron-down class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-slate-500 dark:text-gray-400" aria-hidden="true" />
                             </div>
 
                             <p id="tahun_ajaran_id-hint" class="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-gray-400">

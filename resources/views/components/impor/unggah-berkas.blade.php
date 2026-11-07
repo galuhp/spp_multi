@@ -153,6 +153,13 @@
         </span>
     </label>
 
+    <span
+        class="sr-only"
+        role="status"
+        aria-live="polite"
+        x-text="mengunggah ? 'Mengunggah berkas...' : (namaBerkas ? 'Berkas siap diimpor.' : '')"
+    ></span>
+
     @if ($pesanError)
         <p
             id="{{ $idError }}"
