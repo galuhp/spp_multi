@@ -146,20 +146,6 @@ class LaporanController extends Controller
             'mode' => (string) $request->query('mode', ''),
         ];
 
-        // Scope Wali Kelas strictly to their own assigned class
-        if ($user->isWaliKelas()) {
-            $waliKelasIds = $user->kelasWaliIds();
-            if (empty($waliKelasIds)) {
-                abort(403, 'Akun Anda belum ditugaskan sebagai wali kelas pada rombel manapun.');
-            }
-
-            if (blank($filters['kelas_id']) || ! in_array((int) $filters['kelas_id'], $waliKelasIds, true)) {
-                $filters['kelas_id'] = (string) $waliKelasIds[0];
-            }
-
-            $filters['mode'] = '';
-        }
-
         return view('laporan.tunggakan-cetak', [
             'laporan' => $service->tunggakan($filters),
             'filters' => $filters,

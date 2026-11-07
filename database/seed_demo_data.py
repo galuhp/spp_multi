@@ -477,7 +477,7 @@ def seed():
     INSERT INTO users (name, username, email, password, role, created_at, updated_at) VALUES
     ('Administrator SPP', 'admin', 'admin@spp.test', ?, 'admin', ?, ?),
     ('Budi Santoso (Petugas SPP)', 'petugas', 'petugas@spp.test', ?, 'petugas', ?, ?),
-    ('Siti Aminah, S.Pd (Wali Kelas)', 'walikelas', 'walikelas@spp.test', ?, 'wali_kelas', ?, ?);
+    ('Wali Kelas (View Only)', 'walikelas', 'walikelas@spp.test', ?, 'wali_kelas', ?, ?);
     """, (HASHED_PW, now_str, now_str, HASHED_PW, now_str, now_str, HASHED_PW, now_str, now_str))
 
     admin_id = 1
