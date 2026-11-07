@@ -103,7 +103,7 @@ class PembayaranService
                 }
 
                 $label = $isPriorYear
-                    ? "SPP {$bulan} {$tahun} (Kelas ".Spp::labelTingkat($t).")"
+                    ? "SPP {$bulan} {$tahun} (Kelas ".Spp::labelTingkat($t).')'
                     : "SPP {$bulan} {$tahun}";
 
                 $items[] = [
@@ -134,8 +134,14 @@ class PembayaranService
             }
         }
 
+        $tarif = null;
+
         foreach ($nonSppList->unique('id') as $tarif) {
             if ($tarif->tahunMulai() < $tahunMasuk) {
+                continue;
+            }
+
+            if ($this->tanggunganPemerintah->isPosDitanggung($siswa, $tarif)) {
                 continue;
             }
 
@@ -144,7 +150,7 @@ class PembayaranService
             $sisa = max(0, $nominal - $dibayar);
 
             if ($sisa > 0) {
-                $labelTingkat = $tarif->tingkat ? " (Kelas ".Spp::labelTingkat($tarif->tingkat).")" : "";
+                $labelTingkat = $tarif->tingkat ? ' (Kelas '.Spp::labelTingkat($tarif->tingkat).')' : '';
                 $items[] = [
                     'key' => "spp:{$tarif->id}",
                     'spp_id' => $tarif->id,

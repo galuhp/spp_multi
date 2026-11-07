@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\ImporSiswa\PembacaNilai;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 #[Fillable([
@@ -43,7 +48,7 @@ class Siswa extends Model
     {
         static::saving(function (Siswa $siswa): void {
             if (filled($siswa->no_telp)) {
-                $siswa->no_telp = \App\Support\ImporSiswa\PembacaNilai::normalisasiHp((string) $siswa->no_telp) ?? trim((string) $siswa->no_telp);
+                $siswa->no_telp = PembacaNilai::normalisasiHp((string) $siswa->no_telp) ?? trim((string) $siswa->no_telp);
             }
 
             if ($siswa->kelas_id && (blank($siswa->spp_id) || $siswa->isDirty('kelas_id'))) {
@@ -284,7 +289,7 @@ class Siswa extends Model
         }
 
         if ($this->tanggal_masuk) {
-            return (int) \Carbon\Carbon::parse($this->tanggal_masuk)->format('Y');
+            return (int) Carbon::parse($this->tanggal_masuk)->format('Y');
         }
 
         $taNama = $this->riwayatKelas()
@@ -324,8 +329,8 @@ class Siswa extends Model
             ];
 
             $monthNum = $bulanMap[$bulan] ?? 7;
-            $endOfBulan = \Carbon\Carbon::createFromDate($tahun, $monthNum, 1)->endOfMonth();
-            $tglMasuk = \Carbon\Carbon::parse($this->tanggal_masuk)->startOfMonth();
+            $endOfBulan = Carbon::createFromDate($tahun, $monthNum, 1)->endOfMonth();
+            $tglMasuk = Carbon::parse($this->tanggal_masuk)->startOfMonth();
 
             return ! $endOfBulan->lt($tglMasuk);
         }
@@ -355,8 +360,8 @@ class Siswa extends Model
     public static function sinkronkanDataMasuk(bool $force = false): array
     {
         try {
-            if (! \Illuminate\Support\Facades\Schema::hasColumn('siswas', 'tanggal_masuk') ||
-                ! \Illuminate\Support\Facades\Schema::hasColumn('siswas', 'tahun_masuk')) {
+            if (! Schema::hasColumn('siswas', 'tanggal_masuk') ||
+                ! Schema::hasColumn('siswas', 'tahun_masuk')) {
                 return ['total' => 0, 'diperbarui' => 0];
             }
 
@@ -364,11 +369,11 @@ class Siswa extends Model
             $diperbarui = 0;
 
             $tahunAktifNama = null;
-            if (\Illuminate\Support\Facades\Schema::hasTable('tahun_ajarans')) {
-                $tahunAktifNama = \Illuminate\Support\Facades\DB::table('tahun_ajarans')
+            if (Schema::hasTable('tahun_ajarans')) {
+                $tahunAktifNama = DB::table('tahun_ajarans')
                     ->where('aktif', true)
                     ->value('nama')
-                    ?? \Illuminate\Support\Facades\DB::table('tahun_ajarans')->orderByDesc('nama')->value('nama');
+                    ?? DB::table('tahun_ajarans')->orderByDesc('nama')->value('nama');
             }
 
             $tahunAktifInt = 2026;
@@ -425,7 +430,7 @@ class Siswa extends Model
                 }
 
                 $needsUpdate = false;
-                $tglMasuk = $siswa->tanggal_masuk ? \Carbon\Carbon::parse($siswa->tanggal_masuk) : null;
+                $tglMasuk = $siswa->tanggal_masuk ? Carbon::parse($siswa->tanggal_masuk) : null;
                 $thnMasuk = $siswa->tahun_masuk ? (int) $siswa->tahun_masuk : null;
                 $tahunTanggal = $tglMasuk?->year;
 
@@ -467,7 +472,7 @@ class Siswa extends Model
                 'diperbarui' => $diperbarui,
             ];
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Gagal sinkronkanDataMasuk: ' . $e->getMessage());
+            Log::warning('Gagal sinkronkanDataMasuk: '.$e->getMessage());
 
             return [
                 'total' => 0,

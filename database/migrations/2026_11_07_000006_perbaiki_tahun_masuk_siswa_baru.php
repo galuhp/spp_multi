@@ -2,6 +2,7 @@
 
 use App\Models\Siswa;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Log;
 
 return new class extends Migration
 {
@@ -14,8 +15,8 @@ return new class extends Migration
             if (class_exists(Siswa::class)) {
                 Siswa::sinkronkanDataMasuk(true);
             }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Migration perbaiki tahun masuk siswa: '.$e->getMessage());
+        } catch (Throwable $e) {
+            Log::warning('Migration perbaiki tahun masuk siswa: '.$e->getMessage());
         }
     }
 

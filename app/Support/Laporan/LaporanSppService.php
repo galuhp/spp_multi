@@ -8,6 +8,7 @@ use App\Models\RiwayatKelas;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
+use App\Support\Pembayaran\TanggunganPemerintahService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -592,9 +593,9 @@ class LaporanSppService
 
         $sppBayarMap = [];
         foreach ($semuaPembayaranSpp as $p) {
-            $k1 = $p->siswa_id . '|' . $p->spp_id . '|' . $p->bulan_dibayar;
+            $k1 = $p->siswa_id.'|'.$p->spp_id.'|'.$p->bulan_dibayar;
             $sppBayarMap[$k1] = ($sppBayarMap[$k1] ?? 0) + (int) $p->jumlah_bayar;
-            $k2 = $p->siswa_id . '|' . $p->bulan_dibayar . '|' . $p->tahun_dibayar;
+            $k2 = $p->siswa_id.'|'.$p->bulan_dibayar.'|'.$p->tahun_dibayar;
             $sppBayarMap[$k2] = ($sppBayarMap[$k2] ?? 0) + (int) $p->jumlah_bayar;
         }
 
@@ -606,7 +607,7 @@ class LaporanSppService
 
         $nonSppBayarMap = [];
         foreach ($semuaPembayaranNonSpp as $p) {
-            $k = $p->siswa_id . '|' . $p->spp_id;
+            $k = $p->siswa_id.'|'.$p->spp_id;
             $nonSppBayarMap[$k] = ($nonSppBayarMap[$k] ?? 0) + (int) $p->jumlah_bayar;
         }
 
@@ -618,7 +619,7 @@ class LaporanSppService
             ];
         }
 
-        $tanggunganService = app(\App\Support\Pembayaran\TanggunganPemerintahService::class);
+        $tanggunganService = app(TanggunganPemerintahService::class);
 
         return $siswaList
             ->map(function (Siswa $siswa) use (
@@ -632,6 +633,7 @@ class LaporanSppService
                 $sppBayarMap,
                 $nonSppBayarMap,
                 $tanggunganService,
+                $tahunAjaran,
             ): array {
                 /** @var Kelas $kelas */
                 $kelas = $kelasById->get($kelasPerSiswa[(int) $siswa->id]);
@@ -722,7 +724,7 @@ class LaporanSppService
                             $sisa = max(0, $nomPrior - $bayar);
                             $tunggakanSppPrior += $sisa;
                             if ($sisa > 0) {
-                                $bulanTertunggakPrior[] = "{$bln} (Kelas ".Spp::labelTingkat($pLvl).")";
+                                $bulanTertunggakPrior[] = "{$bln} (Kelas ".Spp::labelTingkat($pLvl).')';
                             }
                         }
                     }
@@ -742,7 +744,7 @@ class LaporanSppService
                         $sisa = max(0, $nomNon - $bayar);
                         $tunggakanNonSppPrior += $sisa;
                         if ($sisa > 0) {
-                            $posNonSppTertunggakPrior[] = ($nonSppPrior->nama ?: $nonSppPrior->kategori)." (Kelas ".Spp::labelTingkat($pLvl).")";
+                            $posNonSppTertunggakPrior[] = ($nonSppPrior->nama ?: $nonSppPrior->kategori).' (Kelas '.Spp::labelTingkat($pLvl).')';
                         }
                         $posNonSpp[] = [
                             'tarif' => $nonSppPrior,

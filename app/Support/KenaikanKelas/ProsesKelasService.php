@@ -10,6 +10,8 @@ use App\Models\RiwayatKelas;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
+use App\Support\Pembayaran\TanggunganPemerintahService;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -542,7 +544,7 @@ class ProsesKelasService
 
             $tunggakan = $this->tunggakan($siswa);
             if (($tunggakan['nominal'] ?? 0) > 0) {
-                $dilewati[] = "{$siswa->nama} masih memiliki tunggakan sebesar Rp " . number_format($tunggakan['nominal'], 0, ',', '.') . " dan tidak dapat diluluskan sebelum lunas.";
+                $dilewati[] = "{$siswa->nama} masih memiliki tunggakan sebesar Rp ".number_format($tunggakan['nominal'], 0, ',', '.').' dan tidak dapat diluluskan sebelum lunas.';
 
                 continue;
             }
@@ -720,7 +722,7 @@ class ProsesKelasService
     public function tunggakan(Siswa $siswa, ?int $tahunAjaranId = null): array
     {
         $siswa->loadMissing(['kelas', 'spp', 'riwayatKelas.spp', 'riwayatKelas.kelas', 'pembayarans']);
-        $tanggunganService = app(\App\Support\Pembayaran\TanggunganPemerintahService::class);
+        $tanggunganService = app(TanggunganPemerintahService::class);
 
         $tingkatSekarang = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
         $tingkatList = [];
@@ -772,7 +774,7 @@ class ProsesKelasService
         $tunggakanBulan = [];
         $tunggakanNonSpp = [];
 
-        $sekarang = \Carbon\Carbon::now();
+        $sekarang = Carbon::now();
         $indeksBulanSekarang = ($sekarang->month + 5) % 12; // Juli=0 ... Juni=11
 
         foreach ($tingkatList as $tingkat) {
@@ -811,7 +813,7 @@ class ProsesKelasService
                     $dibayar = (int) ($dibayarSppPerBulanTahun->get($bln.'|'.$thnLvl) ?? ($dibayarSppPerBulan->get($spp->id.'|'.$bln) ?? 0));
                     $sisa = max(0, $nominal - $dibayar);
                     if ($sisa > 0) {
-                        $label = "{$bln} (Kelas ".Spp::labelTingkat($tingkat).")";
+                        $label = "{$bln} (Kelas ".Spp::labelTingkat($tingkat).')';
                         $tunggakanBulan[] = $label;
                         $totalTunggakanSpp += $sisa;
                         $totalTunggakan += $sisa;
@@ -832,7 +834,7 @@ class ProsesKelasService
                 $dibayar = (int) ($dibayarNonSpp->get($tarifNon->id) ?? 0);
                 $sisa = max(0, $nominal - $dibayar);
                 if ($sisa > 0) {
-                    $label = ($tarifNon->nama ?: $tarifNon->kategori)." (Kelas ".Spp::labelTingkat($tingkat).")";
+                    $label = ($tarifNon->nama ?: $tarifNon->kategori).' (Kelas '.Spp::labelTingkat($tingkat).')';
                     $tunggakanNonSpp[] = $label;
                     $totalTunggakanNonSpp += $sisa;
                     $totalTunggakan += $sisa;

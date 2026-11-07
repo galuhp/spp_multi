@@ -23,12 +23,7 @@ class TagihanMasukTest extends TestCase
 
     public function test_siswa_masuk_2026_tidak_memiliki_tunggakan_tahun_sebelumnya(): void
     {
-        $ta = TahunAjaran::create([
-            'nama' => '2026/2027',
-            'tanggal_mulai' => '2026-07-01',
-            'tanggal_selesai' => '2027-06-30',
-            'aktif' => true,
-        ]);
+        $ta = $this->tahunAjaran('2026/2027', true);
 
         $jurusan = Jurusan::create([
             'kode' => 'RPL',
@@ -93,12 +88,7 @@ class TagihanMasukTest extends TestCase
 
     public function test_sinkronisasi_tidak_menurunkan_tahun_masuk_siswa_baru_di_tingkat_atas(): void
     {
-        $ta = TahunAjaran::create([
-            'nama' => '2026/2027',
-            'tanggal_mulai' => '2026-07-01',
-            'tanggal_selesai' => '2027-06-30',
-            'aktif' => true,
-        ]);
+        $ta = $this->tahunAjaran('2026/2027', true);
 
         $jurusan = Jurusan::create([
             'kode' => 'RPL',
@@ -141,19 +131,9 @@ class TagihanMasukTest extends TestCase
 
     public function test_sinkronisasi_tidak_menaikkan_tahun_masuk_siswa_lama_yang_tinggal_kelas(): void
     {
-        TahunAjaran::create([
-            'nama' => '2024/2025',
-            'tanggal_mulai' => '2024-07-01',
-            'tanggal_selesai' => '2025-06-30',
-            'aktif' => false,
-        ]);
+        $this->tahunAjaran('2024/2025');
 
-        $ta = TahunAjaran::create([
-            'nama' => '2026/2027',
-            'tanggal_mulai' => '2026-07-01',
-            'tanggal_selesai' => '2027-06-30',
-            'aktif' => true,
-        ]);
+        $ta = $this->tahunAjaran('2026/2027', true);
 
         $jurusan = Jurusan::create([
             'kode' => 'RPL',
@@ -210,19 +190,9 @@ class TagihanMasukTest extends TestCase
 
     public function test_siswa_baru_2026_di_tingkat_atas_tidak_memiliki_tunggakan_prior(): void
     {
-        $ta = TahunAjaran::create([
-            'nama' => '2026/2027',
-            'tanggal_mulai' => '2026-07-01',
-            'tanggal_selesai' => '2027-06-30',
-            'aktif' => true,
-        ]);
+        $ta = $this->tahunAjaran('2026/2027', true);
 
-        TahunAjaran::create([
-            'nama' => '2025/2026',
-            'tanggal_mulai' => '2025-07-01',
-            'tanggal_selesai' => '2026-06-30',
-            'aktif' => false,
-        ]);
+        $this->tahunAjaran('2025/2026');
 
         $jurusan = Jurusan::create([
             'kode' => 'RPL',
@@ -294,12 +264,7 @@ class TagihanMasukTest extends TestCase
 
     public function test_pos_non_spp_sebelum_tahun_masuk_tidak_dihitung(): void
     {
-        $ta = TahunAjaran::create([
-            'nama' => '2026/2027',
-            'tanggal_mulai' => '2026-07-01',
-            'tanggal_selesai' => '2027-06-30',
-            'aktif' => true,
-        ]);
+        $ta = $this->tahunAjaran('2026/2027', true);
 
         $jurusan = Jurusan::create([
             'kode' => 'RPL',
@@ -356,5 +321,25 @@ class TagihanMasukTest extends TestCase
             'tahun_masuk' => 2026,
             'status' => 'aktif',
         ]);
+    }
+
+    private function tahunAjaran(string $nama, bool $aktif = false): TahunAjaran
+    {
+        $tahunMulai = (int) substr($nama, 0, 4);
+
+        $tahunAjaran = TahunAjaran::query()->firstOrCreate(
+            ['nama' => $nama],
+            [
+                'tanggal_mulai' => "{$tahunMulai}-07-01",
+                'tanggal_selesai' => ($tahunMulai + 1).'-06-30',
+                'aktif' => $aktif,
+            ],
+        );
+
+        if ($aktif && ! $tahunAjaran->aktif) {
+            $tahunAjaran->update(['aktif' => true]);
+        }
+
+        return $tahunAjaran;
     }
 }

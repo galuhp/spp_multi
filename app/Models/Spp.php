@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 #[Fillable(['kategori', 'tipe', 'nama', 'tahun', 'tahun_ajaran', 'tingkat', 'nominal', 'keterangan'])]
 class Spp extends Model
@@ -154,9 +155,9 @@ class Spp extends Model
     /**
      * Non-SPP tariffs that apply to a level, with fallback if year not specified.
      *
-     * @return \Illuminate\Support\Collection<int, self>
+     * @return Collection<int, self>
      */
-    public static function nonSppUntukTingkat(?string $tingkat, ?string $tahunAjaran = null): \Illuminate\Support\Collection
+    public static function nonSppUntukTingkat(?string $tingkat, ?string $tahunAjaran = null): Collection
     {
         $tingkat = self::normalisasiTingkat($tingkat);
 
