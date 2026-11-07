@@ -8,6 +8,7 @@ use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Livewire\Attributes\Url;
 use Livewire\WithFileUploads;
 use UnitEnum;
 
@@ -21,12 +22,13 @@ class ImporDataMaster extends Page
 
     protected static ?string $navigationLabel = 'Impor Data Master';
 
-    protected static ?string $title = 'Impor Data Master (Tarif, Kelas, Jurusan)';
+    protected static ?string $title = 'Impor Data Master';
 
     protected static ?int $navigationSort = 4;
 
     protected string $view = 'filament.pages.impor-data-master';
 
+    #[Url(as: 'tab', history: true)]
     public string $tabAktif = 'tarif';
 
     public mixed $berkasTarif = null;
@@ -61,12 +63,39 @@ class ImporDataMaster extends Page
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
 
+        if (! in_array($this->tabAktif, ['tarif', 'kelas', 'jurusan'], true)) {
+            $this->tabAktif = 'tarif';
+        }
+
         $this->tahun_ajaran_id = TahunAjaran::where('aktif', true)->value('id')
             ?? TahunAjaran::orderByDesc('nama')->value('id');
     }
 
+    public function getSubheading(): ?string
+    {
+        return 'Unggah berkas Excel atau CSV untuk menambah dan memperbarui data tarif, kelas, serta jurusan sekaligus.';
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getTahunAjaranOptionsProperty(): array
+    {
+        return TahunAjaran::query()
+            ->orderByDesc('nama')
+            ->get()
+            ->mapWithKeys(fn (TahunAjaran $tahunAjaran): array => [
+                $tahunAjaran->getKey() => $tahunAjaran->nama.($tahunAjaran->aktif ? ' (Aktif)' : ''),
+            ])
+            ->all();
+    }
+
     public function setTab(string $tab): void
     {
+        if (! in_array($tab, ['tarif', 'kelas', 'jurusan'], true)) {
+            return;
+        }
+
         $this->tabAktif = $tab;
     }
 

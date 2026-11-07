@@ -1,0 +1,47 @@
+@import './theme.css';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@source '../views/filament/pages/impor-data-master.blade.php';
+@source '../views/components/impor';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.impor-master {
+    --color-primary: var(--primary-600, var(--color-sky-600));
+}
+
+.impor-master .impor-tabs-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.impor-master .impor-tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.impor-master [role='tabpanel'] {
+    animation: impor-fade-in 180ms ease-out;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@keyframes impor-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .impor-master [role='tabpanel'] {
+        animation: none;
+    }
+}

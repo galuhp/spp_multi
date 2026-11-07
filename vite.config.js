@@ -8,6 +8,7 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
+                'resources/css/impor-data-master.css',
                 'resources/css/impor-siswa.css',
                 'resources/css/proses-kelas.css',
                 'resources/css/tagihan-siswa.css',
