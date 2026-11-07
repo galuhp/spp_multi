@@ -40,9 +40,10 @@
         {{-- Navigasi tab --}}
         <div class="rounded-xl border border-slate-200/80 bg-slate-100/80 p-1.5 shadow-xs dark:border-white/10 dark:bg-white/[0.04]">
             <nav
-                class="impor-tabs-scroll flex min-w-0 snap-x snap-mandatory gap-1.5 overflow-x-auto"
+                class="impor-tabs-scroll relative flex min-w-0 snap-x snap-mandatory gap-1.5 overflow-x-auto"
                 role="tablist"
                 aria-label="Jenis data master"
+                x-init="$nextTick(() => { const aktif = $el.querySelector('[role=tab][aria-selected=true]'); if (aktif) { $el.scrollLeft = aktif.offsetLeft - ($el.clientWidth - aktif.offsetWidth) / 2; } })"
                 x-on:keydown.arrow-right.prevent="$event.target.nextElementSibling?.focus()"
                 x-on:keydown.arrow-left.prevent="$event.target.previousElementSibling?.focus()"
                 x-on:keydown.home.prevent="$event.target.parentElement.firstElementChild?.focus()"
