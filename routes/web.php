@@ -131,3 +131,4 @@ Route::middleware('auth')->group(function () {
         Route::get('/kuitansi/{pembayaran}', [SiswaPortalController::class, 'cetakKuitansi'])->name('kuitansi');
     });
 });
+

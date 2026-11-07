@@ -97,7 +97,8 @@ class FilamentPanelTest extends TestCase
 
         $this->actingAs($admin)
             ->get('/admin/spps')
-            ->assertStatus(200);
+            ->assertStatus(200)
+            ->assertDontSee('Reset & Seed Data Demo');
 
         $this->actingAs($admin)
             ->get('/admin/siswas')

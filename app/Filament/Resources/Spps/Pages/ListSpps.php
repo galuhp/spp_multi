@@ -9,7 +9,6 @@ use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\HtmlString;
 
 class ListSpps extends ListRecords
@@ -26,7 +25,7 @@ class ListSpps extends ListRecords
                 ->color('success')
                 ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
                 ->modalHeading('Impor Data Tarif Pembayaran (Excel / CSV)')
-                ->modalDescription(new HtmlString('Unggah file spreadsheet tarif SPP & Non-SPP (kategori, nama, tipe, tahun_ajaran, tingkat, nominal, keterangan). Belum punya format? <a href="' . route('impor.template.tarif') . '" target="_blank" class="text-primary-600 font-semibold underline">Unduh Template Excel</a>'))
+                ->modalDescription(new HtmlString('Unggah file spreadsheet tarif SPP & Non-SPP (kategori, nama, tipe, tahun_ajaran, tingkat, nominal, keterangan). Belum punya format? <a href="'.route('impor.template.tarif').'" target="_blank" class="text-primary-600 font-semibold underline">Unduh Template Excel</a>'))
                 ->modalSubmitActionLabel('Mulai Impor')
                 ->form([
                     FileUpload::make('berkas')
@@ -81,23 +80,6 @@ class ListSpps extends ListRecords
                 ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
                 ->url(fn (): string => route('impor.template.tarif'))
                 ->openUrlInNewTab(),
-            Action::make('seedDemo')
-                ->label('Reset & Seed Data Demo')
-                ->icon('heroicon-o-arrow-path')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('Kosongkan & Seed Ulang Data Demo')
-                ->modalDescription('Tindakan ini akan mengosongkan master tarif, siswa, kelas, dan transaksi pembayaran lama, lalu menanam ulang data tarif resmi dari lampiran Excel (38 tarif) dan siswa demo. Lanjutkan?')
-                ->modalSubmitActionLabel('Ya, Reset & Seed Ulang')
-                ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
-                ->action(function () {
-                    Artisan::call('db:seed', ['--force' => true]);
-                    Notification::make()
-                        ->title('Data Demo Berhasil Direset & Diseed')
-                        ->body('Master tarif, kelas, siswa, dan transaksi telah diperbarui sesuai skema terbaru.')
-                        ->success()
-                        ->send();
-                }),
         ];
     }
 }
