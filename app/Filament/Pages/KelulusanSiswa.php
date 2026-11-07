@@ -125,8 +125,16 @@ class KelulusanSiswa extends Page
         $this->pratinjau = false;
         $this->hasil = null;
         $this->galat = null;
-        $this->siswa_ids = app(ProsesKelasService::class)
+        $service = app(ProsesKelasService::class);
+
+        // Hanya centang siswa yang bebas tunggakan (lunas)
+        $this->siswa_ids = $service
             ->siswaKelas((int) $this->kelas_id, $this->tahun_ajaran_id)
+            ->filter(function (Siswa $siswa) use ($service): bool {
+                $tunggakan = $service->tunggakan($siswa);
+
+                return ($tunggakan['nominal'] ?? 0) === 0;
+            })
             ->pluck('id')
             ->map(fn ($id): int => (int) $id)
             ->all();
@@ -138,23 +146,60 @@ class KelulusanSiswa extends Page
 
         if (! $this->tahun_ajaran_id || ! $this->kelas_id) {
             $this->galat = 'Pilih tahun ajaran dan kelas tingkat akhir terlebih dahulu.';
+            Notification::make()->title('Form belum lengkap')->body($this->galat)->danger()->send();
 
             return;
         }
 
         if ($this->siswa_ids === []) {
-            $this->galat = 'Pilih minimal satu siswa yang lulus.';
+            $this->galat = 'Pilih minimal satu siswa yang bebas tunggakan untuk diluluskan.';
+            Notification::make()->title('Belum ada siswa dipilih')->body($this->galat)->danger()->send();
 
             return;
         }
 
         if (blank($this->tanggal_lulus)) {
             $this->galat = 'Tanggal lulus wajib diisi.';
+            Notification::make()->title('Tanggal lulus kosong')->body($this->galat)->danger()->send();
+
+            return;
+        }
+
+        // Validasi ketat: siswa dengan tunggakan TIDAK BISA lulus
+        $service = app(ProsesKelasService::class);
+        $menunggak = [];
+
+        foreach ($this->siswa_ids as $siswaId) {
+            $siswa = Siswa::query()->find($siswaId);
+
+            if ($siswa) {
+                $tunggakan = $service->tunggakan($siswa);
+
+                if (($tunggakan['nominal'] ?? 0) > 0) {
+                    $menunggak[] = "{$siswa->nama} (Rp " . number_format($tunggakan['nominal'], 0, ',', '.') . ")";
+                }
+            }
+        }
+
+        if ($menunggak !== []) {
+            $this->galat = 'Kelulusan ditolak! Siswa berikut masih memiliki tunggakan SPP dan tidak dapat diluluskan: ' . implode(', ', $menunggak) . '. Harap lunasi terlebih dahulu di loket kasir.';
+            Notification::make()
+                ->title('Kelulusan Ditolak')
+                ->body('Terdapat siswa yang masih memiliki tunggakan. Siswa menunggak tidak dapat diluluskan.')
+                ->danger()
+                ->send();
 
             return;
         }
 
         $this->pratinjau = true;
+        $jumlah = count($this->siswa_ids);
+
+        Notification::make()
+            ->title('Pratinjau Kelulusan Siap')
+            ->body("{$jumlah} siswa bebas tunggakan memenuhi syarat kelulusan dan siap diarsipkan.")
+            ->success()
+            ->send();
     }
 
     public function eksekusi(): void

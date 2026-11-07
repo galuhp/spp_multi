@@ -526,6 +526,13 @@ class ProsesKelasService
                 continue;
             }
 
+            $tunggakan = $this->tunggakan($siswa);
+            if (($tunggakan['nominal'] ?? 0) > 0) {
+                $dilewati[] = "{$siswa->nama} masih memiliki tunggakan sebesar Rp " . number_format($tunggakan['nominal'], 0, ',', '.') . " dan tidak dapat diluluskan sebelum lunas.";
+
+                continue;
+            }
+
             $siap[] = $siswa;
         }
 

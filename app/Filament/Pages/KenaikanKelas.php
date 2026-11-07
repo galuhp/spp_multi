@@ -389,37 +389,71 @@ class KenaikanKelas extends Page
 
         if (! $this->tahun_ajaran_asal_id || ! $this->tahun_ajaran_tujuan_id || ! $this->kelas_asal_id) {
             $this->galat = 'Lengkapi tahun ajaran asal, tahun ajaran tujuan, dan kelas asal terlebih dahulu.';
+            Notification::make()->title('Form belum lengkap')->body($this->galat)->danger()->send();
 
             return;
         }
 
         if ($this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
             $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
+            Notification::make()->title('Tahun ajaran tidak valid')->body($this->galat)->danger()->send();
 
             return;
         }
 
         if (! $this->isTahunAjaranTujuanValid()) {
             $this->galat = 'Tahun ajaran tujuan harus lebih besar dari tahun ajaran asal.';
+            Notification::make()->title('Tahun ajaran tidak valid')->body($this->galat)->danger()->send();
 
             return;
         }
 
-        if ($this->keputusan === []) {
-            $this->galat = 'Tidak ada siswa pada kelas ini.';
+        $siswaList = $this->siswa;
+
+        if ($siswaList->isEmpty()) {
+            $this->galat = 'Tidak ada siswa aktif pada kelas asal ini.';
+            Notification::make()->title('Siswa tidak ditemukan')->body($this->galat)->danger()->send();
 
             return;
         }
 
-        foreach ($this->keputusan as $siswaId => $baris) {
-            if (blank($baris['kelas_tujuan_id'] ?? null)) {
-                $this->galat = 'Pilih kelas tujuan untuk setiap siswa.';
+        // Pastikan seluruh siswa memiliki keputusan dan kelas tujuan
+        foreach ($siswaList as $baris) {
+            $siswaId = $baris['siswa']->id;
+
+            if (! isset($this->keputusan[$siswaId])) {
+                $this->keputusan[$siswaId] = [
+                    'status' => RiwayatKelas::STATUS_NAIK,
+                    'kelas_tujuan_id' => $this->kelas_tujuan_batch_id ?: $baris['default_kelas_id'],
+                ];
+            }
+
+            if (blank($this->keputusan[$siswaId]['kelas_tujuan_id'] ?? null)) {
+                if ($this->kelas_tujuan_batch_id) {
+                    $this->keputusan[$siswaId]['kelas_tujuan_id'] = (int) $this->kelas_tujuan_batch_id;
+                } elseif ($baris['default_kelas_id']) {
+                    $this->keputusan[$siswaId]['kelas_tujuan_id'] = (int) $baris['default_kelas_id'];
+                }
+            }
+
+            if (blank($this->keputusan[$siswaId]['kelas_tujuan_id'] ?? null) && ! $baris['sudah_ada'] && ! $baris['tingkat_akhir']) {
+                $this->galat = "Pilih kelas tujuan untuk siswa: {$baris['siswa']->nama}.";
+                Notification::make()->title('Kelas tujuan belum lengkap')->body($this->galat)->danger()->send();
 
                 return;
             }
         }
 
         $this->pratinjau = true;
+
+        $jumlahNaik = collect($this->keputusan)->where('status', RiwayatKelas::STATUS_NAIK)->count();
+        $jumlahTinggal = collect($this->keputusan)->where('status', RiwayatKelas::STATUS_TINGGAL)->count();
+
+        Notification::make()
+            ->title('Pratinjau Kenaikan Kelas Siap')
+            ->body("{$jumlahNaik} siswa akan naik kelas dan {$jumlahTinggal} siswa tinggal kelas. Silakan periksa rincian di bawah lalu klik Simpan.")
+            ->success()
+            ->send();
     }
 
     public function eksekusi(): void

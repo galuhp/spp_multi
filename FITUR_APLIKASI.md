@@ -106,13 +106,15 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
    - **Tarif Baku per Tingkat**: Seluruh siswa dalam satu tingkat rombel otomatis terkunci mengikuti tarif SPP baku tingkat tersebut (contoh: Tingkat 10/11/12) sehingga tidak terjadi ketidaksesuaian tarif.
    - Dilengkapi pratinjau validasi per baris (*Valid* / *Error* beserta alasan detailnya), opsi timpa data lama, dan ringkasan hasil impor sebelum benar-benar disimpan ke database.
 3. **Kenaikan Kelas Massal (*Batch*) & Retensi Tunggakan Lintas Tahun Ajaran**
-   - **Retensi Tunggakan Lintas Tahun Ajaran**: Saat siswa naik kelas ke tingkat dan tahun ajaran baru, tunggakan dari tahun-tahun sebelumnya tidak hilang/terhapus, melainkan tetap tersimpan di riwayat dan otomatis muncul pada indikator Kenaikan Kelas, Matriks Tagihan Siswa, Loket Kasir, dan Laporan Tunggakan.
+   - **Tunggakan Dihiraukan Saat Kenaikan**: Siswa yang memiliki tunggakan **tetap dapat dinaikkan kelas**; tunggakan tidak menghambat proses kenaikan. Seluruh saldo tunggakan otomatis terbawa ke riwayat dan tetap wajib dilunasi di loket kasir pada tahun ajaran baru.
+   - **Tombol & Kotak Pratinjau Interaktif**: Dilengkapi fitur pratinjau yang menampilkan ringkasan jumlah siswa naik, tinggal, dan total tunggakan sebelum dieksekusi secara permanen.
    - **Pilihan Kelas Tujuan Batch Otomatis**: Saat memilih Kelas Asal (misal `IX RPL 1` atau `Kelas 1A`), sistem otomatis menyarankan Kelas Tujuan tingkat berikutnya (`X RPL 1` atau `Kelas 2A`) dan mengisi kolom Kelas Tujuan seluruh siswa secara serentak (*batch*).
    - **Override Manual per Siswa**: Setelah terisi secara *batch*, operator tetap bebas mengubah Kelas Tujuan pada siswa tertentu secara manual di tabel (mendukung **pola SMK** yang jurusannya tetap selama sekolah maupun **pola SD/SMP** yang bisa lintas nama rombel seperti `Kelas 1A` → `Kelas 2B`).
    - **Jejak Riwayat Kelas & Tarif SPP Historis**: Menyimpan `kelas_id` dan `spp_id` per `tahun_ajaran_id` di tabel `riwayat_kelas`, sekaligus memperbarui kelas aktif dan tarif SPP siswa ke Tahun Ajaran tujuan.
    - Dilengkapi fitur **Batalkan Batch (*Rollback*)** apabila belum ada pembayaran di tahun ajaran baru.
-4. **Kelulusan & Pengarsipan Siswa Kelas Akhir**
-   - Meluluskan siswa tingkat akhir secara massal lengkap dengan pengecekan sisa tunggakan, memindahkan ke status arsip, serta fitur koreksi (keluarkan dari arsip dengan alasan tercatat).
+4. **Kelulusan Siswa Tingkat Akhir (Proteksi Wajib Bebas Tunggakan)**
+   - **Proteksi Ketat Bebas Tunggakan**: Berbeda dengan kenaikan kelas, **kelulusan mewajibkan pelunasan penuh**. Siswa yang masih memiliki tunggakan SPP/Non-SPP otomatis terkunci (*checkbox disabled*) dan **tidak dapat diluluskan** sebelum seluruh tunggakan dilunasi.
+   - Meluluskan siswa tingkat akhir yang bebas tunggakan secara massal, memindahkan ke status arsip, serta fitur koreksi (keluarkan dari arsip dengan alasan tercatat).
 
 ---
 
