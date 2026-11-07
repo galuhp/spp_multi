@@ -91,7 +91,7 @@
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         NISN: <span class="font-mono">{{ $siswa->nisn ?: '-' }}</span>
                         &bull; NIS: <span class="font-mono">{{ $siswa->nis ?: '-' }}</span>
-                        &bull; Masuk: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $siswa->tanggal_masuk ? $siswa->tanggal_masuk->translatedFormat('d M Y') : ($siswa->tahun_masuk ? 'Tahun ' . $siswa->tahun_masuk : '-') }}</span>
+                        &bull; Masuk: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $siswa->tanggal_masuk ? (is_string($siswa->tanggal_masuk) ? \Carbon\Carbon::parse($siswa->tanggal_masuk)->translatedFormat('d M Y') : $siswa->tanggal_masuk->translatedFormat('d M Y')) : ($siswa->tahun_masuk ? 'Tahun ' . $siswa->tahun_masuk : '-') }}</span>
                     </p>
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
                         {{ $kelas?->nama_kelas ?? 'Kelas tidak ditemukan' }}

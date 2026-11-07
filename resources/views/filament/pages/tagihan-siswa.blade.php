@@ -49,7 +49,7 @@
                                         <div class="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400">Siswa terpilih</div>
                                         <div class="mt-1 font-semibold text-slate-900 dark:text-white">{{ $this->siswa->nama }}</div>
                                         <div class="text-xs text-slate-500 dark:text-gray-400">
-                                            NISN {{ $this->siswa->nisn ?: '-' }} &bull; {{ $this->siswa->kelas?->nama_kelas }} &bull; Masuk: {{ $this->siswa->tanggal_masuk ? $this->siswa->tanggal_masuk->translatedFormat('d M Y') : ($this->siswa->tahun_masuk ? 'Tahun ' . $this->siswa->tahun_masuk : '-') }}
+                                            NISN {{ $this->siswa->nisn ?: '-' }} &bull; {{ $this->siswa->kelas?->nama_kelas }} &bull; Masuk: {{ $this->siswa->tanggal_masuk ? (is_string($this->siswa->tanggal_masuk) ? \Carbon\Carbon::parse($this->siswa->tanggal_masuk)->translatedFormat('d M Y') : $this->siswa->tanggal_masuk->translatedFormat('d M Y')) : ($this->siswa->tahun_masuk ? 'Tahun ' . $this->siswa->tahun_masuk : '-') }}
                                         </div>
                                     </div>
                                 @endif
@@ -124,7 +124,7 @@
                     <div>
                         <span class="text-xs font-medium text-slate-500 dark:text-gray-400">Tanggal Masuk</span>
                         <div class="text-base font-bold text-slate-900 dark:text-white">
-                            {{ $siswa->tanggal_masuk ? $siswa->tanggal_masuk->translatedFormat('d F Y') : ($siswa->tahun_masuk ? 'Tahun ' . $siswa->tahun_masuk : '-') }}
+                            {{ $siswa->tanggal_masuk ? (is_string($siswa->tanggal_masuk) ? \Carbon\Carbon::parse($siswa->tanggal_masuk)->translatedFormat('d F Y') : $siswa->tanggal_masuk->translatedFormat('d F Y')) : ($siswa->tahun_masuk ? 'Tahun ' . $siswa->tahun_masuk : '-') }}
                         </div>
                         <div class="text-xs text-slate-500 dark:text-gray-400">Tahun Masuk: {{ $siswa->tahunMasuk() }}</div>
                     </div>

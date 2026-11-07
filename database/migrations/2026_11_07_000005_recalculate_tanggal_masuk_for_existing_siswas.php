@@ -10,9 +10,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Hitung ulang dan sinkronkan tanggal_masuk dan tahun_masuk untuk semua siswa yang sudah ada
-        if (class_exists(Siswa::class)) {
-            Siswa::sinkronkanDataMasuk(true);
+        try {
+            if (class_exists(Siswa::class)) {
+                Siswa::sinkronkanDataMasuk(true);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Migration recalculate siswa data: ' . $e->getMessage());
         }
     }
 
