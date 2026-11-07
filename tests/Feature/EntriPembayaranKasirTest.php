@@ -217,6 +217,13 @@ class EntriPembayaranKasirTest extends TestCase
         // Grup tarif bulanan ditampilkan lebih dulu, baru sekali bayar.
         $this->assertSame('bulanan', $nonSpp->first()['grup']);
         $this->assertSame('sekali_bayar', $nonSpp->last()['grup']);
+
+        // Monthly groups di tab Bulanan menampilkan SPP dan Tabungan Bulanan (12 bulan masing-masing)
+        $monthlyGroups = collect($component->instance()->kasirData['monthly_groups']);
+        $this->assertCount(2, $monthlyGroups);
+        $this->assertSame($this->spp->id, $monthlyGroups[0]['id']);
+        $this->assertSame($tabungan->id, $monthlyGroups[1]['id']);
+        $this->assertCount(12, $monthlyGroups[1]['months']);
     }
 
     public function test_kasir_dapat_menyimpan_spp_dan_biaya_lain_dalam_satu_kuitansi(): void

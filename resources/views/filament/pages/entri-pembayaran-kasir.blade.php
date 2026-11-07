@@ -124,43 +124,47 @@
                             </button>
                         </div>
 
-                        {{-- SPP --}}
-                        <div :class="tab === 'spp' ? '' : 'hidden'" class="mt-5">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                    Bulan SPP yang dibayar
-                                    <span class="font-normal text-gray-500 dark:text-gray-400">&bull; <span x-text="rp(tarif)"></span> / bulan</span>
-                                </p>
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <x-filament::link tag="button" size="sm" @click="preset('tunggakan')">
-                                        Tunggakan saja
-                                    </x-filament::link>
-                                    <x-filament::link tag="button" size="sm" @click="preset('sem1')">
-                                        Sampai Februari
-                                    </x-filament::link>
-                                    <x-filament::link tag="button" color="gray" size="sm" @click="preset('reset')">
-                                        Kosongkan
-                                    </x-filament::link>
+                        {{-- SPP & Tarif Bulanan --}}
+                        <div :class="tab === 'spp' ? '' : 'hidden'" class="mt-5 space-y-6">
+                            <template x-for="(grupBulanan, gIndex) in monthlyGroups" :key="grupBulanan.id">
+                                <div :class="gIndex > 0 ? 'border-t border-gray-200 pt-5 dark:border-gray-800' : ''">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            <span x-text="grupBulanan.nama"></span>
+                                            <span class="font-normal text-gray-500 dark:text-gray-400">&bull; <span x-text="rp(grupBulanan.tarif)"></span> / bulan</span>
+                                        </p>
+                                        <div class="flex flex-wrap items-center gap-3">
+                                            <x-filament::link tag="button" size="sm" @click="presetGroup(gIndex, 'tunggakan')">
+                                                Tunggakan saja
+                                            </x-filament::link>
+                                            <x-filament::link tag="button" size="sm" @click="presetGroup(gIndex, 'sem1')">
+                                                Sampai Februari
+                                            </x-filament::link>
+                                            <x-filament::link tag="button" color="gray" size="sm" @click="presetGroup(gIndex, 'reset')">
+                                                Kosongkan
+                                            </x-filament::link>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                                        <template x-for="(m, index) in grupBulanan.months" :key="m.key">
+                                            <button type="button" @click="toggleGroupMonth(gIndex, index)" :disabled="m.status === 'lunas' || m.status === 'ditanggung'"
+                                                :class="monthClass(m)"
+                                                class="relative flex flex-col items-start rounded-lg border px-3 py-2.5 text-left transition">
+                                                <span class="text-sm font-medium" x-text="m.bulan"></span>
+                                                <span class="text-xs opacity-70" x-text="m.tahun"></span>
+                                                <span class="mt-2 text-xs" x-text="m.status === 'lunas' ? 'Lunas' : (m.status === 'ditanggung' ? 'Ditanggung Pemerintah' : rp(m.nominal))"></span>
+
+                                                <span :class="hasMonthly(m.key) ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
+                                                <span :class="m.status === 'lunas' ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
+                                                <span :class="m.status === 'ditanggung' ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-sky-200/80 bg-sky-50 px-1.5 text-[10px] font-medium text-sky-700">Pemerintah</span>
+                                                <span :class="(m.status === 'tunggakan' && ! hasMonthly(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-amber-200/80 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700">Tunggakan</span>
+                                                <span :class="(m.status === 'berjalan' && ! hasMonthly(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-slate-200 bg-slate-100 px-1.5 text-[10px] font-medium text-slate-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">Bulan ini</span>
+                                            </button>
+                                        </template>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div class="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                                <template x-for="(m, index) in months" :key="m.key">
-                                    <button type="button" @click="toggleMonth(index)" :disabled="m.status === 'lunas' || m.status === 'ditanggung'"
-                                        :class="monthClass(m)"
-                                        class="relative flex flex-col items-start rounded-lg border px-3 py-2.5 text-left transition">
-                                        <span class="text-sm font-medium" x-text="m.bulan"></span>
-                                        <span class="text-xs opacity-70" x-text="m.tahun"></span>
-                                        <span class="mt-2 text-xs" x-text="m.status === 'lunas' ? 'Lunas' : (m.status === 'ditanggung' ? 'Ditanggung Pemerintah' : rp(m.nominal))"></span>
-
-                                        <span :class="has(m.key) ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
-                                        <span :class="m.status === 'lunas' ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
-                                        <span :class="m.status === 'ditanggung' ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-sky-200/80 bg-sky-50 px-1.5 text-[10px] font-medium text-sky-700">Pemerintah</span>
-                                        <span :class="(m.status === 'tunggakan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-amber-200/80 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700">Tunggakan</span>
-                                        <span :class="(m.status === 'berjalan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-slate-200 bg-slate-100 px-1.5 text-[10px] font-medium text-slate-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">Bulan ini</span>
-                                    </button>
-                                </template>
-                            </div>
+                            </template>
 
                             <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
                                 Klik satu bulan untuk memilih semua bulan belum lunas sampai bulan itu. Klik lagi untuk membatalkan dari bulan tersebut.
@@ -325,6 +329,9 @@
                 tab: 'spp',
                 tarif: data.tarif,
                 months: data.months,
+                monthlyGroups: data.monthly_groups && data.monthly_groups.length
+                    ? data.monthly_groups
+                    : [{ id: 'spp', nama: 'Bulan SPP yang dibayar', tarif: data.tarif, tipe: 'spp', months: data.months || [] }],
                 nonSpp: data.non_spp,
                 selected: [],
                 selectedLain: [],
@@ -344,6 +351,10 @@
 
                 hasLain(key) {
                     return this.selectedLain.includes(key);
+                },
+
+                hasMonthly(key) {
+                    return this.selected.includes(key) || this.selectedLain.includes(key);
                 },
 
                 get nonSppGroups() {
@@ -367,38 +378,74 @@
                 },
 
                 toggleMonth(index) {
-                    const m = this.months[index];
+                    this.toggleGroupMonth(0, index);
+                },
 
+                toggleGroupMonth(gIndex, index) {
+                    const grp = this.monthlyGroups[gIndex];
+                    if (!grp) {
+                        return;
+                    }
+
+                    const m = grp.months[index];
                     if (!m || m.status === 'lunas' || m.status === 'ditanggung') {
                         return;
                     }
 
-                    if (this.has(m.key)) {
-                        this.selected = this.months
-                            .filter((x, i) => i < index && this.has(x.key))
+                    const groupKeys = grp.months.map((x) => x.key);
+                    const targetList = grp.tipe === 'spp' ? 'selected' : 'selectedLain';
+                    const current = this[targetList];
+                    const otherKeys = current.filter((k) => !groupKeys.includes(k));
+
+                    if (current.includes(m.key)) {
+                        const kept = grp.months
+                            .filter((x, i) => i < index && current.includes(x.key))
                             .map((x) => x.key);
+                        this[targetList] = [...otherKeys, ...kept];
                     } else {
-                        this.selected = this.unpaidUpTo(index);
+                        const added = grp.months
+                            .filter((x, i) => i <= index && x.status !== 'lunas' && x.status !== 'ditanggung')
+                            .map((x) => x.key);
+                        this[targetList] = [...otherKeys, ...added];
                     }
                 },
 
                 preset(mode) {
+                    this.presetGroup(0, mode);
+                },
+
+                presetGroup(gIndex, mode) {
+                    const grp = this.monthlyGroups[gIndex];
+                    if (!grp) {
+                        return;
+                    }
+
+                    const groupKeys = grp.months.map((x) => x.key);
+                    const targetList = grp.tipe === 'spp' ? 'selected' : 'selectedLain';
+                    const otherKeys = this[targetList].filter((k) => !groupKeys.includes(k));
+
                     if (mode === 'tunggakan') {
-                        this.selected = this.months
+                        const added = grp.months
                             .filter((m) => m.status === 'tunggakan')
                             .map((m) => m.key);
+                        this[targetList] = [...otherKeys, ...added];
 
                         return;
                     }
 
                     if (mode === 'sem1') {
-                        const index = this.months.findIndex((m) => m.bulan === 'Februari');
-                        this.selected = index >= 0 ? this.unpaidUpTo(index) : [];
+                        const index = grp.months.findIndex((m) => m.bulan === 'Februari');
+                        const added = index >= 0
+                            ? grp.months
+                                .filter((m, i) => i <= index && m.status !== 'lunas' && m.status !== 'ditanggung')
+                                .map((m) => m.key)
+                            : [];
+                        this[targetList] = [...otherKeys, ...added];
 
                         return;
                     }
 
-                    this.selected = [];
+                    this[targetList] = otherKeys;
                 },
 
                 toggleLain(key) {
@@ -445,7 +492,7 @@
                         return 'cursor-not-allowed border-sky-200/80 bg-sky-50/45 text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300';
                     }
 
-                    if (this.has(m.key)) {
+                    if (this.hasMonthly(m.key)) {
                         return 'border-primary-600 bg-primary-600 text-white shadow-sm';
                     }
 

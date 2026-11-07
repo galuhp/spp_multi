@@ -147,6 +147,7 @@ class EntriPembayaranKasir extends Page
             return [
                 'tarif' => 0,
                 'months' => [],
+                'monthly_groups' => [],
                 'non_spp' => [],
                 'tanggal' => now()->toDateString(),
             ];
@@ -204,6 +205,54 @@ class EntriPembayaranKasir extends Page
             }
         }
 
+        $tingkatSiswa = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+        $tarifBulananList = Spp::bulananUntukTingkat($tingkatSiswa, $tahunAjaranSekarang, $spp);
+        $monthlyGroups = [];
+
+        foreach ($tarifBulananList as $tarifBulanan) {
+            $isSppUtama = $tarifBulanan->kategori === Spp::KATEGORI_SPP;
+            $nominalBulanan = (int) $tarifBulanan->nominal;
+            $groupMonths = [];
+
+            if ($isSppUtama) {
+                $groupMonths = $months;
+            } else {
+                $ditanggungPos = $tanggunganPemerintah->isPosDitanggung($siswa, $tarifBulanan);
+
+                foreach (Pembayaran::bulanTahunAjaran($tahunAjaranSekarang) as $index => $periode) {
+                    $key = "spp:{$tarifBulanan->id}:{$periode['bulan']}:{$periode['tahun']}";
+                    $terbuka = $items->get($key);
+
+                    if (! $terbuka) {
+                        $status = $ditanggungPos ? 'ditanggung' : 'lunas';
+                    } elseif ($index < $indexSekarang) {
+                        $status = 'tunggakan';
+                    } elseif ($index === $indexSekarang) {
+                        $status = 'berjalan';
+                    } else {
+                        $status = 'akan';
+                    }
+
+                    $groupMonths[] = [
+                        'key' => $key,
+                        'bulan' => $periode['bulan'],
+                        'tahun' => $periode['tahun'],
+                        'nominal' => $terbuka ? (int) $terbuka['sisa'] : $nominalBulanan,
+                        'status' => $status,
+                    ];
+                }
+            }
+
+            $monthlyGroups[] = [
+                'id' => $tarifBulanan->id,
+                'nama' => $tarifBulanan->nama ?: $tarifBulanan->kategori,
+                'kategori' => $tarifBulanan->kategori,
+                'tarif' => $nominalBulanan,
+                'tipe' => $isSppUtama ? 'spp' : 'non_spp',
+                'months' => $groupMonths,
+            ];
+        }
+
         $nonSppItems = collect($items)->where('tipe', 'non_spp');
         $tarifNonSpp = Spp::query()
             ->whereIn('id', $nonSppItems->pluck('spp_id')->unique()->all())
@@ -232,6 +281,7 @@ class EntriPembayaranKasir extends Page
         return [
             'tarif' => $nominal,
             'months' => $months,
+            'monthly_groups' => $monthlyGroups,
             'non_spp' => $nonSpp,
             'tanggal' => now()->toDateString(),
         ];
@@ -286,8 +336,8 @@ class EntriPembayaranKasir extends Page
         foreach (array_unique($bulanKeys) as $key) {
             $item = $items->get($key);
 
-            if (! $item || $item['tipe'] !== 'spp') {
-                $this->tolak('Pilihan bulan SPP tidak valid. Muat ulang halaman.');
+            if (! $item || ! in_array($item['tipe'], ['spp', 'non_spp'], true) || blank($item['bulan'] ?? null)) {
+                $this->tolak('Pilihan bulan tagihan tidak valid. Muat ulang halaman.');
 
                 return;
             }

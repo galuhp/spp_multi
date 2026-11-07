@@ -181,7 +181,7 @@ class Spp extends Model
             }
         }
 
-        return self::query()
+        return Spp::query()
             ->where('kategori', '!=', self::KATEGORI_SPP)
             ->where('tingkat', $tingkat)
             ->orderBy('id')
@@ -197,14 +197,68 @@ class Spp extends Model
     {
         return self::query()
             ->where('kategori', '!=', self::KATEGORI_SPP)
-            ->whereNull('tingkat')
+            ->where(function (Builder $query): void {
+                $query->whereNull('tingkat')->orWhere('tingkat', '');
+            })
             ->where('tipe', self::TIPE_BULANAN)
             ->where(function (Builder $query) use ($tahunMulai): void {
                 $query->where('tahun_ajaran', $tahunMulai.'/'.($tahunMulai + 1))
-                    ->orWhere('tahun', $tahunMulai);
+                    ->orWhereIn('tahun', [$tahunMulai, $tahunMulai + 1]);
             })
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * All monthly tariffs (SPP + non-SPP with tipe = bulanan) applicable to a level and academic year.
+     *
+     * @return Collection<int, self>
+     */
+    public static function bulananUntukTingkat(?string $tingkat, int $tahunMulai, ?self $fallbackSpp = null): Collection
+    {
+        $tingkatNormal = self::normalisasiTingkat($tingkat);
+        $variasiTingkat = array_values(array_unique(array_filter([
+            $tingkatNormal,
+            $tingkatNormal ? (self::TINGKAT_LIST[$tingkatNormal] ?? null) : null,
+            $tingkat,
+        ])));
+        $tahunAjaran = $tahunMulai.'/'.($tahunMulai + 1);
+
+        $tarifs = self::query()
+            ->where('tipe', self::TIPE_BULANAN)
+            ->where(function (Builder $query) use ($tahunMulai, $tahunAjaran): void {
+                $query->where('tahun_ajaran', $tahunAjaran)
+                    ->orWhereIn('tahun', [$tahunMulai, $tahunMulai + 1]);
+            })
+            ->where(function (Builder $query) use ($variasiTingkat): void {
+                $query->whereNull('tingkat')->orWhere('tingkat', '');
+
+                if ($variasiTingkat !== []) {
+                    $query->orWhereIn('tingkat', $variasiTingkat);
+                }
+            })
+            ->orderByRaw('CASE WHEN kategori = ? THEN 0 ELSE 1 END', [self::KATEGORI_SPP])
+            ->orderBy('id')
+            ->get();
+
+        // Fallback if no SPP tariff matched the exact year
+        if (! $tarifs->contains(fn (self $t): bool => $t->kategori === self::KATEGORI_SPP)) {
+            $sppFallback = self::untukTingkat($tingkatNormal, $tahunAjaran) ?? $fallbackSpp;
+            if ($sppFallback && $sppFallback->isBulanan()) {
+                $tarifs->prepend($sppFallback);
+            }
+        }
+
+        // Also include level-matched monthly non-SPP tariffs if year fallback is needed
+        if ($tingkatNormal !== null) {
+            foreach (self::nonSppUntukTingkat($tingkatNormal, $tahunAjaran) as $nonSpp) {
+                if ($nonSpp->isBulanan() && ! $tarifs->contains('id', $nonSpp->id)) {
+                    $tarifs->push($nonSpp);
+                }
+            }
+        }
+
+        return $tarifs->unique('id')->values();
     }
 
     /**

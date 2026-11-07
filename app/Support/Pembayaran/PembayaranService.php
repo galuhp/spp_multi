@@ -134,11 +134,17 @@ class PembayaranService
                 continue;
             }
 
-            foreach (Spp::nonSppUntukTingkat($t) as $tarifNon) {
+            foreach (Spp::nonSppUntukTingkat($t, $tahunMulai.'/'.($tahunMulai + 1)) as $tarifNon) {
                 $nonSppList->push($tarifNon);
 
-                if ($tarifNon->isBulanan() && $tarifNon->tahunMulai() === $tahunMulai) {
+                if ($tarifNon->isBulanan()) {
                     $nonSppBulananList->push($tarifNon);
+                }
+            }
+
+            foreach (Spp::bulananUntukTingkat($t, $tahunMulai) as $tarifBulananLvl) {
+                if ($tarifBulananLvl->kategori !== Spp::KATEGORI_SPP) {
+                    $nonSppBulananList->push($tarifBulananLvl);
                 }
             }
 

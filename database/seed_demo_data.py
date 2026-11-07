@@ -550,7 +550,7 @@ def seed():
         if 'biaya sekolah per bulan' in j or 'spp' in j:
             return ('SPP', 'bulanan')
         if 'tabungan' in j:
-            return ('Tabungan', 'sekali_bayar')
+            return ('Tabungan', 'bulanan')
         if 'pts' in j or 'pas' in j or 'anbk' in j or 'ujian' in j:
             return ('Biaya Ujian', 'sekali_bayar')
         if 'praktek' in j or 'prakerin' in j:

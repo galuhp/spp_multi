@@ -254,7 +254,7 @@ class DatabaseSeeder extends Seeder
 
         $kategoriMap = [
             'biaya sekolah per bulan' => ['SPP', 'bulanan'],
-            'tabungan per bulan' => ['Tabungan', 'sekali_bayar'],
+            'tabungan per bulan' => ['Tabungan', 'bulanan'],
             'pts ganjil' => ['Biaya Ujian', 'sekali_bayar'],
             'pts genap' => ['Biaya Ujian', 'sekali_bayar'],
             'pas ganjil' => ['Biaya Ujian', 'sekali_bayar'],
@@ -281,7 +281,7 @@ class DatabaseSeeder extends Seeder
         $daftarTarif = [
             '10' => [
                 ['Biaya Sekolah per bulan', 100000, 'SPP', 'bulanan'],
-                ['Tabungan per bulan', 35000, 'Tabungan', 'sekali_bayar'],
+                ['Tabungan per bulan', 35000, 'Tabungan', 'bulanan'],
                 ['PTS Ganjil', 250000, 'Biaya Ujian', 'sekali_bayar'],
                 ['PTS Genap', 250000, 'Biaya Ujian', 'sekali_bayar'],
                 ['PAS Ganjil', 300000, 'Biaya Ujian', 'sekali_bayar'],
@@ -296,7 +296,7 @@ class DatabaseSeeder extends Seeder
             ],
             '11' => [
                 ['Biaya Sekolah per bulan', 100000, 'SPP', 'bulanan'],
-                ['Tabungan per bulan', 35000, 'Tabungan', 'sekali_bayar'],
+                ['Tabungan per bulan', 35000, 'Tabungan', 'bulanan'],
                 ['PTS Ganjil', 250000, 'Biaya Ujian', 'sekali_bayar'],
                 ['PTS Genap', 250000, 'Biaya Ujian', 'sekali_bayar'],
                 ['PAS Ganjil', 300000, 'Biaya Ujian', 'sekali_bayar'],
@@ -310,7 +310,7 @@ class DatabaseSeeder extends Seeder
             ],
             '12' => [
                 ['Biaya Sekolah per bulan', 100000, 'SPP', 'bulanan'],
-                ['Tabungan per bulan', 35000, 'Tabungan', 'sekali_bayar'],
+                ['Tabungan per bulan', 35000, 'Tabungan', 'bulanan'],
                 ['PTS Ganjil', 250000, 'Biaya Ujian', 'sekali_bayar'],
                 ['PTS Genap', 250000, 'Biaya Ujian', 'sekali_bayar'],
                 ['PAS Ganjil', 300000, 'Biaya Ujian', 'sekali_bayar'],
