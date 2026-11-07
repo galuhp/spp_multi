@@ -414,77 +414,107 @@ class DatabaseSeeder extends Seeder
                 $userId = $userSiswa->id;
             }
 
-            $siswa = Siswa::create([
-                'user_id' => $userId,
-                'kelas_id' => $kelas->id,
-                'spp_id' => $sppBulanan->id,
-                'nisn' => $nisn,
-                'nis' => $nis,
-                'nama' => $nama,
-                'jenis_kelamin' => $jk,
-                'alamat' => "Jl. Pemuda Mandiri No. ".($i + 1).", RT 0".(($i % 5) + 1)."/RW 0".(($i % 3) + 1).", Bandung",
-                'no_telp' => "0812{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
-                'tahun_masuk' => $tahunMasuk,
-                'status' => 'aktif',
-                'is_archived' => false,
-            ]);
+            $siswa = Siswa::withoutEvents(function () use (
+                $userId, $kelas, $sppBulanan, $nisn, $nis, $nama, $jk, $i, $tingkat, $tahunMasuk
+            ) {
+                return Siswa::create([
+                    'user_id' => $userId,
+                    'kelas_id' => $kelas->id,
+                    'spp_id' => $sppBulanan->id,
+                    'nisn' => $nisn,
+                    'nis' => $nis,
+                    'nama' => $nama,
+                    'jenis_kelamin' => $jk,
+                    'alamat' => "Jl. Pemuda Mandiri No. ".($i + 1).", RT 0".(($i % 5) + 1)."/RW 0".(($i % 3) + 1).", Bandung",
+                    'no_telp' => "0812{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                    'tahun_masuk' => $tahunMasuk,
+                    'status' => 'aktif',
+                    'is_archived' => false,
+                ]);
+            });
 
-            Wali::create([
-                'siswa_id' => $siswa->id,
-                'nama_ayah' => "Bapak {$fn}",
-                'nama_ibu' => "Ibu {$fn}",
-                'hp_wali' => "0813{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
-            ]);
+            Wali::updateOrCreate(
+                ['siswa_id' => $siswa->id],
+                [
+                    'nama_ayah' => "Bapak {$fn}",
+                    'nama_ibu' => "Ibu {$fn}",
+                    'hp_wali' => "0813{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                ]
+            );
 
             // Riwayat Kelas berdasarkan timeline multi-tahun
             if ($tingkat === '10') {
-                RiwayatKelas::create([
-                    'siswa_id' => $siswa->id,
-                    'kelas_id' => $kelas->id,
-                    'tahun_ajaran_id' => $taModels['2026/2027']->id,
-                    'spp_id' => $sppBulanan->id,
-                    'status' => 'aktif',
-                ]);
+                RiwayatKelas::updateOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $taModels['2026/2027']->id,
+                    ],
+                    [
+                        'kelas_id' => $kelas->id,
+                        'spp_id' => $sppBulanan->id,
+                        'status' => 'aktif',
+                    ]
+                );
             } elseif ($tingkat === '11') {
                 $prevX = str_contains($kelas->nama_kelas, 'RPL') ? $kelasModels['X RPL 1'] : $kelasModels['X TKJ 1'];
-                RiwayatKelas::create([
-                    'siswa_id' => $siswa->id,
-                    'kelas_id' => $prevX->id,
-                    'tahun_ajaran_id' => $taModels['2025/2026']->id,
-                    'spp_id' => $sppModels['10']['SPP']->id,
-                    'status' => 'naik',
-                ]);
-                RiwayatKelas::create([
-                    'siswa_id' => $siswa->id,
-                    'kelas_id' => $kelas->id,
-                    'tahun_ajaran_id' => $taModels['2026/2027']->id,
-                    'spp_id' => $sppBulanan->id,
-                    'status' => 'aktif',
-                ]);
+                RiwayatKelas::updateOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $taModels['2025/2026']->id,
+                    ],
+                    [
+                        'kelas_id' => $prevX->id,
+                        'spp_id' => $sppModels['10']['SPP']->id,
+                        'status' => 'naik',
+                    ]
+                );
+                RiwayatKelas::updateOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $taModels['2026/2027']->id,
+                    ],
+                    [
+                        'kelas_id' => $kelas->id,
+                        'spp_id' => $sppBulanan->id,
+                        'status' => 'aktif',
+                    ]
+                );
             } elseif ($tingkat === '12') {
                 $prevX = str_contains($kelas->nama_kelas, 'RPL') ? $kelasModels['X RPL 1'] : $kelasModels['X TKJ 1'];
                 $prevXI = str_contains($kelas->nama_kelas, 'RPL') ? $kelasModels['XI RPL 1'] : $kelasModels['XI TKJ 1'];
-                RiwayatKelas::create([
-                    'siswa_id' => $siswa->id,
-                    'kelas_id' => $prevX->id,
-                    'tahun_ajaran_id' => $taModels['2024/2025']->id,
-                    'spp_id' => $sppModels['10']['SPP']->id,
-                    'status' => 'naik',
-                ]);
-                RiwayatKelas::create([
-                    'siswa_id' => $siswa->id,
-                    'kelas_id' => $prevXI->id,
-                    'tahun_ajaran_id' => $taModels['2025/2026']->id,
-                    'spp_id' => $sppModels['11']['SPP']->id,
-                    'status' => 'naik',
-                ]);
-                RiwayatKelas::create([
-                    'siswa_id' => $siswa->id,
-                    'kelas_id' => $kelas->id,
-                    'tahun_ajaran_id' => $taModels['2026/2027']->id,
-                    'spp_id' => $sppBulanan->id,
-                    'status' => 'aktif',
-                ]);
+                RiwayatKelas::updateOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $taModels['2024/2025']->id,
+                    ],
+                    [
+                        'kelas_id' => $prevX->id,
+                        'spp_id' => $sppModels['10']['SPP']->id,
+                        'status' => 'naik',
+                    ]
+                );
+                RiwayatKelas::updateOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $taModels['2025/2026']->id,
+                    ],
+                    [
+                        'kelas_id' => $prevXI->id,
+                        'spp_id' => $sppModels['11']['SPP']->id,
+                        'status' => 'naik',
+                    ]
+                );
+                RiwayatKelas::updateOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $taModels['2026/2027']->id,
+                    ],
+                    [
+                        'kelas_id' => $kelas->id,
+                        'spp_id' => $sppBulanan->id,
+                        'status' => 'aktif',
+                    ]
+                );
             }
 
             $siswas[] = $siswa;
