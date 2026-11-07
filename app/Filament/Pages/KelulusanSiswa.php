@@ -82,8 +82,11 @@ class KelulusanSiswa extends Page
 
         return Kelas::query()
             ->with('jurusan')
-            ->where('tahun_ajaran_id', $this->tahun_ajaran_id)
-            ->whereIn('tingkat', ['12', '13', 'XII'])
+            ->where(function ($query): void {
+                $query->where('tahun_ajaran_id', $this->tahun_ajaran_id)
+                    ->orWhereNull('tahun_ajaran_id');
+            })
+            ->whereIn('tingkat', ['12', '13', 'XII', '6', 'VI', '9', 'IX'])
             ->orderBy('nama_kelas')
             ->get()
             ->mapWithKeys(fn (Kelas $kelas): array => [
@@ -103,7 +106,7 @@ class KelulusanSiswa extends Page
 
         $service = app(ProsesKelasService::class);
 
-        return $service->siswaKelas($this->kelas_id)->map(fn ($siswa): array => [
+        return $service->siswaKelas($this->kelas_id, $this->tahun_ajaran_id)->map(fn ($siswa): array => [
             'siswa' => $siswa,
             'tunggakan' => $service->tunggakan($siswa),
         ]);
@@ -123,7 +126,7 @@ class KelulusanSiswa extends Page
         $this->hasil = null;
         $this->galat = null;
         $this->siswa_ids = app(ProsesKelasService::class)
-            ->siswaKelas((int) $this->kelas_id)
+            ->siswaKelas((int) $this->kelas_id, $this->tahun_ajaran_id)
             ->pluck('id')
             ->map(fn ($id): int => (int) $id)
             ->all();

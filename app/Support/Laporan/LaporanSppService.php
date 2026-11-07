@@ -310,7 +310,16 @@ class LaporanSppService
 
         $kelasList = Kelas::query()
             ->with('jurusan')
-            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->where(function ($query) use ($tahunAjaran): void {
+                $query->where('tahun_ajaran_id', $tahunAjaran->id)
+                    ->orWhereNull('tahun_ajaran_id')
+                    ->orWhereIn(
+                        'id',
+                        RiwayatKelas::query()
+                            ->where('tahun_ajaran_id', $tahunAjaran->id)
+                            ->select('kelas_id'),
+                    );
+            })
             ->orderBy('nama_kelas')
             ->get();
 
@@ -329,12 +338,19 @@ class LaporanSppService
                 $kelasPerSiswa[(int) $riwayat->siswa_id] = (int) $riwayat->kelas_id;
             });
 
-        Siswa::query()
-            ->whereIn('kelas_id', $kelasById->keys())
-            ->get(['id', 'kelas_id'])
-            ->each(function (Siswa $siswa) use (&$kelasPerSiswa): void {
-                $kelasPerSiswa[(int) $siswa->id] ??= (int) $siswa->kelas_id;
-            });
+        $kelasSpesifikIds = $kelasList
+            ->filter(fn (Kelas $kelas): bool => (int) $kelas->tahun_ajaran_id === (int) $tahunAjaran->id || ($kelas->tahun_ajaran_id === null && (bool) $tahunAjaran->aktif))
+            ->pluck('id')
+            ->all();
+
+        if ($kelasSpesifikIds !== []) {
+            Siswa::query()
+                ->whereIn('kelas_id', $kelasSpesifikIds)
+                ->get(['id', 'kelas_id'])
+                ->each(function (Siswa $siswa) use (&$kelasPerSiswa): void {
+                    $kelasPerSiswa[(int) $siswa->id] ??= (int) $siswa->kelas_id;
+                });
+        }
 
         if ($kelasPerSiswa === []) {
             return collect();
@@ -370,7 +386,7 @@ class LaporanSppService
 
         $siswa->loadMissing('kelas.jurusan');
 
-        if ($siswa->kelas && (int) $siswa->kelas->tahun_ajaran_id === (int) $tahunAjaran->id) {
+        if ($siswa->kelas && ((int) $siswa->kelas->tahun_ajaran_id === (int) $tahunAjaran->id || ($siswa->kelas->tahun_ajaran_id === null && (bool) $tahunAjaran->aktif))) {
             return $siswa->kelas;
         }
 
@@ -484,7 +500,16 @@ class LaporanSppService
 
         $kelasList = Kelas::query()
             ->with('jurusan')
-            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->where(function ($query) use ($tahunAjaran): void {
+                $query->where('tahun_ajaran_id', $tahunAjaran->id)
+                    ->orWhereNull('tahun_ajaran_id')
+                    ->orWhereIn(
+                        'id',
+                        RiwayatKelas::query()
+                            ->where('tahun_ajaran_id', $tahunAjaran->id)
+                            ->select('kelas_id'),
+                    );
+            })
             ->when(filled($filters['kelas_id'] ?? null), fn ($query) => $query->whereKey($filters['kelas_id']))
             ->when(filled($filters['jurusan_id'] ?? null), fn ($query) => $query->where('jurusan_id', $filters['jurusan_id']))
             ->when(filled($filters['tingkat'] ?? null), function ($query) use ($filters): void {
@@ -508,12 +533,19 @@ class LaporanSppService
                 $kelasPerSiswa[(int) $riwayat->siswa_id] = (int) $riwayat->kelas_id;
             });
 
-        Siswa::query()
-            ->whereIn('kelas_id', $kelasById->keys())
-            ->get(['id', 'kelas_id'])
-            ->each(function (Siswa $siswa) use (&$kelasPerSiswa): void {
-                $kelasPerSiswa[(int) $siswa->id] ??= (int) $siswa->kelas_id;
-            });
+        $kelasSpesifikIds = $kelasList
+            ->filter(fn (Kelas $kelas): bool => (int) $kelas->tahun_ajaran_id === (int) $tahunAjaran->id || ($kelas->tahun_ajaran_id === null && (bool) $tahunAjaran->aktif))
+            ->pluck('id')
+            ->all();
+
+        if ($kelasSpesifikIds !== []) {
+            Siswa::query()
+                ->whereIn('kelas_id', $kelasSpesifikIds)
+                ->get(['id', 'kelas_id'])
+                ->each(function (Siswa $siswa) use (&$kelasPerSiswa): void {
+                    $kelasPerSiswa[(int) $siswa->id] ??= (int) $siswa->kelas_id;
+                });
+        }
 
         if ($kelasPerSiswa === []) {
             return collect();
@@ -794,6 +826,17 @@ class LaporanSppService
         if ($siswa->spp?->kategori === Spp::KATEGORI_SPP
             && $siswa->spp?->tahun_ajaran === $tahunAjaran->nama) {
             return $siswa->spp;
+        }
+
+        $riwayatSpp = RiwayatKelas::query()
+            ->with('spp')
+            ->where('siswa_id', $siswa->id)
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->first()
+            ?->spp;
+
+        if ($riwayatSpp && $riwayatSpp->kategori === Spp::KATEGORI_SPP) {
+            return $riwayatSpp;
         }
 
         return null;

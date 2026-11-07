@@ -25,6 +25,7 @@ use RuntimeException;
     'jenis_kelamin',
     'alamat',
     'tanggal_masuk',
+    'tahun_masuk',
     'status',
     'no_telp',
     'is_archived',
@@ -36,10 +37,49 @@ class Siswa extends Model
     use HasFactory;
 
     /**
-     * Prevent deleting a student that still owns payment history.
+     * Auto-fill tahun_masuk, sync initial RiwayatKelas, and prevent deleting a student with payment history.
      */
     protected static function booted(): void
     {
+        static::creating(function (Siswa $siswa): void {
+            if (blank($siswa->tahun_masuk)) {
+                if ($siswa->tanggal_masuk) {
+                    $siswa->tahun_masuk = (int) $siswa->tanggal_masuk->format('Y');
+                } elseif ($siswa->spp_id && ($spp = Spp::find($siswa->spp_id))) {
+                    $siswa->tahun_masuk = Pembayaran::tahunMulaiTarif($spp);
+                } else {
+                    $siswa->tahun_masuk = (int) now()->year;
+                }
+            }
+        });
+
+        static::created(function (Siswa $siswa): void {
+            if (! $siswa->kelas_id) {
+                return;
+            }
+
+            $kelas = Kelas::find($siswa->kelas_id);
+            $tahunAjaranId = $kelas?->tahun_ajaran_id
+                ?: TahunAjaran::query()->where('aktif', true)->value('id')
+                ?: TahunAjaran::query()->orderByDesc('nama')->value('id');
+
+            if ($tahunAjaranId) {
+                RiwayatKelas::query()->firstOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $tahunAjaranId,
+                    ],
+                    [
+                        'kelas_id' => $siswa->kelas_id,
+                        'spp_id' => $siswa->spp_id,
+                        'status' => $siswa->status === 'lulus'
+                            ? RiwayatKelas::STATUS_LULUS
+                            : RiwayatKelas::STATUS_AKTIF,
+                    ],
+                );
+            }
+        });
+
         static::deleting(function (Siswa $siswa): void {
             if ($siswa->pembayarans()->exists()) {
                 throw new RuntimeException('Siswa dengan riwayat pembayaran tidak dapat dihapus. Arsipkan data siswa.');
@@ -57,6 +97,7 @@ class Siswa extends Model
         return [
             'tanggal_lahir' => 'date',
             'tanggal_masuk' => 'date',
+            'tahun_masuk' => 'integer',
             'is_archived' => 'boolean',
             'archived_at' => 'datetime',
             'tanggal_lulus' => 'date',

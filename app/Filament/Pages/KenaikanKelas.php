@@ -99,12 +99,24 @@ class KenaikanKelas extends Page
             return [];
         }
 
-        return Kelas::query()
+        $kelasList = Kelas::query()
             ->with('jurusan')
-            ->where('tahun_ajaran_id', $this->tahun_ajaran_asal_id)
+            ->where(function ($query): void {
+                $query->where('tahun_ajaran_id', $this->tahun_ajaran_asal_id)
+                    ->orWhereNull('tahun_ajaran_id')
+                    ->orWhereHas('siswas', fn ($q) => $q->aktif())
+                    ->orWhereIn(
+                        'id',
+                        RiwayatKelas::query()
+                            ->where('tahun_ajaran_id', $this->tahun_ajaran_asal_id)
+                            ->select('kelas_id'),
+                    );
+            })
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')
-            ->get()
+            ->get();
+
+        return $kelasList
             ->mapWithKeys(fn (Kelas $kelas): array => [
                 $kelas->id => $this->formatLabelKelas($kelas),
             ])
@@ -112,7 +124,7 @@ class KenaikanKelas extends Page
     }
 
     /**
-     * All target classes in the destination academic year, ordered with recommended classes first.
+     * All target classes in the destination academic year (or master classes across years), ordered with recommended classes first.
      *
      * @return array<int, string>
      */
@@ -126,18 +138,31 @@ class KenaikanKelas extends Page
         $service = app(ProsesKelasService::class);
         $tingkatNaik = $kelasAsal ? $service->tingkatBerikutnya($service->normalisasiTingkat($kelasAsal->tingkat)) : null;
 
-        return Kelas::query()
+        $kandidat = Kelas::query()
             ->with('jurusan')
-            ->where('tahun_ajaran_id', $this->tahun_ajaran_tujuan_id)
+            ->where(function ($query): void {
+                $query->where('tahun_ajaran_id', $this->tahun_ajaran_tujuan_id)
+                    ->orWhereNull('tahun_ajaran_id');
+            })
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')
-            ->get()
+            ->get();
+
+        if ($kandidat->isEmpty()) {
+            $kandidat = Kelas::query()
+                ->with('jurusan')
+                ->orderBy('tingkat')
+                ->orderBy('nama_kelas')
+                ->get();
+        }
+
+        return $kandidat
             ->sortBy(function (Kelas $kelas) use ($kelasAsal, $service, $tingkatNaik): string {
                 $tingkatNormal = (string) $service->normalisasiTingkat($kelas->tingkat);
                 $prioritasTingkat = ($tingkatNaik !== null && $tingkatNormal === $tingkatNaik) ? '0' : '1';
                 $prioritasJurusan = ($kelasAsal && $kelasAsal->jurusan_id && (int) $kelas->jurusan_id === (int) $kelasAsal->jurusan_id) ? '0' : '1';
 
-                return "{$prioritasTingkat}-{$prioritasJurusan}-". str_pad($tingkatNormal, 3, '0', STR_PAD_LEFT).'-'.$kelas->nama_kelas;
+                return "{$prioritasTingkat}-{$prioritasJurusan}-".str_pad($tingkatNormal, 3, '0', STR_PAD_LEFT).'-'.$kelas->nama_kelas;
             })
             ->mapWithKeys(fn (Kelas $kelas): array => [
                 $kelas->id => $this->formatLabelKelas($kelas, true),
@@ -176,7 +201,7 @@ class KenaikanKelas extends Page
             ?? $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id)?->id;
         $tingkatAkhir = in_array($service->normalisasiTingkat($kelas->tingkat), ProsesKelasService::TINGKAT_AKHIR, true);
 
-        $siswaList = $service->siswaKelas($this->kelas_asal_id);
+        $siswaList = $service->siswaKelas($this->kelas_asal_id, $this->tahun_ajaran_asal_id);
         $sudahAdaIds = $siswaList->isEmpty()
             ? []
             : array_flip(
@@ -330,7 +355,7 @@ class KenaikanKelas extends Page
         $default = $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id);
         $this->kelas_tujuan_batch_id = $default?->id;
 
-        foreach ($service->siswaKelas($this->kelas_asal_id) as $siswa) {
+        foreach ($service->siswaKelas($this->kelas_asal_id, $this->tahun_ajaran_asal_id) as $siswa) {
             $this->keputusan[$siswa->id] = [
                 'status' => RiwayatKelas::STATUS_NAIK,
                 'kelas_tujuan_id' => $this->kelas_tujuan_batch_id,

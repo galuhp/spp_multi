@@ -46,6 +46,14 @@ class SiswaForm
                     ->required()
                     ->default('L'),
 
+                TextInput::make('tahun_masuk')
+                    ->label('Tahun Masuk / Angkatan')
+                    ->numeric()
+                    ->minValue(2000)
+                    ->maxValue(2100)
+                    ->default(fn (): int => (int) now()->year)
+                    ->helperText('Tahun angkatan masuk siswa (contoh: 2026).'),
+
                 Select::make('kelas_id')
                     ->label('Rombongan Belajar / Kelas')
                     ->relationship('kelas', 'nama_kelas')
@@ -71,10 +79,13 @@ class SiswaForm
                             return [];
                         }
 
+                        $namaTa = $kelas->tahunAjaran?->nama
+                            ?? \App\Models\TahunAjaran::query()->where('aktif', true)->value('nama');
+
                         return Spp::query()
                             ->where('kategori', Spp::KATEGORI_SPP)
                             ->where('tipe', Spp::TIPE_BULANAN)
-                            ->when($kelas->tahunAjaran?->nama, fn ($query, $tahunAjaran) => $query->where('tahun_ajaran', $tahunAjaran))
+                            ->when($namaTa, fn ($query, $tahunAjaran) => $query->where('tahun_ajaran', $tahunAjaran))
                             ->where(function ($query) use ($kelas): void {
                                 $query->where('tingkat', Spp::normalisasiTingkat($kelas->tingkat))
                                     ->orWhereNull('tingkat');
@@ -90,7 +101,7 @@ class SiswaForm
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->helperText('Otomatis mengikuti tingkat kelas. Tarif lama tanpa tingkat tetap tersedia sebagai cadangan.'),
+                    ->helperText('Otomatis mengikuti tingkat kelas dan tahun ajaran berjalan.'),
 
                 TextInput::make('no_telp')
                     ->label('Nomor Telepon / WhatsApp')

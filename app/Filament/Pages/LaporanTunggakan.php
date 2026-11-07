@@ -133,7 +133,10 @@ class LaporanTunggakan extends Page
 
         return Kelas::query()
             ->with('jurusan')
-            ->where('tahun_ajaran_id', $this->tahun_ajaran_id)
+            ->where(function ($query): void {
+                $query->where('tahun_ajaran_id', $this->tahun_ajaran_id)
+                    ->orWhereNull('tahun_ajaran_id');
+            })
             ->orderBy('nama_kelas')
             ->get();
     }

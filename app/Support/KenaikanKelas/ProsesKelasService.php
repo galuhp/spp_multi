@@ -19,22 +19,34 @@ class ProsesKelasService
     public const TINGKAT_AKHIR = ['12', '13'];
 
     /**
-     * Students eligible for mass promotion from a class.
+     * Students eligible for mass promotion from a class in an optional source academic year.
      *
      * @return Collection<int, Siswa>
      */
-    public function siswaKelas(int $kelasId): Collection
+    public function siswaKelas(int $kelasId, ?int $tahunAjaranId = null): Collection
     {
         return Siswa::query()
             ->with('spp')
-            ->where('kelas_id', $kelasId)
+            ->where(function ($query) use ($kelasId, $tahunAjaranId): void {
+                $query->where('kelas_id', $kelasId);
+
+                if ($tahunAjaranId) {
+                    $query->orWhereIn(
+                        'id',
+                        RiwayatKelas::query()
+                            ->where('kelas_id', $kelasId)
+                            ->where('tahun_ajaran_id', $tahunAjaranId)
+                            ->pluck('siswa_id'),
+                    );
+                }
+            })
             ->aktif()
             ->orderBy('nama')
             ->get();
     }
 
     /**
-     * Map a level to the next level. Supports SD (1-6), SMP (7-9), SMA/SMK (10-12).
+     * Map a level to the next level. Supports SD (1-6), SMP (7-9), SMA/SMK (10-12), or Satu Atap (9->10).
      * Returns null when the level is unknown or already at the maximum numeric level.
      */
     public function tingkatBerikutnya(?string $tingkat): ?string
@@ -101,10 +113,22 @@ class ProsesKelasService
         ]));
 
         $semuaDiTingkat = Kelas::query()
-            ->where('tahun_ajaran_id', $tahunAjaranTujuanId)
+            ->where(function ($query) use ($tahunAjaranTujuanId): void {
+                $query->where('tahun_ajaran_id', $tahunAjaranTujuanId)
+                    ->orWhereNull('tahun_ajaran_id');
+            })
             ->whereIn('tingkat', $variasiTingkat)
+            ->orderByRaw('CASE WHEN tahun_ajaran_id = ? THEN 0 ELSE 1 END', [$tahunAjaranTujuanId])
             ->orderBy('nama_kelas')
             ->get();
+
+        // Fallback ke seluruh master kelas pada tingkat tujuan bila rombel sebelumnya diset ke TA lama
+        if ($semuaDiTingkat->isEmpty()) {
+            $semuaDiTingkat = Kelas::query()
+                ->whereIn('tingkat', $variasiTingkat)
+                ->orderBy('nama_kelas')
+                ->get();
+        }
 
         if ($semuaDiTingkat->isEmpty()) {
             return null;
@@ -165,13 +189,24 @@ class ProsesKelasService
         ]));
 
         $semuaDiTingkat = Kelas::query()
-            ->where('tahun_ajaran_id', $tahunAjaranTujuanId)
+            ->where(function ($query) use ($tahunAjaranTujuanId): void {
+                $query->where('tahun_ajaran_id', $tahunAjaranTujuanId)
+                    ->orWhereNull('tahun_ajaran_id');
+            })
             ->whereIn('tingkat', $variasiTingkat)
+            ->orderByRaw('CASE WHEN tahun_ajaran_id = ? THEN 0 ELSE 1 END', [$tahunAjaranTujuanId])
             ->orderBy('nama_kelas')
             ->get();
 
         if ($semuaDiTingkat->isEmpty()) {
-            return null;
+            $semuaDiTingkat = Kelas::query()
+                ->whereIn('tingkat', $variasiTingkat)
+                ->orderBy('nama_kelas')
+                ->get();
+        }
+
+        if ($semuaDiTingkat->isEmpty()) {
+            return $kelasAsal;
         }
 
         $sejurusan = $kelasAsal->jurusan_id
@@ -276,11 +311,16 @@ class ProsesKelasService
 
         $kelasAsal = Kelas::query()->findOrFail($kelasAsalId);
 
-        if ((int) $kelasAsal->tahun_ajaran_id !== $tahunAjaranAsalId) {
-            throw new RuntimeException('Kelas asal tidak berada pada tahun ajaran asal yang dipilih.');
+        if ($kelasAsal->tahun_ajaran_id !== null && (int) $kelasAsal->tahun_ajaran_id !== $tahunAjaranAsalId) {
+            // Izinkan jika memang ada siswa atau riwayat di kelas ini pada TA asal
+            $adaSiswa = $this->siswaKelas($kelasAsalId, $tahunAjaranAsalId)->isNotEmpty();
+
+            if (! $adaSiswa) {
+                throw new RuntimeException('Kelas asal tidak berada pada tahun ajaran asal yang dipilih.');
+            }
         }
 
-        $siswaKelas = $this->siswaKelas($kelasAsalId)->keyBy('id');
+        $siswaKelas = $this->siswaKelas($kelasAsalId, $tahunAjaranAsalId)->keyBy('id');
 
         $dilewati = [];
         $pesan = [];
@@ -312,7 +352,7 @@ class ProsesKelasService
 
             $kelasTujuan = Kelas::query()->find($kelasTujuanId);
 
-            if (! $kelasTujuan || (int) $kelasTujuan->tahun_ajaran_id !== $tahunAjaranTujuanId) {
+            if (! $kelasTujuan || ($kelasTujuan->tahun_ajaran_id !== null && (int) $kelasTujuan->tahun_ajaran_id !== $tahunAjaranTujuanId && (int) $kelasTujuan->tahun_ajaran_id === $tahunAjaranAsalId && $kelasTujuan->id === $kelasAsal->id && $status === RiwayatKelas::STATUS_NAIK)) {
                 $dilewati[] = "Kelas tujuan untuk {$siswa->nama} tidak valid pada tahun ajaran tujuan.";
 
                 continue;
@@ -324,7 +364,7 @@ class ProsesKelasService
                 ? $this->tingkatBerikutnya($tingkatAsal)
                 : $tingkatAsal;
 
-            // Untuk tingkat standar (10->11, 11->12, 1->2, dst), validasi kesesuaian tingkat bila keduanya numerik standar
+            // Untuk tingkat standar (9->10, 10->11, 11->12, 1->2, dst), validasi kesesuaian tingkat bila keduanya numerik standar
             if (
                 $tingkatDiharapkan !== null
                 && is_numeric($tingkatAsal)
@@ -386,26 +426,30 @@ class ProsesKelasService
                     ],
                     [
                         'kelas_id' => $kelasAsal->id,
+                        'spp_id' => $siswa->spp_id,
                         'status' => $baris['status'],
                         'batch_id' => $batch->id,
                     ]
                 );
 
+                $tarifTujuan = Spp::untukTingkat($kelasTujuan->tingkat, $tahunAjaranTujuanNama) ?? $siswa->spp;
+
                 RiwayatKelas::create([
                     'siswa_id' => $siswa->id,
                     'kelas_id' => $kelasTujuan->id,
                     'tahun_ajaran_id' => $tahunAjaranTujuanId,
+                    'spp_id' => $tarifTujuan?->id,
                     'status' => RiwayatKelas::STATUS_AKTIF,
                     'batch_id' => $batch->id,
                 ]);
 
-                $siswa->update(['kelas_id' => $kelasTujuan->id]);
-
-                $tarifTujuan = Spp::untukTingkat($kelasTujuan->tingkat, $tahunAjaranTujuanNama);
+                $perubahanSiswa = ['kelas_id' => $kelasTujuan->id];
 
                 if ($tarifTujuan) {
-                    $siswa->update(['spp_id' => $tarifTujuan->id]);
+                    $perubahanSiswa['spp_id'] = $tarifTujuan->id;
                 }
+
+                $siswa->update($perubahanSiswa);
             }
 
             LogAktivitas::catat(
@@ -450,8 +494,12 @@ class ProsesKelasService
 
         $kelas = Kelas::query()->findOrFail($kelasId);
 
-        if ((int) $kelas->tahun_ajaran_id !== $tahunAjaranId) {
-            throw new RuntimeException('Kelas tidak berada pada tahun ajaran yang dipilih.');
+        if ($kelas->tahun_ajaran_id !== null && (int) $kelas->tahun_ajaran_id !== $tahunAjaranId) {
+            $adaSiswa = $this->siswaKelas($kelasId, $tahunAjaranId)->isNotEmpty();
+
+            if (! $adaSiswa) {
+                throw new RuntimeException('Kelas tidak berada pada tahun ajaran yang dipilih.');
+            }
         }
 
         if (! in_array($this->normalisasiTingkat($kelas->tingkat), self::TINGKAT_AKHIR, true)) {

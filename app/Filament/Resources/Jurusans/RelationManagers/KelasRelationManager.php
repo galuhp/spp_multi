@@ -30,31 +30,40 @@ class KelasRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Select::make('tahun_ajaran_id')
-                    ->label('Tahun Ajaran')
-                    ->relationship('tahunAjaran', 'nama')
-                    ->default(fn (): ?int => TahunAjaran::query()->where('aktif', true)->value('id'))
-                    ->required(),
                 TextInput::make('nama_kelas')
                     ->label('Nama Rombel')
-                    ->placeholder('Contoh: X RPL 1')
+                    ->placeholder('Contoh: X RPL 1 / IX-A / Kelas 1A')
                     ->unique(
                         ignoreRecord: true,
                         modifyRuleUsing: fn (Unique $rule, Get $get): Unique => $rule
                             ->where('tahun_ajaran_id', $get('tahun_ajaran_id')),
                     )
                     ->validationMessages([
-                        'unique' => 'Nama kelas sudah terdaftar pada tahun ajaran ini.',
+                        'unique' => 'Nama kelas sudah terdaftar.',
                     ])
                     ->required(),
                 Select::make('tingkat')
                     ->label('Tingkat')
                     ->options([
-                        'X' => 'X',
-                        'XI' => 'XI',
-                        'XII' => 'XII',
+                        '1' => '1 (I)',
+                        '2' => '2 (II)',
+                        '3' => '3 (III)',
+                        '4' => '4 (IV)',
+                        '5' => '5 (V)',
+                        '6' => '6 (VI)',
+                        '7' => '7 (VII)',
+                        '8' => '8 (VIII)',
+                        '9' => '9 (IX)',
+                        'X' => 'X (10)',
+                        'XI' => 'XI (11)',
+                        'XII' => 'XII (12)',
                     ])
                     ->required(),
+                Select::make('tahun_ajaran_id')
+                    ->label('Tahun Ajaran (Opsional)')
+                    ->relationship('tahunAjaran', 'nama')
+                    ->placeholder('Lintas Tahun Ajaran (Master Rombel)')
+                    ->nullable(),
             ]);
     }
 
@@ -65,7 +74,8 @@ class KelasRelationManager extends RelationManager
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('tahunAjaran'))
             ->columns([
                 TextColumn::make('tahunAjaran.nama')
-                    ->label('Tahun Ajaran')
+                    ->label('Cakupan TA')
+                    ->default('Lintas Tahun')
                     ->badge()
                     ->color('primary')
                     ->sortable(),

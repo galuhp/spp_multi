@@ -73,7 +73,10 @@ class ImporSiswaService
             ->all();
 
         $kelas = Kelas::query()
-            ->where('tahun_ajaran_id', $batch->tahun_ajaran_id)
+            ->where(function ($query) use ($batch): void {
+                $query->where('tahun_ajaran_id', $batch->tahun_ajaran_id)
+                    ->orWhereNull('tahun_ajaran_id');
+            })
             ->get()
             ->keyBy(fn (Kelas $kelas): string => PembacaNilai::normalisasiKelas($kelas->nama_kelas))
             ->all();
@@ -500,11 +503,14 @@ class ImporSiswaService
         }
 
         $hp = PembacaNilai::normalisasiHp($baris->hp_wali);
-        $spp = Spp::untukTingkat($kelas->tingkat, $kelas->tahunAjaran?->nama);
+        $namaTahunAjaran = $kelas->tahunAjaran?->nama
+            ?? \App\Models\TahunAjaran::query()->whereKey($baris->tahun_ajaran_id)->value('nama');
+        $spp = Spp::untukTingkat($kelas->tingkat, $namaTahunAjaran);
+        $sppId = $spp?->id ?? $baris->spp_id;
 
         $data = [
             'kelas_id' => $kelas->id,
-            'spp_id' => $spp?->id ?? $baris->spp_id,
+            'spp_id' => $sppId,
             'nisn' => $baris->nisn,
             'nik' => $baris->nik,
             'nis' => $baris->nis,
@@ -541,7 +547,10 @@ class ImporSiswaService
                 'siswa_id' => $siswa->id,
                 'tahun_ajaran_id' => $baris->tahun_ajaran_id,
             ],
-            ['kelas_id' => $kelas->id],
+            [
+                'kelas_id' => $kelas->id,
+                'spp_id' => $sppId,
+            ],
         );
 
         $baris->update([
@@ -572,7 +581,10 @@ class ImporSiswaService
         if (! isset($this->cacheKelas[$tahunAjaranId])) {
             $this->cacheKelas[$tahunAjaranId] = Kelas::query()
                 ->with('tahunAjaran')
-                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->where(function ($query) use ($tahunAjaranId): void {
+                    $query->where('tahun_ajaran_id', $tahunAjaranId)
+                        ->orWhereNull('tahun_ajaran_id');
+                })
                 ->get()
                 ->keyBy(fn (Kelas $kelas): string => PembacaNilai::normalisasiKelas($kelas->nama_kelas))
                 ->all();

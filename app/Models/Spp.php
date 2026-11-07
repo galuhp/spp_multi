@@ -36,22 +36,41 @@ class Spp extends Model
     public const TIPE_SEKALI_BAYAR = 'sekali_bayar';
 
     public const TINGKAT_LIST = [
+        '1' => 'I',
+        '2' => 'II',
+        '3' => 'III',
+        '4' => 'IV',
+        '5' => 'V',
+        '6' => 'VI',
+        '7' => 'VII',
+        '8' => 'VIII',
+        '9' => 'IX',
         '10' => 'X',
         '11' => 'XI',
         '12' => 'XII',
     ];
 
     /**
-     * Non-SPP tariffs never have a class level.
+     * Normalize class level (Arabic or Roman I-XIII) to its numeric string representation.
      */
     public static function normalisasiTingkat(?string $tingkat): ?string
     {
         $tingkat = mb_strtoupper(trim((string) $tingkat));
 
         return match ($tingkat) {
+            '1', 'I' => '1',
+            '2', 'II' => '2',
+            '3', 'III' => '3',
+            '4', 'IV' => '4',
+            '5', 'V' => '5',
+            '6', 'VI' => '6',
+            '7', 'VII' => '7',
+            '8', 'VIII' => '8',
+            '9', 'IX' => '9',
             '10', 'X' => '10',
             '11', 'XI' => '11',
             '12', 'XII' => '12',
+            '13', 'XIII' => '13',
             default => is_numeric($tingkat) ? (string) $tingkat : null,
         };
     }
@@ -74,19 +93,31 @@ class Spp extends Model
             return null;
         }
 
-        return self::query()
+        $exact = self::query()
             ->where('kategori', self::KATEGORI_SPP)
             ->where('tipe', self::TIPE_BULANAN)
             ->when($tahunAjaran, fn (Builder $query): Builder => $query->where('tahun_ajaran', $tahunAjaran))
             ->where('tingkat', $tingkat)
             ->orderByDesc('tahun_ajaran')
             ->first();
+
+        if ($exact) {
+            return $exact;
+        }
+
+        return self::query()
+            ->where('kategori', self::KATEGORI_SPP)
+            ->where('tipe', self::TIPE_BULANAN)
+            ->when($tahunAjaran, fn (Builder $query): Builder => $query->where('tahun_ajaran', $tahunAjaran))
+            ->whereNull('tingkat')
+            ->orderByDesc('tahun_ajaran')
+            ->first();
     }
 
     /**
-     * Find the SPP tariff that matches the class level and academic year.
+     * Find the SPP tariff that matches the class level and academic year (falling back to the active academic year).
      */
-    public static function untukKelas(?Kelas $kelas): ?self
+    public static function untukKelas(?Kelas $kelas, ?string $namaTahunAjaran = null): ?self
     {
         if (! $kelas) {
             return null;
@@ -94,7 +125,12 @@ class Spp extends Model
 
         $kelas->loadMissing('tahunAjaran');
 
-        return self::untukTingkat($kelas->tingkat, $kelas->tahunAjaran?->nama);
+        $tahunAjaran = $namaTahunAjaran
+            ?? $kelas->tahunAjaran?->nama
+            ?? TahunAjaran::query()->where('aktif', true)->value('nama')
+            ?? TahunAjaran::query()->orderByDesc('nama')->value('nama');
+
+        return self::untukTingkat($kelas->tingkat, $tahunAjaran);
     }
 
     /**

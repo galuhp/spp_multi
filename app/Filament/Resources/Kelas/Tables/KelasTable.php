@@ -17,7 +17,8 @@ class KelasTable
         return $table
             ->columns([
                 TextColumn::make('tahunAjaran.nama')
-                    ->label('Tahun Ajaran')
+                    ->label('Cakupan TA')
+                    ->default('Lintas Tahun')
                     ->badge()
                     ->color('primary')
                     ->sortable(),
@@ -25,9 +26,9 @@ class KelasTable
                     ->label('Tingkat')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'X' => 'gray',
-                        'XI' => 'info',
-                        'XII' => 'success',
+                        'X', '10', '7', 'VII', '1', 'I' => 'gray',
+                        'XI', '11', '8', 'VIII', '2', 'II', '3', 'III', '4', 'IV', '5', 'V' => 'info',
+                        'XII', '12', '9', 'IX', '6', 'VI' => 'success',
                         default => 'primary',
                     })
                     ->sortable(),
@@ -52,6 +53,15 @@ class KelasTable
                 SelectFilter::make('tingkat')
                     ->label('Filter Tingkat')
                     ->options([
+                        '1' => 'Kelas 1',
+                        '2' => 'Kelas 2',
+                        '3' => 'Kelas 3',
+                        '4' => 'Kelas 4',
+                        '5' => 'Kelas 5',
+                        '6' => 'Kelas 6',
+                        '7' => 'Kelas 7',
+                        '8' => 'Kelas 8',
+                        '9' => 'Kelas 9',
                         'X' => 'Kelas X',
                         'XI' => 'Kelas XI',
                         'XII' => 'Kelas XII',

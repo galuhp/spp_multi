@@ -439,6 +439,88 @@ class ProsesKelasTest extends TestCase
         $this->assertSame($kelas2B->id, $siswaSd->fresh()->kelas_id);
     }
 
+    public function test_siswa_masuk_2026_kelas_9_naik_ke_kelas_10_di_tahun_depan_dengan_master_kelas(): void
+    {
+        $ta2627 = TahunAjaran::query()->create(['nama' => '2026/2027', 'is_active' => false]);
+        $ta2728 = TahunAjaran::query()->create(['nama' => '2027/2028', 'is_active' => true]);
+
+        $spp2627 = Spp::query()->create([
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => 'IX',
+            'kategori' => Spp::KATEGORI_SPP,
+            'tahun' => 2026,
+            'nominal' => 250000,
+        ]);
+
+        $spp2728 = Spp::query()->create([
+            'tahun_ajaran' => '2027/2028',
+            'tingkat' => 'X',
+            'kategori' => Spp::KATEGORI_SPP,
+            'tahun' => 2027,
+            'nominal' => 300000,
+        ]);
+
+        // Master Kelas lintas tahun ajaran (tahun_ajaran_id = null)
+        $kelas9 = Kelas::query()->create([
+            'tahun_ajaran_id' => null,
+            'jurusan_id' => $this->jurusan->id,
+            'nama_kelas' => 'IX RPL 1',
+            'tingkat' => '9',
+        ]);
+
+        $kelas10 = Kelas::query()->create([
+            'tahun_ajaran_id' => null,
+            'jurusan_id' => $this->jurusan->id,
+            'nama_kelas' => 'X RPL 1',
+            'tingkat' => '10',
+        ]);
+
+        // Siswa A masuk tahun 2026 di kelas 9 pada TA 2026/2027
+        $siswaA = Siswa::query()->create([
+            'kelas_id' => $kelas9->id,
+            'spp_id' => $spp2627->id,
+            'tahun_masuk' => 2026,
+            'nisn' => '2026000001',
+            'nis' => '20260001',
+            'nama' => 'Siswa A Angkatan 2026',
+            'jenis_kelamin' => 'L',
+            'status' => 'aktif',
+        ]);
+
+        // Pastikan riwayat awal di TA 2026/2027 tercatat di Kelas 9
+        $riwayatAwal = RiwayatKelas::query()
+            ->where('siswa_id', $siswaA->id)
+            ->where('tahun_ajaran_id', $ta2627->id)
+            ->first();
+        $this->assertNotNull($riwayatAwal);
+        $this->assertSame($kelas9->id, $riwayatAwal->kelas_id);
+        $this->assertSame($spp2627->id, $riwayatAwal->spp_id);
+
+        // Di tahun depan (TA 2027/2028), Siswa A naik ke Kelas 10
+        Livewire::test(KenaikanKelas::class)
+            ->set('tahun_ajaran_asal_id', $ta2627->id)
+            ->set('tahun_ajaran_tujuan_id', $ta2728->id)
+            ->set('kelas_asal_id', $kelas9->id)
+            ->assertSet('kelas_tujuan_batch_id', $kelas10->id)
+            ->assertSet("keputusan.{$siswaA->id}.kelas_tujuan_id", $kelas10->id)
+            ->call('pratinjau')
+            ->call('eksekusi');
+
+        $siswaA->refresh();
+        $this->assertSame(2026, $siswaA->tahun_masuk);
+        $this->assertSame($kelas10->id, $siswaA->kelas_id);
+        $this->assertSame($spp2728->id, $siswaA->spp_id);
+
+        // Riwayat di TA 2027/2028 tercatat di Kelas 10 dengan tarif SPP 2027/2028
+        $riwayat2728 = RiwayatKelas::query()
+            ->where('siswa_id', $siswaA->id)
+            ->where('tahun_ajaran_id', $ta2728->id)
+            ->first();
+        $this->assertNotNull($riwayat2728);
+        $this->assertSame($kelas10->id, $riwayat2728->kelas_id);
+        $this->assertSame($spp2728->id, $riwayat2728->spp_id);
+    }
+
     private function buatKelas(string $tingkat, TahunAjaran $tahunAjaran, string $nama): Kelas
     {
         return Kelas::query()->create([
