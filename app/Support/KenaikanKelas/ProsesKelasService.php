@@ -34,32 +34,58 @@ class ProsesKelasService
     }
 
     /**
-     * Map a level to the next level. Returns null for final levels.
+     * Map a level to the next level. Supports SD (1-6), SMP (7-9), SMA/SMK (10-12).
+     * Returns null when the level is unknown or already at the maximum numeric level.
      */
     public function tingkatBerikutnya(?string $tingkat): ?string
     {
-        return match ((string) $tingkat) {
-            '10', 'X' => '11',
-            '11', 'XI' => '12',
-            default => null,
-        };
+        $normal = $this->normalisasiTingkat($tingkat);
+
+        if ($normal === null || in_array($normal, self::TINGKAT_AKHIR, true)) {
+            return null;
+        }
+
+        if (is_numeric($normal)) {
+            $angka = (int) $normal;
+
+            if ($angka >= 1 && $angka < 12) {
+                return (string) ($angka + 1);
+            }
+        }
+
+        return null;
     }
 
     /**
-     * Normalize a level to the numeric form used by the app (10/11/12).
+     * Normalize a level (Arabic or Roman I-XIII) to its numeric string form.
      */
     public function normalisasiTingkat(?string $tingkat): ?string
     {
-        return match ((string) $tingkat) {
+        $raw = mb_strtoupper(trim((string) $tingkat));
+
+        return match ($raw) {
+            'I' => '1',
+            'II' => '2',
+            'III' => '3',
+            'IV' => '4',
+            'V' => '5',
+            'VI' => '6',
+            'VII' => '7',
+            'VIII' => '8',
+            'IX' => '9',
             'X' => '10',
             'XI' => '11',
             'XII' => '12',
-            default => $tingkat === null || $tingkat === '' ? null : (string) $tingkat,
+            'XIII' => '13',
+            default => $raw === '' ? null : $raw,
         };
     }
 
     /**
-     * Determine the default target class (next level, same department).
+     * Determine the default target class for a batch promotion:
+     * 1. Prefer candidates at the next level (`tingkatBerikutnya`) with the same `jurusan_id` (SMK/SMA).
+     * 2. If none match the same `jurusan_id`, fall back to any class at the next level (SD/SMP cross-class).
+     * 3. If multiple parallel classes exist (e.g. X RPL 1 -> XI RPL 1, or 1A -> 2A), match by the class suffix/parallel index.
      */
     public function kelasTujuanDefault(Kelas $kelasAsal, int $tahunAjaranTujuanId): ?Kelas
     {
@@ -69,26 +95,164 @@ class ProsesKelasService
             return null;
         }
 
-        $kandidat = Kelas::query()
+        $variasiTingkat = array_values(array_unique([
+            $tingkatTujuan,
+            $this->formatTingkat($tingkatTujuan),
+        ]));
+
+        $semuaDiTingkat = Kelas::query()
             ->where('tahun_ajaran_id', $tahunAjaranTujuanId)
-            ->where('jurusan_id', $kelasAsal->jurusan_id)
-            ->whereIn('tingkat', [$tingkatTujuan, $this->formatTingkat($tingkatTujuan)])
+            ->whereIn('tingkat', $variasiTingkat)
+            ->orderBy('nama_kelas')
             ->get();
 
-        return $kandidat->count() === 1 ? $kandidat->first() : null;
+        if ($semuaDiTingkat->isEmpty()) {
+            return null;
+        }
+
+        // Prioritaskan jurusan yang sama (kasus SMK/SMA)
+        $sejurusan = $kelasAsal->jurusan_id
+            ? $semuaDiTingkat->where('jurusan_id', $kelasAsal->jurusan_id)->values()
+            : collect();
+
+        $kandidat = $sejurusan->isNotEmpty() ? $sejurusan : $semuaDiTingkat;
+
+        if ($kandidat->count() === 1) {
+            return $kandidat->first();
+        }
+
+        // Coba cocokkan pola nama rombel/paralel (mis. "X RPL 1" -> "XI RPL 1", "1A" -> "2A", "Kelas 1-B" -> "Kelas 2-B")
+        $polaDiharapkan = $this->prediksiNamaKelasTujuan($kelasAsal->nama_kelas, $kelasAsal->tingkat, $tingkatTujuan);
+
+        foreach ($kandidat as $calon) {
+            $namaCalon = mb_strtoupper(trim((string) $calon->nama_kelas));
+
+            if (in_array($namaCalon, $polaDiharapkan, true)) {
+                return $calon;
+            }
+        }
+
+        // Cocokkan akhiran paralel (angka/huruf di ujung nama kelas, mis. "1", "2", "A", "B")
+        $akhiranAsal = $this->ekstrakAkhiranRombel($kelasAsal->nama_kelas);
+
+        if ($akhiranAsal !== null) {
+            $cocokAkhiran = $kandidat->first(
+                fn (Kelas $calon): bool => $this->ekstrakAkhiranRombel($calon->nama_kelas) === $akhiranAsal
+            );
+
+            if ($cocokAkhiran) {
+                return $cocokAkhiran;
+            }
+        }
+
+        return $kandidat->first();
     }
 
     /**
-     * Format a numeric level into the alternative notation.
+     * Determine the default target class when a student stays in the same level (tinggal kelas).
+     */
+    public function kelasTinggalDefault(Kelas $kelasAsal, int $tahunAjaranTujuanId): ?Kelas
+    {
+        $tingkatAsal = $this->normalisasiTingkat($kelasAsal->tingkat);
+
+        if ($tingkatAsal === null) {
+            return null;
+        }
+
+        $variasiTingkat = array_values(array_unique([
+            $tingkatAsal,
+            $this->formatTingkat($tingkatAsal),
+        ]));
+
+        $semuaDiTingkat = Kelas::query()
+            ->where('tahun_ajaran_id', $tahunAjaranTujuanId)
+            ->whereIn('tingkat', $variasiTingkat)
+            ->orderBy('nama_kelas')
+            ->get();
+
+        if ($semuaDiTingkat->isEmpty()) {
+            return null;
+        }
+
+        $sejurusan = $kelasAsal->jurusan_id
+            ? $semuaDiTingkat->where('jurusan_id', $kelasAsal->jurusan_id)->values()
+            : collect();
+
+        $kandidat = $sejurusan->isNotEmpty() ? $sejurusan : $semuaDiTingkat;
+
+        $namaSama = $kandidat->first(
+            fn (Kelas $calon): bool => mb_strtoupper(trim((string) $calon->nama_kelas)) === mb_strtoupper(trim((string) $kelasAsal->nama_kelas))
+        );
+
+        return $namaSama ?? $kandidat->first();
+    }
+
+    /**
+     * Format a numeric level into Roman numeral notation.
      */
     public function formatTingkat(string $tingkat): string
     {
-        return match ($tingkat) {
+        return match ($this->normalisasiTingkat($tingkat)) {
+            '1' => 'I',
+            '2' => 'II',
+            '3' => 'III',
+            '4' => 'IV',
+            '5' => 'V',
+            '6' => 'VI',
+            '7' => 'VII',
+            '8' => 'VIII',
+            '9' => 'IX',
             '10' => 'X',
             '11' => 'XI',
             '12' => 'XII',
+            '13' => 'XIII',
             default => $tingkat,
         };
+    }
+
+    /**
+     * Build expected target class names by replacing the origin level token with the target level token.
+     *
+     * @return array<int, string>
+     */
+    protected function prediksiNamaKelasTujuan(string $namaAsal, ?string $tingkatAsal, string $tingkatTujuan): array
+    {
+        $nama = mb_strtoupper(trim($namaAsal));
+        $angkaAsal = (string) $this->normalisasiTingkat($tingkatAsal);
+        $romawiAsal = $this->formatTingkat($angkaAsal);
+        $angkaTujuan = (string) $this->normalisasiTingkat($tingkatTujuan);
+        $romawiTujuan = $this->formatTingkat($angkaTujuan);
+
+        $hasil = [];
+
+        foreach ([$romawiAsal, $angkaAsal] as $tokenAsal) {
+            if ($tokenAsal === '') {
+                continue;
+            }
+
+            $pattern = '/^'.preg_quote($tokenAsal, '/').'(?=[\s\-A-Z0-9]|$)/u';
+
+            if (preg_match($pattern, $nama)) {
+                $hasil[] = (string) preg_replace($pattern, $romawiTujuan, $nama, 1);
+                $hasil[] = (string) preg_replace($pattern, $angkaTujuan, $nama, 1);
+            }
+        }
+
+        return array_values(array_unique($hasil));
+    }
+
+    /**
+     * Extract trailing parallel identifier (e.g. "1" from "X RPL 1" or "A" from "Kelas 1A").
+     */
+    protected function ekstrakAkhiranRombel(string $namaKelas): ?string
+    {
+        $nama = mb_strtoupper(trim($namaKelas));
+
+        if (preg_match('/(?:[\s\-]|(?<=\d))([A-Z]|\d+)$/u', $nama, $m)) {
+            return $m[1];
+        }
+
+        return null;
     }
 
     /**
@@ -160,7 +324,13 @@ class ProsesKelasService
                 ? $this->tingkatBerikutnya($tingkatAsal)
                 : $tingkatAsal;
 
-            if ($tingkatTujuan !== $tingkatDiharapkan) {
+            // Untuk tingkat standar (10->11, 11->12, 1->2, dst), validasi kesesuaian tingkat bila keduanya numerik standar
+            if (
+                $tingkatDiharapkan !== null
+                && is_numeric($tingkatAsal)
+                && is_numeric($tingkatTujuan)
+                && $tingkatTujuan !== $tingkatDiharapkan
+            ) {
                 $dilewati[] = "Kelas tujuan {$kelasTujuan->nama_kelas} tidak sesuai tingkat untuk {$siswa->nama}.";
 
                 continue;

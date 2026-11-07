@@ -36,6 +36,8 @@ class KenaikanKelas extends Page
 
     public ?int $kelas_asal_id = null;
 
+    public ?int $kelas_tujuan_batch_id = null;
+
     /**
      * @var array<int, array{status: string, kelas_tujuan_id: ?int}>
      */
@@ -104,12 +106,14 @@ class KenaikanKelas extends Page
             ->orderBy('nama_kelas')
             ->get()
             ->mapWithKeys(fn (Kelas $kelas): array => [
-                $kelas->id => "{$kelas->nama_kelas} ({$kelas->tingkat}) - {$kelas->jurusan?->nama}",
+                $kelas->id => $this->formatLabelKelas($kelas),
             ])
             ->all();
     }
 
     /**
+     * All target classes in the destination academic year, ordered with recommended classes first.
+     *
      * @return array<int, string>
      */
     public function getKelasTujuanOptionsProperty(): array
@@ -118,16 +122,38 @@ class KenaikanKelas extends Page
             return [];
         }
 
+        $kelasAsal = $this->kelas_asal_id ? Kelas::query()->find($this->kelas_asal_id) : null;
+        $service = app(ProsesKelasService::class);
+        $tingkatNaik = $kelasAsal ? $service->tingkatBerikutnya($service->normalisasiTingkat($kelasAsal->tingkat)) : null;
+
         return Kelas::query()
             ->with('jurusan')
             ->where('tahun_ajaran_id', $this->tahun_ajaran_tujuan_id)
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')
             ->get()
+            ->sortBy(function (Kelas $kelas) use ($kelasAsal, $service, $tingkatNaik): string {
+                $tingkatNormal = (string) $service->normalisasiTingkat($kelas->tingkat);
+                $prioritasTingkat = ($tingkatNaik !== null && $tingkatNormal === $tingkatNaik) ? '0' : '1';
+                $prioritasJurusan = ($kelasAsal && $kelasAsal->jurusan_id && (int) $kelas->jurusan_id === (int) $kelasAsal->jurusan_id) ? '0' : '1';
+
+                return "{$prioritasTingkat}-{$prioritasJurusan}-". str_pad($tingkatNormal, 3, '0', STR_PAD_LEFT).'-'.$kelas->nama_kelas;
+            })
             ->mapWithKeys(fn (Kelas $kelas): array => [
-                $kelas->id => "{$kelas->nama_kelas} ({$kelas->tingkat}) - {$kelas->jurusan?->kode}",
+                $kelas->id => $this->formatLabelKelas($kelas, true),
             ])
             ->all();
+    }
+
+    protected function formatLabelKelas(Kelas $kelas, bool $pakaiKodeJurusan = false): string
+    {
+        $infoJurusan = $pakaiKodeJurusan
+            ? ($kelas->jurusan?->kode ?: $kelas->jurusan?->nama)
+            : ($kelas->jurusan?->nama ?: $kelas->jurusan?->kode);
+
+        $label = "{$kelas->nama_kelas} (Tingkat {$kelas->tingkat})";
+
+        return filled($infoJurusan) ? "{$label} - {$infoJurusan}" : $label;
     }
 
     /**
@@ -146,7 +172,8 @@ class KenaikanKelas extends Page
         }
 
         $service = app(ProsesKelasService::class);
-        $default = $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id);
+        $defaultId = $this->kelas_tujuan_batch_id
+            ?? $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id)?->id;
         $tingkatAkhir = in_array($service->normalisasiTingkat($kelas->tingkat), ProsesKelasService::TINGKAT_AKHIR, true);
 
         $siswaList = $service->siswaKelas($this->kelas_asal_id);
@@ -160,12 +187,12 @@ class KenaikanKelas extends Page
                     ->all(),
             );
 
-        return $siswaList->map(function ($siswa) use ($default, $tingkatAkhir, $sudahAdaIds): array {
+        return $siswaList->map(function ($siswa) use ($defaultId, $tingkatAkhir, $sudahAdaIds): array {
             return [
                 'siswa' => $siswa,
                 'sudah_ada' => isset($sudahAdaIds[$siswa->id]),
                 'tingkat_akhir' => $tingkatAkhir,
-                'default_kelas_id' => $default?->id,
+                'default_kelas_id' => $defaultId,
             ];
         });
     }
@@ -173,6 +200,7 @@ class KenaikanKelas extends Page
     public function updatedTahunAjaranAsalId(): void
     {
         $this->kelas_asal_id = null;
+        $this->kelas_tujuan_batch_id = null;
         $this->keputusan = [];
         $this->pratinjau = false;
         $this->hasil = null;
@@ -185,6 +213,7 @@ class KenaikanKelas extends Page
 
     public function updatedTahunAjaranTujuanId(): void
     {
+        $this->kelas_tujuan_batch_id = null;
         $this->keputusan = [];
         $this->pratinjau = false;
         $this->hasil = null;
@@ -193,6 +222,12 @@ class KenaikanKelas extends Page
         if ($this->tahun_ajaran_asal_id && $this->tahun_ajaran_tujuan_id === $this->tahun_ajaran_asal_id) {
             $this->tahun_ajaran_tujuan_id = null;
             $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
+
+            return;
+        }
+
+        if ($this->kelas_asal_id && $this->tahun_ajaran_tujuan_id) {
+            $this->inisialisasiKeputusan();
         }
     }
 
@@ -202,7 +237,33 @@ class KenaikanKelas extends Page
     }
 
     /**
-     * Adjust the target class automatically when the status changes.
+     * When the batch target class changes, automatically apply it to all students with status "naik".
+     */
+    public function updatedKelasTujuanBatchId(): void
+    {
+        $this->terapkanKelasTujuanBatch();
+    }
+
+    /**
+     * Apply the selected batch target class to all students currently marked as "naik".
+     */
+    public function terapkanKelasTujuanBatch(): void
+    {
+        if (! $this->kelas_tujuan_batch_id) {
+            return;
+        }
+
+        foreach ($this->keputusan as $siswaId => $baris) {
+            if (($baris['status'] ?? RiwayatKelas::STATUS_NAIK) === RiwayatKelas::STATUS_NAIK) {
+                $this->keputusan[$siswaId]['kelas_tujuan_id'] = (int) $this->kelas_tujuan_batch_id;
+            }
+        }
+
+        $this->pratinjau = false;
+    }
+
+    /**
+     * Adjust the target class automatically when a single student's status changes.
      */
     public function updatedKeputusan(mixed $value, string $key): void
     {
@@ -224,28 +285,29 @@ class KenaikanKelas extends Page
         }
 
         $service = app(ProsesKelasService::class);
-        $tingkat = $status === RiwayatKelas::STATUS_TINGGAL
-            ? $service->normalisasiTingkat($kelas->tingkat)
-            : $service->tingkatBerikutnya($service->normalisasiTingkat($kelas->tingkat));
 
-        if ($tingkat === null) {
+        if ($status === RiwayatKelas::STATUS_NAIK) {
+            $targetId = $this->kelas_tujuan_batch_id
+                ?? $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id)?->id;
+
+            if ($targetId) {
+                $this->keputusan[$siswaId]['kelas_tujuan_id'] = (int) $targetId;
+            }
+
             return;
         }
 
-        $kandidat = Kelas::query()
-            ->where('tahun_ajaran_id', $this->tahun_ajaran_tujuan_id)
-            ->where('jurusan_id', $kelas->jurusan_id)
-            ->whereIn('tingkat', [$tingkat, $service->formatTingkat($tingkat)])
-            ->get();
+        $kelasTinggal = $service->kelasTinggalDefault($kelas, $this->tahun_ajaran_tujuan_id);
 
-        if ($kandidat->count() === 1) {
-            $this->keputusan[$siswaId]['kelas_tujuan_id'] = $kandidat->first()->id;
+        if ($kelasTinggal) {
+            $this->keputusan[$siswaId]['kelas_tujuan_id'] = $kelasTinggal->id;
         }
     }
 
     public function inisialisasiKeputusan(): void
     {
         $this->keputusan = [];
+        $this->kelas_tujuan_batch_id = null;
         $this->pratinjau = false;
         $this->hasil = null;
         $this->galat = null;
@@ -266,11 +328,12 @@ class KenaikanKelas extends Page
         }
 
         $default = $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id);
+        $this->kelas_tujuan_batch_id = $default?->id;
 
         foreach ($service->siswaKelas($this->kelas_asal_id) as $siswa) {
             $this->keputusan[$siswa->id] = [
                 'status' => RiwayatKelas::STATUS_NAIK,
-                'kelas_tujuan_id' => $default?->id,
+                'kelas_tujuan_id' => $this->kelas_tujuan_batch_id,
             ];
         }
     }

@@ -19,12 +19,12 @@
         @endif
 
         <div class="fi-section rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-gray-900">
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Pilih Tahun Ajaran & Kelas Asal</h3>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Pilih Tahun Ajaran, Kelas Asal &amp; Tujuan Batch</h3>
             <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
-                Tahun ajaran tujuan harus berbeda dari tahun ajaran asal dan sudah memiliki rombel. Siswa yang tidak naik tetap dipilihkan kelas di tingkat yang sama.
+                Pilih kelas asal untuk mengisi otomatis kelas tujuan seluruh siswa secara massal (batch). Untuk SMK/SMA jurusan yang sama diprioritaskan otomatis; untuk SD/SMP atau lintas rombel Anda dapat memilih kelas tujuan mana saja, lalu menyesuaikan per siswa di daftar bawah bila diperlukan.
             </p>
 
-            <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-gray-300">Tahun Ajaran Asal</label>
                     <select wire:model.live="tahun_ajaran_asal_id"
@@ -51,8 +51,28 @@
                     <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-gray-300">Kelas Asal</label>
                     <select wire:model.live="kelas_asal_id"
                         class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-                        <option value="">Pilih kelas</option>
+                        <option value="">Pilih kelas asal</option>
                         @foreach ($this->kelasAsalOptions as $id => $label)
+                            <option value="{{ $id }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <div class="mb-1 flex items-center justify-between gap-2">
+                        <label class="block text-xs font-medium text-slate-600 dark:text-gray-300">Kelas Tujuan (Batch / Default)</label>
+                        @if ($kelas_tujuan_batch_id && $siswaList->isNotEmpty())
+                            <button type="button" wire:click="terapkanKelasTujuanBatch"
+                                class="text-[11px] font-semibold text-primary-600 hover:underline dark:text-primary-400">
+                                Terapkan ke semua
+                            </button>
+                        @endif
+                    </div>
+                    <select wire:model.live="kelas_tujuan_batch_id"
+                        @disabled(! $tahun_ajaran_tujuan_id)
+                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                        <option value="">Pilih kelas tujuan batch</option>
+                        @foreach ($kelasTujuanOptions as $id => $label)
                             <option value="{{ $id }}">{{ $label }}</option>
                         @endforeach
                     </select>
@@ -66,7 +86,7 @@
                     <div>
                         <h3 class="text-base font-semibold text-slate-900 dark:text-white">Daftar Siswa</h3>
                         <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
-                            Semua siswa aktif tercentang naik. Ubah status menjadi "Tinggal" bila siswa tidak naik kelas.
+                            Seluruh siswa aktif otomatis terisi dengan kelas tujuan batch di atas. Anda tetap dapat mengubah status atau kelas tujuan secara manual per siswa.
                         </p>
                     </div>
                     <div class="flex flex-wrap gap-2 text-xs tabular-nums">
@@ -100,7 +120,7 @@
                                         </select>
                                     </td>
                                     <td class="px-3 py-2">
-                                        <select wire:model="keputusan.{{ $siswa->id }}.kelas_tujuan_id"
+                                        <select wire:model.live="keputusan.{{ $siswa->id }}.kelas_tujuan_id"
                                             class="w-64 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                                             <option value="">Pilih kelas tujuan</option>
                                             @foreach ($kelasTujuanOptions as $id => $label)

@@ -374,6 +374,71 @@ class ProsesKelasTest extends TestCase
         $this->assertSame(ProsesKelasBatch::STATUS_SELESAI, $hasil['batch']->fresh()->status);
     }
 
+    public function test_batch_kenaikan_kelas_otomatis_mengisi_tujuan_dan_mendukung_override_lintas_kelas(): void
+    {
+        // Kasus SMK: X RPL 1 & X RPL 2 -> otomatis memilih XI RPL 1 untuk kelas asal X RPL 1
+        $kelasAsalSmk = $this->buatKelas('10', $this->asal, 'X RPL 1');
+        $kelasTujuanSmk1 = $this->buatKelas('11', $this->tujuan, 'XI RPL 1');
+        $kelasTujuanSmk2 = $this->buatKelas('11', $this->tujuan, 'XI RPL 2');
+
+        $siswaA = $this->buatSiswa($kelasAsalSmk, ['nama' => 'Andi', 'nisn' => '1000000001', 'nis' => '10000001']);
+        $siswaB = $this->buatSiswa($kelasAsalSmk, ['nama' => 'Budi', 'nisn' => '1000000002', 'nis' => '10000002']);
+
+        $component = Livewire::test(KenaikanKelas::class)
+            ->set('tahun_ajaran_asal_id', $this->asal->id)
+            ->set('tahun_ajaran_tujuan_id', $this->tujuan->id)
+            ->set('kelas_asal_id', $kelasAsalSmk->id)
+            ->assertSet('kelas_tujuan_batch_id', $kelasTujuanSmk1->id)
+            ->assertSet("keputusan.{$siswaA->id}.kelas_tujuan_id", $kelasTujuanSmk1->id)
+            ->assertSet("keputusan.{$siswaB->id}.kelas_tujuan_id", $kelasTujuanSmk1->id);
+
+        // Ubah Kelas Tujuan Batch ke XI RPL 2 -> semua siswa naik otomatis ikut berubah ke XI RPL 2
+        $component->set('kelas_tujuan_batch_id', $kelasTujuanSmk2->id)
+            ->assertSet("keputusan.{$siswaA->id}.kelas_tujuan_id", $kelasTujuanSmk2->id)
+            ->assertSet("keputusan.{$siswaB->id}.kelas_tujuan_id", $kelasTujuanSmk2->id);
+
+        // User tetap bisa manual pilih kelas tujuan berbeda untuk 1 siswa (misal Siswa B pindah ke XI RPL 1)
+        $component->set("keputusan.{$siswaB->id}.kelas_tujuan_id", $kelasTujuanSmk1->id)
+            ->call('pratinjau')
+            ->assertSet('pratinjau', true)
+            ->call('eksekusi');
+
+        $this->assertSame($kelasTujuanSmk2->id, $siswaA->fresh()->kelas_id);
+        $this->assertSame($kelasTujuanSmk1->id, $siswaB->fresh()->kelas_id);
+    }
+
+    public function test_kenaikan_kelas_sd_lintas_nama_kelas_dan_tingkat(): void
+    {
+        $jurusanUmum = Jurusan::query()->create(['kode' => 'UMUM', 'nama' => 'Umum']);
+
+        $kelas1A = Kelas::query()->create([
+            'tahun_ajaran_id' => $this->asal->id,
+            'jurusan_id' => $jurusanUmum->id,
+            'nama_kelas' => 'Kelas 1A',
+            'tingkat' => '1',
+        ]);
+
+        $kelas2B = Kelas::query()->create([
+            'tahun_ajaran_id' => $this->tujuan->id,
+            'jurusan_id' => $this->jurusan->id, // bahkan jika berbeda/lintas pengelompokan
+            'nama_kelas' => 'Kelas 2B - Unggulan',
+            'tingkat' => '2',
+        ]);
+
+        $siswaSd = $this->buatSiswa($kelas1A, ['nama' => 'Citra SD', 'nisn' => '2000000001', 'nis' => '20000001']);
+
+        Livewire::test(KenaikanKelas::class)
+            ->set('tahun_ajaran_asal_id', $this->asal->id)
+            ->set('tahun_ajaran_tujuan_id', $this->tujuan->id)
+            ->set('kelas_asal_id', $kelas1A->id)
+            ->assertSet('kelas_tujuan_batch_id', $kelas2B->id)
+            ->assertSet("keputusan.{$siswaSd->id}.kelas_tujuan_id", $kelas2B->id)
+            ->call('pratinjau')
+            ->call('eksekusi');
+
+        $this->assertSame($kelas2B->id, $siswaSd->fresh()->kelas_id);
+    }
+
     private function buatKelas(string $tingkat, TahunAjaran $tahunAjaran, string $nama): Kelas
     {
         return Kelas::query()->create([
