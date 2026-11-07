@@ -580,6 +580,7 @@ class LaporanSppService
             $kelasPerSiswa,
             $kelasById,
             $tahunAjaran,
+            $bulan,
         );
 
         $siswaIds = $siswaList->pluck('id')->all();
@@ -674,7 +675,8 @@ class LaporanSppService
                 $tunggakanNonSppCur = (int) collect($posNonSpp)->sum('tunggakan');
                 $posNonSppTertunggak = collect($posNonSpp)
                     ->filter(fn (array $pos): bool => $pos['tunggakan'] > 0)
-                    ->map(fn (array $pos): string => $pos['tarif']->nama ?: $pos['tarif']->kategori)
+                    ->map(fn (array $pos): string => ($pos['tarif']->nama ?: $pos['tarif']->kategori)
+                        .(filled($pos['bulan'] ?? null) ? " {$pos['bulan']} {$pos['tahun']}" : ''))
                     ->values()
                     ->all();
 
@@ -729,15 +731,55 @@ class LaporanSppService
                         }
                     }
 
-                    foreach ($lvlTarifs['non_spp'] as $nonSppPrior) {
+                    foreach ($lvlTarifs['non_spp']->merge(Spp::nonSppGlobalBulanan($taPriorYear))->unique('id') as $nonSppPrior) {
                         if ($nonSppPrior->tahunMulai() < $tahunMasukSiswa) {
+                            continue;
+                        }
+
+                        if ($nonSppPrior->isBulanan() && $nonSppPrior->tahunMulai() !== $taPriorYear) {
                             continue;
                         }
 
                         if ($tanggunganService->isPosDitanggung($siswa, $nonSppPrior)) {
                             continue;
                         }
+
                         $nomNon = (int) $nonSppPrior->nominal;
+
+                        if ($nonSppPrior->isBulanan()) {
+                            foreach (Pembayaran::bulanTahunAjaran($nonSppPrior->tahunMulai()) as $periode) {
+                                $bln = $periode['bulan'];
+                                $thn = $periode['tahun'];
+
+                                if ($thn < $tahunMasukSiswa || ! $siswa->sudahMasukPadaPeriode($bln, $thn)) {
+                                    continue;
+                                }
+
+                                $bayar = (int) ($sppBayarMap[$siswa->id.'|'.$nonSppPrior->id.'|'.$bln] ?? 0);
+
+                                $tagihanNonSppPrior += $nomNon;
+                                $dibayarNonSppPrior += min($bayar, $nomNon);
+                                $sisa = max(0, $nomNon - $bayar);
+                                $tunggakanNonSppPrior += $sisa;
+
+                                if ($sisa > 0) {
+                                    $posNonSppTertunggakPrior[] = ($nonSppPrior->nama ?: $nonSppPrior->kategori)." {$bln} (Kelas ".Spp::labelTingkat($pLvl).')';
+                                }
+
+                                $posNonSpp[] = [
+                                    'tarif' => $nonSppPrior,
+                                    'nominal' => $nomNon,
+                                    'dibayar' => min($bayar, $nomNon),
+                                    'tunggakan' => $sisa,
+                                    'bulan' => $bln,
+                                    'tahun' => $thn,
+                                    'status' => $sisa === 0 ? 'lunas' : ($bayar > 0 ? 'sebagian' : 'belum'),
+                                ];
+                            }
+
+                            continue;
+                        }
+
                         $tagihanNonSppPrior += $nomNon;
                         $bayar = (int) ($nonSppBayarMap[$siswa->id.'|'.$nonSppPrior->id] ?? 0);
                         $dibayarNonSppPrior += min($bayar, $nomNon);
@@ -822,6 +864,7 @@ class LaporanSppService
      * @param  Collection<int, Siswa>  $siswaList
      * @param  array<int, int>  $kelasPerSiswa
      * @param  Collection<int, Kelas>  $kelasById
+     * @param  array<int, array{bulan: string, tahun: int}>  $bulan
      * @return array<int, array<int, array{tarif: Spp, nominal: int, dibayar: int, tunggakan: int, status: string}>>
      */
     private function nonSppPerSiswa(
@@ -829,6 +872,7 @@ class LaporanSppService
         array $kelasPerSiswa,
         Collection $kelasById,
         TahunAjaran $tahunAjaran,
+        array $bulan,
     ): array {
         if (! $this->tahunAjaranSudahDimulai($tahunAjaran)) {
             return [];
@@ -854,13 +898,19 @@ class LaporanSppService
             ->whereIn('siswa_id', $siswaList->pluck('id')->all())
             ->whereIn('spp_id', $tarifList->pluck('id')->all())
             ->whereNull('void_at')
-            ->get(['siswa_id', 'spp_id', 'jumlah_bayar']);
+            ->get(['siswa_id', 'spp_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar']);
 
         $dibayarPerSiswaTarif = [];
+        $dibayarPerSiswaTarifBulan = [];
 
         foreach ($pembayarans as $pembayaran) {
             $kunci = $pembayaran->siswa_id.'|'.$pembayaran->spp_id;
             $dibayarPerSiswaTarif[$kunci] = ($dibayarPerSiswaTarif[$kunci] ?? 0) + (int) $pembayaran->jumlah_bayar;
+
+            if (filled($pembayaran->bulan_dibayar) && filled($pembayaran->tahun_dibayar)) {
+                $kunciBulan = $pembayaran->siswa_id.'|'.$pembayaran->spp_id.'|'.$pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar;
+                $dibayarPerSiswaTarifBulan[$kunciBulan] = ($dibayarPerSiswaTarifBulan[$kunciBulan] ?? 0) + (int) $pembayaran->jumlah_bayar;
+            }
         }
 
         $hasil = [];
@@ -884,6 +934,33 @@ class LaporanSppService
                 }
 
                 $nominal = (int) $tarif->nominal;
+
+                if ($tarif->isBulanan()) {
+                    foreach ($bulan as $periode) {
+                        $bln = $periode['bulan'];
+                        $thn = $periode['tahun'];
+                        $kunciBulan = $siswa->id.'|'.$tarif->id.'|'.$bln.'|'.$thn;
+                        $dibayar = (int) ($dibayarPerSiswaTarifBulan[$kunciBulan] ?? 0);
+                        $sisa = max(0, $nominal - $dibayar);
+
+                        $pos[] = [
+                            'tarif' => $tarif,
+                            'nominal' => $nominal,
+                            'dibayar' => min($dibayar, $nominal),
+                            'tunggakan' => $sisa,
+                            'bulan' => $bln,
+                            'tahun' => $thn,
+                            'status' => match (true) {
+                                $nominal <= 0, $sisa === 0 => 'lunas',
+                                $dibayar > 0 => 'sebagian',
+                                default => 'belum',
+                            },
+                        ];
+                    }
+
+                    continue;
+                }
+
                 $dibayar = (int) ($dibayarPerSiswaTarif[$siswa->id.'|'.$tarif->id] ?? 0);
                 $sisa = max(0, $nominal - $dibayar);
 

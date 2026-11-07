@@ -40,7 +40,7 @@
     @if(!empty($nonSppStatus))
         <x-ui.card class="!max-w-none !p-6">
             <h4 class="font-bold text-zinc-900 text-base mb-1">Tagihan Biaya Lainnya (Uang Gedung, Seragam, dll.)</h4>
-            <p class="text-xs text-zinc-500 mb-5">Daftar kewajiban biaya pendidikan di luar iuran bulanan untuk tahun ajaran {{ $siswa->spp?->tahun_ajaran }}.</p>
+            <p class="text-xs text-zinc-500 mb-5">Daftar kewajiban biaya pendidikan lainnya, termasuk pos yang ditagih bulanan, untuk tahun ajaran {{ $siswa->spp?->tahun_ajaran }}.</p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($nonSppStatus as $item)
@@ -69,6 +69,9 @@
                             <div class="font-bold text-sm text-zinc-900 mt-1">
                                 {{ $tarif->nama ?: $tarif->kategori }}
                             </div>
+                            @if(!empty($item['bulan']))
+                                <div class="text-xs text-zinc-500 mt-0.5">{{ $item['bulan'] }} {{ $item['tahun'] }}</div>
+                            @endif
                             <div class="text-xs text-zinc-500 mt-2 space-y-1">
                                 <div class="flex justify-between">
                                     <span>Total Biaya:</span>

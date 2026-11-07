@@ -157,6 +157,10 @@ class CreatePembayaran extends CreateRecord
                 $this->tolak('Pos biaya yang dipilih tidak valid.');
             }
 
+            if ($tarif->isBulanan()) {
+                $this->tolak("Pos {$tarif->kategori} ditagih bulanan. Gunakan Kasir Cepat agar dapat memilih bulan.");
+            }
+
             if ($tanggunganPemerintah->isPosDitanggung($siswa, $tarif)) {
                 $this->tolak("Tagihan {$tarif->kategori} ditanggung pemerintah.");
             }

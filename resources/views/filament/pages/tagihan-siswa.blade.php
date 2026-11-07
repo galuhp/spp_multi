@@ -299,7 +299,7 @@
                 <x-ui.card class="!max-w-none !p-6">
                     <div class="mb-4">
                         <h3 class="text-base font-semibold text-slate-900 dark:text-white">Pos Tagihan Lainnya (Non-SPP)</h3>
-                        <p class="text-xs text-slate-500 dark:text-gray-400">Uang Gedung, Seragam, Praktik, Ujian dan biaya kegiatan non-bulanan.</p>
+                        <p class="text-xs text-slate-500 dark:text-gray-400">Uang Gedung, Seragam, Praktik, Ujian, Tabungan, dan biaya lain — termasuk pos yang ditagih bulanan.</p>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -317,6 +317,11 @@
                                     <x-ui.table.row>
                                         <x-ui.table.cell class="font-medium">
                                             {{ $item['tarif']->nama ?: $item['tarif']->kategori }}
+                                            @if(!empty($item['bulan']))
+                                                <span class="block text-[11px] font-normal text-slate-500 dark:text-gray-400">
+                                                    {{ $item['bulan'] }} {{ $item['tahun'] }}
+                                                </span>
+                                            @endif
                                         </x-ui.table.cell>
                                         <x-ui.table.cell class="text-xs">
                                             <x-ui.badge variant="outline">{{ $item['tarif']->kategori }}</x-ui.badge>

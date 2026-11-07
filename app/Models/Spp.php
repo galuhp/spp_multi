@@ -186,6 +186,25 @@ class Spp extends Model
     }
 
     /**
+     * Global monthly non-SPP tariffs (no level restriction) for an academic year.
+     *
+     * @return Collection<int, self>
+     */
+    public static function nonSppGlobalBulanan(int $tahunMulai): Collection
+    {
+        return self::query()
+            ->where('kategori', '!=', self::KATEGORI_SPP)
+            ->whereNull('tingkat')
+            ->where('tipe', self::TIPE_BULANAN)
+            ->where(function (Builder $query) use ($tahunMulai): void {
+                $query->where('tahun_ajaran', $tahunMulai.'/'.($tahunMulai + 1))
+                    ->orWhere('tahun', $tahunMulai);
+            })
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
      * Find the SPP tariff that matches the class level and academic year (falling back to the active academic year).
      */
     public static function untukKelas(?Kelas $kelas, ?string $namaTahunAjaran = null): ?self

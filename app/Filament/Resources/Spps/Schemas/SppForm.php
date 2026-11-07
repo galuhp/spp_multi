@@ -96,9 +96,9 @@ class SppForm
                     ->prefix('Rp')
                     ->numeric()
                     ->minValue(1000)
-                    ->step(5000)
+                    ->step(1000)
                     ->required()
-                    ->helperText('Untuk SPP: nominal per bulan. Untuk sekali bayar: total tagihan.'),
+                    ->helperText('Untuk tarif bulanan (SPP, Tabungan, dll.): nominal per bulan. Untuk sekali bayar: total tagihan.'),
 
                 Textarea::make('keterangan')
                     ->label('Keterangan')

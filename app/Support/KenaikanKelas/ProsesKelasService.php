@@ -768,6 +768,12 @@ class ProsesKelasService
             ->groupBy('spp_id')
             ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
+        $dibayarNonSppPerBulan = $pembayarans
+            ->whereNotNull('bulan_dibayar')
+            ->whereNotNull('tahun_dibayar')
+            ->groupBy(fn (Pembayaran $p): string => $p->spp_id.'|'.$p->bulan_dibayar.'|'.$p->tahun_dibayar)
+            ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
+
         $totalTunggakan = 0;
         $totalTunggakanSpp = 0;
         $totalTunggakanNonSpp = 0;
@@ -780,10 +786,12 @@ class ProsesKelasService
         foreach ($tingkatList as $tingkat) {
             $isPrior = ($tingkat !== $tingkatSekarang);
             $spp = Spp::untukTingkat($tingkat);
-            $nonSppList = Spp::nonSppUntukTingkat($tingkat);
 
             $selisih = max(0, (int) $tingkatSekarang - (int) $tingkat);
             $tahunMulaiLvl = $taCurYear - $selisih;
+
+            $nonSppList = Spp::nonSppUntukTingkat($tingkat)
+                ->merge(Spp::nonSppGlobalBulanan($tahunMulaiLvl));
 
             if ($tahunMulaiLvl < $tahunMasuk) {
                 continue;
@@ -827,10 +835,45 @@ class ProsesKelasService
                     continue;
                 }
 
+                if ($tarifNon->isBulanan() && $tarifNon->tahunMulai() !== $tahunMulaiLvl) {
+                    continue;
+                }
+
                 if ($tanggunganService->isPosDitanggung($siswa, $tarifNon)) {
                     continue;
                 }
+
                 $nominal = (int) $tarifNon->nominal;
+
+                if ($tarifNon->isBulanan()) {
+                    $maxIndex = ($tarifNon->tahunMulai() < $taCurYear) ? 11 : $indeksBulanSekarang;
+
+                    foreach (Pembayaran::bulanTahunAjaran($tarifNon->tahunMulai()) as $idx => $periode) {
+                        if ($idx > $maxIndex) {
+                            continue;
+                        }
+
+                        $bln = $periode['bulan'];
+                        $thn = $periode['tahun'];
+
+                        if (! $siswa->sudahMasukPadaPeriode($bln, $thn)) {
+                            continue;
+                        }
+
+                        $dibayar = (int) ($dibayarNonSppPerBulan->get($tarifNon->id.'|'.$bln.'|'.$thn) ?? 0);
+                        $sisa = max(0, $nominal - $dibayar);
+
+                        if ($sisa > 0) {
+                            $label = ($tarifNon->nama ?: $tarifNon->kategori)." {$bln} {$thn} (Kelas ".Spp::labelTingkat($tingkat).')';
+                            $tunggakanNonSpp[] = $label;
+                            $totalTunggakanNonSpp += $sisa;
+                            $totalTunggakan += $sisa;
+                        }
+                    }
+
+                    continue;
+                }
+
                 $dibayar = (int) ($dibayarNonSpp->get($tarifNon->id) ?? 0);
                 $sisa = max(0, $nominal - $dibayar);
                 if ($sisa > 0) {

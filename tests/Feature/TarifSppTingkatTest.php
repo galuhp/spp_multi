@@ -120,6 +120,30 @@ class TarifSppTingkatTest extends TestCase
         $this->assertFalse(Hash::check('7123456777', $user->password));
     }
 
+    public function test_tarif_non_spp_bulanan_dengan_nominal_tidak_bulat_dapat_disimpan(): void
+    {
+        Livewire::test(CreateSpp::class)
+            ->fillForm([
+                'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+                'tipe' => Spp::TIPE_BULANAN,
+                'nama' => 'Tabungan per bulan',
+                'tahun' => 2026,
+                'tahun_ajaran' => '2026/2027',
+                'tingkat' => '10',
+                'nominal' => 35000,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('spps', [
+            'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+            'tipe' => Spp::TIPE_BULANAN,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 35000,
+        ]);
+    }
+
     public function test_tarif_spp_wajib_memilih_tingkat(): void
     {
         Livewire::test(CreateSpp::class)

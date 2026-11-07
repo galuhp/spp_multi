@@ -57,9 +57,12 @@ class PembayaranService
         }
 
         // Collect all distinct tariffs assigned to the student along their study timeline
+        $sppTarifIds = Spp::query()->where('kategori', Spp::KATEGORI_SPP)->pluck('id')->all();
+
         $dibayarPerBulan = Pembayaran::query()
             ->where('siswa_id', $siswa->id)
             ->whereNull('void_at')
+            ->whereIn('spp_id', $sppTarifIds)
             ->whereNotNull('bulan_dibayar')
             ->whereNotNull('tahun_dibayar')
             ->get(['bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
@@ -122,6 +125,8 @@ class PembayaranService
 
         // 2. Non-SPP across all timeline levels
         $nonSppList = collect();
+        $nonSppBulananList = collect();
+
         foreach ($tingkatList as $t) {
             $selisih = max(0, (int) $tingkatSekarang - (int) $t);
             $tahunMulai = $taCurYear - $selisih;
@@ -131,12 +136,84 @@ class PembayaranService
 
             foreach (Spp::nonSppUntukTingkat($t) as $tarifNon) {
                 $nonSppList->push($tarifNon);
+
+                if ($tarifNon->isBulanan() && $tarifNon->tahunMulai() === $tahunMulai) {
+                    $nonSppBulananList->push($tarifNon);
+                }
+            }
+
+            foreach (Spp::nonSppGlobalBulanan($tahunMulai) as $tarifGlobal) {
+                $nonSppBulananList->push($tarifGlobal);
+            }
+        }
+
+        // 3. Non-SPP bulanan (mis. Tabungan) diperlakukan seperti SPP: 12 bulan per TA.
+        $nonSppBulanan = $nonSppBulananList->unique('id')->values();
+
+        $nonSppSekali = $nonSppList
+            ->filter(fn (Spp $tarif): bool => $tarif->isSekaliBayar())
+            ->unique('id')
+            ->values();
+
+        $nonSppBulananIds = $nonSppBulanan->pluck('id')->all();
+
+        $dibayarNonSppBulanan = $nonSppBulananIds === []
+            ? collect()
+            : Pembayaran::query()
+                ->where('siswa_id', $siswa->id)
+                ->whereIn('spp_id', $nonSppBulananIds)
+                ->whereNull('void_at')
+                ->whereNotNull('bulan_dibayar')
+                ->whereNotNull('tahun_dibayar')
+                ->get(['spp_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
+                ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->spp_id.'|'.$pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar)
+                ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
+
+        foreach ($nonSppBulanan as $tarifBulanan) {
+            if ($tarifBulanan->tahunMulai() < $tahunMasuk) {
+                continue;
+            }
+
+            if ($this->tanggunganPemerintah->isPosDitanggung($siswa, $tarifBulanan)) {
+                continue;
+            }
+
+            $nominalBulanan = (int) $tarifBulanan->nominal;
+
+            foreach (Pembayaran::bulanTahunAjaran($tarifBulanan->tahunMulai()) as $periode) {
+                $bulan = $periode['bulan'];
+                $tahun = $periode['tahun'];
+
+                if (! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+                    continue;
+                }
+
+                $dibayar = (int) ($dibayarNonSppBulanan->get($tarifBulanan->id.'|'.$bulan.'|'.$tahun) ?? 0);
+                $sisa = max(0, $nominalBulanan - $dibayar);
+
+                if ($sisa <= 0) {
+                    continue;
+                }
+
+                $labelTingkat = $tarifBulanan->tingkat ? ' (Kelas '.Spp::labelTingkat($tarifBulanan->tingkat).')' : '';
+
+                $items[] = [
+                    'key' => "spp:{$tarifBulanan->id}:{$bulan}:{$tahun}",
+                    'spp_id' => $tarifBulanan->id,
+                    'bulan' => $bulan,
+                    'tahun' => $tahun,
+                    'nominal' => $nominalBulanan,
+                    'dibayar' => min($dibayar, $nominalBulanan),
+                    'sisa' => $sisa,
+                    'label' => ($tarifBulanan->nama ?: $tarifBulanan->kategori)." {$bulan} {$tahun}".$labelTingkat,
+                    'tipe' => 'non_spp',
+                ];
             }
         }
 
         $tarif = null;
 
-        foreach ($nonSppList->unique('id') as $tarif) {
+        foreach ($nonSppSekali as $tarif) {
             if ($tarif->tahunMulai() < $tahunMasuk) {
                 continue;
             }
@@ -176,6 +253,9 @@ class PembayaranService
 
         $nonSpp = Spp::query()
             ->where('kategori', '!=', Spp::KATEGORI_SPP)
+            ->where(function ($query): void {
+                $query->whereNull('tipe')->orWhere('tipe', '!=', Spp::TIPE_BULANAN);
+            })
             ->where(function ($query) use ($variasiTingkat): void {
                 $query->whereNull('tingkat');
 

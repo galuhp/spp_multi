@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Pages\TagihanSiswa;
 use App\Models\Jurusan;
 use App\Models\Kelas;
+use App\Models\Pembayaran;
 use App\Models\RiwayatKelas;
 use App\Models\RolePermission;
 use App\Models\Siswa;
@@ -306,6 +307,130 @@ class TagihanMasukTest extends TestCase
             collect($tagihan)->contains(fn (array $item): bool => $item['spp_id'] === $nonSppLama->id),
             'Pos non-SPP sebelum tahun masuk tidak boleh menjadi tagihan.'
         );
+    }
+
+    public function test_tarif_non_spp_bulanan_ditagih_per_bulan(): void
+    {
+        $ta = $this->tahunAjaran('2026/2027', true);
+
+        $jurusan = Jurusan::create([
+            'kode' => 'RPL',
+            'nama' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        $kelas = Kelas::create([
+            'nama_kelas' => 'X RPL 1',
+            'tingkat' => '10',
+            'jurusan_id' => $jurusan->id,
+            'tahun_ajaran_id' => $ta->id,
+        ]);
+
+        $spp = Spp::create([
+            'kategori' => 'SPP',
+            'nama' => 'SPP Bulanan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 100000,
+        ]);
+
+        $tabungan = Spp::create([
+            'kategori' => 'Tabungan',
+            'nama' => 'Tabungan per bulan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 35000,
+        ]);
+
+        $siswa = $this->buatSiswa($kelas, $spp, 'Siswa Tabungan', '26006', '26006');
+
+        $items = collect(app(PembayaranService::class)->tagihanTerbuka($siswa));
+        $tabunganItems = $items->where('spp_id', $tabungan->id);
+
+        $this->assertCount(12, $tabunganItems);
+        $this->assertSame(12 * 35000, (int) $tabunganItems->sum('sisa'));
+        $this->assertTrue($tabunganItems->every(
+            fn (array $item): bool => $item['tipe'] === 'non_spp' && filled($item['bulan']),
+        ));
+
+        Pembayaran::create([
+            'kode_transaksi' => 'TRX-TABUNGAN-JULI',
+            'user_id' => User::factory()->create(['role' => UserRole::Petugas])->id,
+            'siswa_id' => $siswa->id,
+            'spp_id' => $tabungan->id,
+            'tgl_bayar' => '2026-07-15',
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 35000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $items = collect(app(PembayaranService::class)->tagihanTerbuka($siswa));
+        $tabunganItems = $items->where('spp_id', $tabungan->id);
+
+        $this->assertCount(11, $tabunganItems);
+        $this->assertFalse($tabunganItems->contains(
+            fn (array $item): bool => $item['bulan'] === 'Juli',
+        ));
+    }
+
+    public function test_halaman_tagihan_menampilkan_tarif_non_spp_bulanan_per_bulan(): void
+    {
+        $ta = $this->tahunAjaran('2026/2027', true);
+
+        $jurusan = Jurusan::create([
+            'kode' => 'RPL',
+            'nama' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        $kelas = Kelas::create([
+            'nama_kelas' => 'X RPL 1',
+            'tingkat' => '10',
+            'jurusan_id' => $jurusan->id,
+            'tahun_ajaran_id' => $ta->id,
+        ]);
+
+        $spp = Spp::create([
+            'kategori' => 'SPP',
+            'nama' => 'SPP Bulanan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 100000,
+        ]);
+
+        $tabungan = Spp::create([
+            'kategori' => 'Tabungan',
+            'nama' => 'Tabungan per bulan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 35000,
+        ]);
+
+        $siswa = $this->buatSiswa($kelas, $spp, 'Siswa Tabungan', '26007', '26007');
+
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        RolePermission::query()->firstOrCreate([
+            'role' => UserRole::Admin,
+            'permission' => RolePermission::PORTAL_SISWA,
+        ]);
+        $this->actingAs($admin);
+
+        $component = Livewire::test(TagihanSiswa::class)
+            ->call('pilihSiswa', $siswa->id);
+
+        $tagihan = $component->instance()->getTagihanDataProperty();
+        $barisTabungan = collect($tagihan['nonSppStatus'])
+            ->filter(fn (array $item): bool => $item['tarif']->id === $tabungan->id);
+
+        $this->assertCount(12, $barisTabungan);
+        $this->assertSame(12 * 35000, (int) $tagihan['totalNonSppBelumLunas']);
     }
 
     private function buatSiswa(Kelas $kelas, Spp $spp, string $nama, string $nisn, string $nis): Siswa

@@ -61,6 +61,7 @@ class SiswaPortalController extends Controller
         $siswa->load(['spp', 'kelas.jurusan']);
         $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
+        $tahunMasukSiswa = $siswa->tahunMasuk();
 
         $riwayatPembayaran = $siswa->pembayarans()
             ->whereNull('void_at')
@@ -76,6 +77,10 @@ class SiswaPortalController extends Controller
         foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
             $bulan = $periode['bulan'];
             $tahun = $periode['tahun'];
+
+            if ($tahun < $tahunMasukSiswa || ! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+                continue;
+            }
 
             $bayarList = $riwayatPembayaran
                 ->where('spp_id', $siswa->spp_id)
@@ -126,9 +131,50 @@ class SiswaPortalController extends Controller
         $totalNonSppBelumLunas = 0;
 
         foreach ($nonSppTarifs as $tarif) {
+            if ($tarif->tahunMulai() < $tahunMasukSiswa) {
+                continue;
+            }
+
+            $nominal = (int) $tarif->nominal;
+
+            if ($tarif->isBulanan()) {
+                foreach (Pembayaran::bulanTahunAjaran($tarif->tahunMulai()) as $periode) {
+                    $bulan = $periode['bulan'];
+                    $tahun = $periode['tahun'];
+
+                    if ($tahun < $tahunMasukSiswa || ! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+                        continue;
+                    }
+
+                    $bayarList = $riwayatPembayaran
+                        ->where('spp_id', $tarif->id)
+                        ->where('bulan_dibayar', $bulan)
+                        ->where('tahun_dibayar', $tahun);
+                    $dibayar = (int) $bayarList->sum('jumlah_bayar');
+                    $sisa = max(0, $nominal - $dibayar);
+                    $lunas = $sisa === 0 && $dibayar > 0;
+
+                    $totalNonSppLunas += min($dibayar, $nominal);
+                    $totalNonSppBelumLunas += $sisa;
+
+                    $nonSppStatus[] = [
+                        'tarif' => $tarif,
+                        'nominal' => $nominal,
+                        'dibayar' => min($dibayar, $nominal),
+                        'sisa' => $sisa,
+                        'lunas' => $lunas,
+                        'pembayarans' => $bayarList,
+                        'bulan' => $bulan,
+                        'tahun' => $tahun,
+                    ];
+                }
+
+                continue;
+            }
+
             $bayarList = $riwayatPembayaran->where('spp_id', $tarif->id);
             $dibayar = (int) $bayarList->sum('jumlah_bayar');
-            $sisa = max(0, $tarif->nominal - $dibayar);
+            $sisa = max(0, $nominal - $dibayar);
             $lunas = $sisa === 0 && $dibayar > 0;
 
             $totalNonSppLunas += $dibayar;
@@ -136,11 +182,13 @@ class SiswaPortalController extends Controller
 
             $nonSppStatus[] = [
                 'tarif' => $tarif,
-                'nominal' => $tarif->nominal,
+                'nominal' => $nominal,
                 'dibayar' => $dibayar,
                 'sisa' => $sisa,
                 'lunas' => $lunas,
                 'pembayarans' => $bayarList,
+                'bulan' => null,
+                'tahun' => null,
             ];
         }
 

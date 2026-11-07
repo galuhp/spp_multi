@@ -285,14 +285,56 @@ class TagihanSiswa extends Page
                 continue;
             }
 
+            $ditanggung = $tanggunganPemerintah->isPosDitanggung($siswa, $tarif);
+            $nominal = (int) $tarif->nominal;
+
+            if ($tarif->isBulanan()) {
+                foreach (Pembayaran::bulanTahunAjaran($tarif->tahunMulai()) as $periode) {
+                    $bulan = $periode['bulan'];
+                    $tahun = $periode['tahun'];
+
+                    if ($tahun < $tahunMasukSiswa || ! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+                        continue;
+                    }
+
+                    $bayarList = $riwayatPembayaran
+                        ->where('spp_id', $tarif->id)
+                        ->where('bulan_dibayar', $bulan)
+                        ->where('tahun_dibayar', $tahun);
+                    $dibayar = (int) $bayarList->sum('jumlah_bayar');
+                    $sisa = $ditanggung ? 0 : max(0, $nominal - $dibayar);
+                    $lunas = ! $ditanggung && $sisa === 0 && $dibayar > 0;
+
+                    if ($ditanggung) {
+                        $totalNonSppDitanggung += $nominal;
+                    } else {
+                        $totalNonSppLunas += min($dibayar, $nominal);
+                        $totalNonSppBelumLunas += $sisa;
+                    }
+
+                    $nonSppStatus[] = [
+                        'tarif' => $tarif,
+                        'nominal' => $nominal,
+                        'dibayar' => min($dibayar, $nominal),
+                        'sisa' => $sisa,
+                        'lunas' => $lunas,
+                        'ditanggung' => $ditanggung,
+                        'pembayarans' => $bayarList,
+                        'bulan' => $bulan,
+                        'tahun' => $tahun,
+                    ];
+                }
+
+                continue;
+            }
+
             $bayarList = $riwayatPembayaran->where('spp_id', $tarif->id);
             $dibayar = (int) $bayarList->sum('jumlah_bayar');
-            $ditanggung = $tanggunganPemerintah->isPosDitanggung($siswa, $tarif);
-            $sisa = $ditanggung ? 0 : max(0, $tarif->nominal - $dibayar);
+            $sisa = $ditanggung ? 0 : max(0, $nominal - $dibayar);
             $lunas = ! $ditanggung && $sisa === 0 && $dibayar > 0;
 
             if ($ditanggung) {
-                $totalNonSppDitanggung += (int) $tarif->nominal;
+                $totalNonSppDitanggung += $nominal;
             } else {
                 $totalNonSppLunas += $dibayar;
                 $totalNonSppBelumLunas += $sisa;
@@ -300,12 +342,14 @@ class TagihanSiswa extends Page
 
             $nonSppStatus[] = [
                 'tarif' => $tarif,
-                'nominal' => $tarif->nominal,
+                'nominal' => $nominal,
                 'dibayar' => $dibayar,
                 'sisa' => $sisa,
                 'lunas' => $lunas,
                 'ditanggung' => $ditanggung,
                 'pembayarans' => $bayarList,
+                'bulan' => null,
+                'tahun' => null,
             ];
         }
 
@@ -373,9 +417,15 @@ class TagihanSiswa extends Page
                 }
             }
 
-            $nonSppPriorList = Spp::nonSppUntukTingkat($pLvl);
+            $nonSppPriorList = Spp::nonSppUntukTingkat($pLvl)
+                ->merge(Spp::nonSppGlobalBulanan($tahunMulaiPrior));
+
             foreach ($nonSppPriorList as $tNonPrior) {
                 if ($tNonPrior->tahunMulai() < $tahunMasukSiswa) {
+                    continue;
+                }
+
+                if ($tNonPrior->isBulanan() && $tNonPrior->tahunMulai() !== $tahunMulaiPrior) {
                     continue;
                 }
 
@@ -384,6 +434,41 @@ class TagihanSiswa extends Page
                 }
 
                 $nominalNonPrior = (int) $tNonPrior->nominal;
+
+                if ($tNonPrior->isBulanan()) {
+                    foreach (Pembayaran::bulanTahunAjaran($tNonPrior->tahunMulai()) as $periode) {
+                        $bulanNonPrior = $periode['bulan'];
+                        $tahunNonPrior = $periode['tahun'];
+
+                        if ($tahunNonPrior < $tahunMasukSiswa || ! $siswa->sudahMasukPadaPeriode($bulanNonPrior, $tahunNonPrior)) {
+                            continue;
+                        }
+
+                        $dibayarNonPrior = (int) $riwayatPembayaran
+                            ->where('spp_id', $tNonPrior->id)
+                            ->where('bulan_dibayar', $bulanNonPrior)
+                            ->where('tahun_dibayar', $tahunNonPrior)
+                            ->sum('jumlah_bayar');
+
+                        $sisaNonPrior = max(0, $nominalNonPrior - $dibayarNonPrior);
+                        if ($sisaNonPrior <= 0) {
+                            continue;
+                        }
+
+                        $totalTunggakanPrior += $sisaNonPrior;
+                        $tunggakanPrior[] = [
+                            'tahun_ajaran' => 'Kelas '.Spp::labelTingkat($pLvl),
+                            'bulan' => ($tNonPrior->nama ?: $tNonPrior->kategori)." {$bulanNonPrior} {$tahunNonPrior}",
+                            'tipe' => 'Non-SPP',
+                            'nominal' => $nominalNonPrior,
+                            'dibayar' => min($dibayarNonPrior, $nominalNonPrior),
+                            'sisa' => $sisaNonPrior,
+                        ];
+                    }
+
+                    continue;
+                }
+
                 $dibayarNonPrior = (int) $riwayatPembayaran
                     ->where('spp_id', $tNonPrior->id)
                     ->sum('jumlah_bayar');

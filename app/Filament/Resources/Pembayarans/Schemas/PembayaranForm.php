@@ -238,6 +238,10 @@ class PembayaranForm
                                     })
                                     ->get()
                                     ->filter(function (Spp $tarif) use ($siswa, $tanggungan): bool {
+                                        if ($tarif->isBulanan()) {
+                                            return false;
+                                        }
+
                                         if ($tanggungan->isPosDitanggung($siswa, $tarif)) {
                                             return false;
                                         }
@@ -257,7 +261,7 @@ class PembayaranForm
                             ->columns(1)
                             ->visible(fn (Get $get): bool => in_array('non_spp', (array) $get('bayar_non_spp'), true))
                             ->required(fn (Get $get): bool => in_array('non_spp', (array) $get('bayar_non_spp'), true))
-                            ->helperText('Centang biaya lain yang akan dibayar. Nominal yang disimpan adalah sisa tagihan penuh.')
+                            ->helperText('Centang biaya lain yang akan dibayar. Pos bulanan (mis. Tabungan) dibayar melalui Kasir Cepat agar dapat dipilih per bulan.')
                             ->columnSpanFull(),
                     ]),
 
