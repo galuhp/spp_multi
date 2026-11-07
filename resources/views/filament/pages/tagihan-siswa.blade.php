@@ -238,51 +238,115 @@
                 </div>
             @endif
 
-            <!-- Matriks SPP Bulanan -->
+            <!-- Matriks Tarif Bulanan (SPP + pos bulanan lainnya) -->
             <x-ui.card class="!max-w-none !p-6">
                 <div class="mb-4">
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Matriks Pembayaran SPP Bulanan (12 Bulan Tahun Pelajaran)</h3>
-                    <p class="text-xs text-slate-500 dark:text-gray-400">Status pelunasan iuran bulanan dari Juli hingga Juni.</p>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Matriks Pembayaran Bulanan (12 Bulan Tahun Pelajaran)</h3>
+                    <p class="text-xs text-slate-500 dark:text-gray-400">Status pelunasan seluruh tarif bulanan — SPP dan pos biaya lain bertipe bulanan — dari Juli hingga Juni.</p>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    @foreach($tagihan['bulanStatus'] as $item)
-                        <div class="rounded-xl border p-4 text-center flex flex-col justify-between {{ $item['ditanggung'] ? 'border-sky-200/80 bg-sky-50/35 dark:border-sky-500/30 dark:bg-sky-950/25' : ($item['lunas'] ? 'border-emerald-200/80 bg-emerald-50/35 dark:border-emerald-500/30 dark:bg-emerald-950/25' : ($item['status'] === 'sebagian' ? 'border-amber-200/80 bg-amber-50/30 dark:border-amber-500/30 dark:bg-amber-950/25' : 'border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800/50')) }}">
+                    @foreach($tagihan['matriksBulanan'] as $bulan)
+                        @php
+                            $spp = $bulan['spp'];
+                            $jumlahPos = ($spp ? 1 : 0) + count($bulan['pos_lain']);
+                            $warnaKartu = $bulan['ditanggung']
+                                ? 'border-sky-200/80 bg-sky-50/35 dark:border-sky-500/30 dark:bg-sky-950/25'
+                                : ($bulan['lunas']
+                                    ? 'border-emerald-200/80 bg-emerald-50/35 dark:border-emerald-500/30 dark:bg-emerald-950/25'
+                                    : ($bulan['sebagian']
+                                        ? 'border-amber-200/80 bg-amber-50/30 dark:border-amber-500/30 dark:bg-amber-950/25'
+                                        : 'border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800/50'));
+                        @endphp
+                        <div class="rounded-xl border p-4 text-center flex flex-col justify-between {{ $warnaKartu }}">
                             <div>
-                                <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $item['bulan'] }}</div>
-                                <div class="text-xs text-slate-500 dark:text-gray-400">{{ $item['tahun'] }}</div>
-                                <div class="mt-2.5">
-                                    @if($item['ditanggung'])
-                                        <x-ui.badge color="sky">Ditanggung Pemerintah</x-ui.badge>
-                                        <div class="mt-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300 tabular-nums">
-                                            Rp {{ number_format($item['nominal'], 0, ',', '.') }}
-                                        </div>
-                                    @elseif($item['lunas'])
-                                        <x-ui.badge color="emerald">Lunas</x-ui.badge>
-                                        <div class="mt-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 tabular-nums">
-                                            Rp {{ number_format($item['dibayar'], 0, ',', '.') }}
-                                        </div>
-                                    @elseif($item['status'] === 'sebagian')
-                                        <x-ui.badge color="amber">Sebagian</x-ui.badge>
-                                        <div class="mt-1.5 text-xs text-emerald-700 dark:text-emerald-300 tabular-nums">
-                                            Dibayar Rp {{ number_format($item['dibayar'], 0, ',', '.') }}
-                                        </div>
-                                        <div class="text-xs font-semibold text-amber-700 dark:text-amber-300 tabular-nums">
-                                            Sisa Rp {{ number_format($item['sisa'], 0, ',', '.') }}
-                                        </div>
-                                    @else
-                                        <x-ui.badge color="rose">Belum Lunas</x-ui.badge>
-                                        <div class="mt-1.5 text-xs font-medium text-slate-500 dark:text-gray-400 tabular-nums">
-                                            Rp {{ number_format($item['nominal'], 0, ',', '.') }}
-                                        </div>
-                                    @endif
-                                </div>
+                                <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $bulan['bulan'] }}</div>
+                                <div class="text-xs text-slate-500 dark:text-gray-400">{{ $bulan['tahun'] }}</div>
+
+                                @if($spp)
+                                    <div class="mt-2.5">
+                                        @if($spp['ditanggung'])
+                                            <x-ui.badge color="sky">Ditanggung Pemerintah</x-ui.badge>
+                                            <div class="mt-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300 tabular-nums">
+                                                Rp {{ number_format($spp['nominal'], 0, ',', '.') }}
+                                            </div>
+                                        @elseif($spp['lunas'])
+                                            <x-ui.badge color="emerald">Lunas</x-ui.badge>
+                                            <div class="mt-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 tabular-nums">
+                                                Rp {{ number_format($spp['dibayar'], 0, ',', '.') }}
+                                            </div>
+                                        @elseif($spp['status'] === 'sebagian')
+                                            <x-ui.badge color="amber">Sebagian</x-ui.badge>
+                                            <div class="mt-1.5 text-xs text-emerald-700 dark:text-emerald-300 tabular-nums">
+                                                Dibayar Rp {{ number_format($spp['dibayar'], 0, ',', '.') }}
+                                            </div>
+                                            <div class="text-xs font-semibold text-amber-700 dark:text-amber-300 tabular-nums">
+                                                Sisa Rp {{ number_format($spp['sisa'], 0, ',', '.') }}
+                                            </div>
+                                        @else
+                                            <x-ui.badge color="rose">Belum Lunas</x-ui.badge>
+                                            <div class="mt-1.5 text-xs font-medium text-slate-500 dark:text-gray-400 tabular-nums">
+                                                Rp {{ number_format($spp['nominal'], 0, ',', '.') }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                @if($bulan['pos_lain'] !== [])
+                                    <div class="mt-3 space-y-2 border-t border-dashed border-slate-200/80 pt-2.5 text-left dark:border-gray-700">
+                                        @foreach($bulan['pos_lain'] as $pos)
+                                            <div>
+                                                <div class="flex items-start justify-between gap-1.5">
+                                                    <span class="truncate text-[11px] font-semibold text-slate-700 dark:text-gray-200" title="{{ $pos['nama'] }}">{{ $pos['nama'] }}</span>
+                                                    @if($pos['ditanggung'])
+                                                        <x-ui.badge color="sky">Ditanggung</x-ui.badge>
+                                                    @elseif($pos['lunas'])
+                                                        <x-ui.badge color="emerald">Lunas</x-ui.badge>
+                                                    @elseif($pos['status'] === 'sebagian')
+                                                        <x-ui.badge color="amber">Sebagian</x-ui.badge>
+                                                    @else
+                                                        <x-ui.badge color="rose">Belum Lunas</x-ui.badge>
+                                                    @endif
+                                                </div>
+                                                <div class="mt-1 text-[11px] tabular-nums">
+                                                    @if($pos['ditanggung'])
+                                                        <span class="font-semibold text-sky-700 dark:text-sky-300">Rp {{ number_format($pos['nominal'], 0, ',', '.') }}</span>
+                                                    @elseif($pos['lunas'])
+                                                        <span class="font-semibold text-emerald-700 dark:text-emerald-300">Rp {{ number_format($pos['dibayar'], 0, ',', '.') }}</span>
+                                                    @elseif($pos['status'] === 'sebagian')
+                                                        <span class="text-emerald-700 dark:text-emerald-300">Dibayar Rp {{ number_format($pos['dibayar'], 0, ',', '.') }}</span>
+                                                        <span class="block font-semibold text-amber-700 dark:text-amber-300">Sisa Rp {{ number_format($pos['sisa'], 0, ',', '.') }}</span>
+                                                    @else
+                                                        <span class="font-medium text-slate-500 dark:text-gray-400">Rp {{ number_format($pos['nominal'], 0, ',', '.') }}</span>
+                                                    @endif
+                                                </div>
+                                                @if($pos['pembayaran'])
+                                                    <a href="{{ auth()->user()?->isSiswa() ? route('portal.kuitansi', $pos['pembayaran']->id) : route('pembayaran.cetak', $pos['pembayaran']->id) }}"
+                                                        target="_blank"
+                                                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary-600 hover:underline dark:text-primary-400">
+                                                        <x-filament::icon icon="heroicon-o-printer" class="size-3" />
+                                                        Kuitansi
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
 
-                            @if($item['pembayaran'])
+                            @if($jumlahPos > 1)
+                                <div class="mt-3 border-t border-slate-200/70 pt-2 text-[11px] text-slate-600 dark:border-gray-700 dark:text-gray-300">
+                                    Total: <span class="font-semibold tabular-nums">Rp {{ number_format($bulan['total'], 0, ',', '.') }}</span>
+                                    @if($bulan['total_sisa'] > 0)
+                                        <span class="block font-semibold text-rose-600 dark:text-rose-400 tabular-nums">Sisa Rp {{ number_format($bulan['total_sisa'], 0, ',', '.') }}</span>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if($spp && $spp['pembayaran'])
                                 <div class="mt-3">
                                     <x-filament::button tag="a"
-                                        href="{{ auth()->user()?->isSiswa() ? route('portal.kuitansi', $item['pembayaran']->id) : route('pembayaran.cetak', $item['pembayaran']->id) }}"
+                                        href="{{ auth()->user()?->isSiswa() ? route('portal.kuitansi', $spp['pembayaran']->id) : route('pembayaran.cetak', $spp['pembayaran']->id) }}"
                                         target="_blank" color="gray" size="sm" outlined icon="heroicon-o-printer"
                                         class="w-full whitespace-nowrap">
                                         Cetak Kuitansi
@@ -294,12 +358,12 @@
                 </div>
             </x-ui.card>
 
-            <!-- Non-SPP -->
-            @if(count($tagihan['nonSppStatus']) > 0)
+            <!-- Pos sekali bayar -->
+            @if(count($tagihan['nonSppSekaliBayar']) > 0)
                 <x-ui.card class="!max-w-none !p-6">
                     <div class="mb-4">
-                        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Pos Tagihan Lainnya (Non-SPP)</h3>
-                        <p class="text-xs text-slate-500 dark:text-gray-400">Uang Gedung, Seragam, Praktik, Ujian, Tabungan, dan biaya lain — termasuk pos yang ditagih bulanan.</p>
+                        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Pos Tagihan Sekali Bayar (Non-SPP)</h3>
+                        <p class="text-xs text-slate-500 dark:text-gray-400">Uang Gedung, Seragam, Praktik, Ujian, dan biaya lain yang tidak ditagih bulanan — bisa dibayar sekaligus atau dicicil.</p>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -313,15 +377,10 @@
                                 <x-ui.table.head class="text-center">Status</x-ui.table.head>
                             </x-ui.table.columns>
                             <x-ui.table.rows>
-                                @foreach($tagihan['nonSppStatus'] as $item)
+                                @foreach($tagihan['nonSppSekaliBayar'] as $item)
                                     <x-ui.table.row>
                                         <x-ui.table.cell class="font-medium">
                                             {{ $item['tarif']->nama ?: $item['tarif']->kategori }}
-                                            @if(!empty($item['bulan']))
-                                                <span class="block text-[11px] font-normal text-slate-500 dark:text-gray-400">
-                                                    {{ $item['bulan'] }} {{ $item['tahun'] }}
-                                                </span>
-                                            @endif
                                         </x-ui.table.cell>
                                         <x-ui.table.cell class="text-xs">
                                             <x-ui.badge variant="outline">{{ $item['tarif']->kategori }}</x-ui.badge>

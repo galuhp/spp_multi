@@ -184,6 +184,41 @@ class EntriPembayaranKasirTest extends TestCase
         $this->assertNotContains("spp:{$sppLain->id}", collect($data['non_spp'])->pluck('key')->all());
     }
 
+    public function test_biaya_lain_dikelompokkan_bulanan_lalu_sekali_bayar(): void
+    {
+        $tabungan = Spp::query()->create([
+            'kategori' => 'Tabungan',
+            'tipe' => Spp::TIPE_BULANAN,
+            'nama' => 'Tabungan Bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 50000,
+        ]);
+
+        $component = Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id);
+
+        $nonSpp = collect($component->instance()->kasirData['non_spp']);
+
+        $this->assertTrue($nonSpp->every(
+            fn (array $item): bool => in_array($item['grup'], ['bulanan', 'sekali_bayar'], true)
+        ));
+
+        $grupBulanan = $nonSpp->where('grup', 'bulanan')->values();
+        $grupSekaliBayar = $nonSpp->where('grup', 'sekali_bayar')->values();
+
+        $this->assertCount(12, $grupBulanan);
+        $this->assertTrue($grupBulanan->every(
+            fn (array $item): bool => str_starts_with($item['key'], "spp:{$tabungan->id}:")
+        ));
+        $this->assertSame(["spp:{$this->uangGedung->id}"], $grupSekaliBayar->pluck('key')->all());
+
+        // Grup tarif bulanan ditampilkan lebih dulu, baru sekali bayar.
+        $this->assertSame('bulanan', $nonSpp->first()['grup']);
+        $this->assertSame('sekali_bayar', $nonSpp->last()['grup']);
+    }
+
     public function test_kasir_dapat_menyimpan_spp_dan_biaya_lain_dalam_satu_kuitansi(): void
     {
         $items = collect(app(PembayaranService::class)->tagihanTerbuka($this->siswa))->keyBy('key');

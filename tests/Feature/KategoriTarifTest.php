@@ -261,7 +261,7 @@ class KategoriTarifTest extends TestCase
 
         $tagihanResponse = $this->actingAs($this->siswaUser)->followingRedirects()->get(route('portal.tagihan'));
         $tagihanResponse->assertOk();
-        $tagihanResponse->assertSee('Pos Tagihan Lainnya (Non-SPP)');
+        $tagihanResponse->assertSee('Pos Tagihan Sekali Bayar (Non-SPP)');
         $tagihanResponse->assertSee('Uang Gedung & Pengembangan');
         $tagihanResponse->assertSee('Belum Lunas');
         $tagihanResponse->assertSee('Paket Seragam 4 Stel');

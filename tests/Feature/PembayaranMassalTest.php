@@ -485,6 +485,7 @@ class PembayaranMassalTest extends TestCase
             'nama' => 'SPP 2026/2027',
             'tahun' => 2027,
             'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
             'nominal' => 250000,
         ]);
 
@@ -493,6 +494,8 @@ class PembayaranMassalTest extends TestCase
             'nisn' => '0098765432',
             'nis' => '00987654',
             'spp_id' => $spp->id,
+            'kelas_id' => $this->buatKelasTahunAjaranLalu()->id,
+            'tahun_masuk' => 2026,
         ]);
 
         Pembayaran::query()->create([
@@ -523,6 +526,25 @@ class PembayaranMassalTest extends TestCase
         $this->assertFalse($terbuka->has('Juli'));
         $this->assertSame(2026, $terbuka['Agustus']['tahun']);
         $this->assertSame(2027, $terbuka['Januari']['tahun']);
+    }
+
+    private function buatKelasTahunAjaranLalu(): Kelas
+    {
+        $tahunAjaran = TahunAjaran::query()->firstOrCreate(
+            ['nama' => '2026/2027'],
+            [
+                'tanggal_mulai' => '2026-07-01',
+                'tanggal_selesai' => '2027-06-30',
+                'aktif' => false,
+            ],
+        );
+
+        return Kelas::query()->create([
+            'tahun_ajaran_id' => $tahunAjaran->id,
+            'jurusan_id' => $this->jurusan->id,
+            'nama_kelas' => 'X RPL 1 Angkatan 2026',
+            'tingkat' => '10',
+        ]);
     }
 
     /**

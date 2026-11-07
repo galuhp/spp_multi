@@ -215,14 +215,17 @@ class EntriPembayaranKasir extends Page
                 $tarif = $tarifNonSpp->get($item['spp_id']);
                 $labelTingkat = $tarif?->tingkat ? ' (Kelas '.Spp::labelTingkat($tarif->tingkat).')' : '';
                 $labelBulan = filled($item['bulan'] ?? null) ? " — {$item['bulan']} {$item['tahun']}" : '';
+                $bulanan = ($tarif?->tipe ?? Spp::TIPE_SEKALI_BAYAR) === Spp::TIPE_BULANAN;
 
                 return [
                     'key' => $item['key'],
                     'nama' => ($tarif?->nama ?: ($tarif?->kategori ?: 'Biaya Lainnya')).$labelBulan.$labelTingkat,
                     'deskripsi' => $tarif?->kategori ?: 'Sisa tagihan',
                     'sisa' => (int) $item['sisa'],
+                    'grup' => $bulanan ? 'bulanan' : 'sekali_bayar',
                 ];
             })
+            ->sortBy(fn (array $item): int => $item['grup'] === 'bulanan' ? 0 : 1)
             ->values()
             ->all();
 

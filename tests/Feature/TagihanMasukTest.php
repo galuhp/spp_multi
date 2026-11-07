@@ -431,6 +431,40 @@ class TagihanMasukTest extends TestCase
 
         $this->assertCount(12, $barisTabungan);
         $this->assertSame(12 * 35000, (int) $tagihan['totalNonSppBelumLunas']);
+
+        // Matriks bulanan menggabungkan SPP dan tarif lain bertipe bulanan.
+        $this->assertCount(12, $tagihan['matriksBulanan']);
+
+        $component
+            ->assertSee('Matriks Pembayaran Bulanan')
+            ->assertSee('Tabungan per bulan');
+
+        $juli = collect($tagihan['matriksBulanan'])->firstWhere('bulan', 'Juli');
+
+        $this->assertNotNull($juli);
+        $this->assertNotNull($juli['spp']);
+        $this->assertCount(1, $juli['pos_lain']);
+        $this->assertSame('Tabungan per bulan', $juli['pos_lain'][0]['nama']);
+        $this->assertSame(35000, $juli['pos_lain'][0]['nominal']);
+        $this->assertSame(100000 + 35000, $juli['total']);
+        $this->assertSame([], $tagihan['nonSppSekaliBayar']);
+
+        // Tarif sekali bayar tidak masuk matriks bulanan, melainkan grup tersendiri.
+        $gedung = Spp::create([
+            'kategori' => 'Uang Gedung',
+            'nama' => 'Uang Gedung',
+            'tipe' => 'sekali_bayar',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 2000000,
+        ]);
+
+        $tagihan = $component->instance()->getTagihanDataProperty();
+
+        $this->assertCount(12, $tagihan['matriksBulanan']);
+        $this->assertCount(1, $tagihan['nonSppSekaliBayar']);
+        $this->assertSame($gedung->id, $tagihan['nonSppSekaliBayar'][0]['tarif']->id);
     }
 
     private function buatSiswa(Kelas $kelas, Spp $spp, string $nama, string $nisn, string $nis): Siswa

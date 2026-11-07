@@ -175,28 +175,39 @@
                                 Tidak ada biaya lain yang belum dibayar.
                             </p>
 
-                            <ul class="mt-3 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-                                <template x-for="x in nonSpp" :key="x.key">
-                                    <li class="flex items-center justify-between gap-3 px-4 py-3 transition"
-                                        :class="hasLain(x.key) ? 'bg-primary-50 dark:bg-primary-950/40' : ''">
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="x.nama"></p>
-                                            <p class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="x.deskripsi"></p>
+                            <div class="mt-3 space-y-4">
+                                <template x-for="grup in nonSppGroups" :key="grup.key">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" x-text="grup.label"></h4>
+                                            <span class="rounded-full bg-gray-100 px-1.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300" x-text="grup.items.length"></span>
                                         </div>
-                                        <div class="flex shrink-0 items-center gap-3">
-                                            <span class="text-sm text-gray-800 dark:text-gray-200" x-text="rp(x.sisa)"></span>
-                                            <x-filament::button type="button" color="gray" size="sm" outlined
-                                                class="w-28 whitespace-nowrap" x-show="! hasLain(x.key)" @click="toggleLain(x.key)">
-                                                Tambah
-                                            </x-filament::button>
-                                            <x-filament::button type="button" size="sm"
-                                                class="w-28 whitespace-nowrap" x-show="hasLain(x.key)" x-cloak @click="toggleLain(x.key)">
-                                                Ditambahkan
-                                            </x-filament::button>
-                                        </div>
-                                    </li>
+
+                                        <ul class="mt-2 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+                                            <template x-for="x in grup.items" :key="x.key">
+                                                <li class="flex items-center justify-between gap-3 px-4 py-3 transition"
+                                                    :class="hasLain(x.key) ? 'bg-primary-50 dark:bg-primary-950/40' : ''">
+                                                    <div class="min-w-0">
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="x.nama"></p>
+                                                        <p class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="x.deskripsi"></p>
+                                                    </div>
+                                                    <div class="flex shrink-0 items-center gap-3">
+                                                        <span class="text-sm text-gray-800 dark:text-gray-200" x-text="rp(x.sisa)"></span>
+                                                        <x-filament::button type="button" color="gray" size="sm" outlined
+                                                            class="w-28 whitespace-nowrap" x-show="! hasLain(x.key)" @click="toggleLain(x.key)">
+                                                            Tambah
+                                                        </x-filament::button>
+                                                        <x-filament::button type="button" size="sm"
+                                                            class="w-28 whitespace-nowrap" x-show="hasLain(x.key)" x-cloak @click="toggleLain(x.key)">
+                                                            Ditambahkan
+                                                        </x-filament::button>
+                                                    </div>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
                                 </template>
-                            </ul>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -333,6 +344,20 @@
 
                 hasLain(key) {
                     return this.selectedLain.includes(key);
+                },
+
+                get nonSppGroups() {
+                    const grup = [
+                        { key: 'bulanan', label: 'Tarif Bulanan', items: [] },
+                        { key: 'sekali_bayar', label: 'Sekali Bayar', items: [] },
+                    ];
+
+                    this.nonSpp.forEach((x) => {
+                        const target = grup.find((g) => g.key === x.grup) ?? grup[1];
+                        target.items.push(x);
+                    });
+
+                    return grup.filter((g) => g.items.length > 0);
                 },
 
                 unpaidUpTo(index) {
