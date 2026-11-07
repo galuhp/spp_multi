@@ -65,21 +65,24 @@ class PembayaranService
             ->whereIn('spp_id', $sppTarifIds)
             ->whereNotNull('bulan_dibayar')
             ->whereNotNull('tahun_dibayar')
-            ->get(['bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
-            ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar)
+            ->get(['spp_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
+            ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->spp_id.'|'.$pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar)
             ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
         // 1. SPP Bulanan across all timeline levels
         foreach ($tingkatList as $t) {
-            $sppLvl = Spp::untukTingkat($t) ?? $siswa->spp;
-            if (! $sppLvl || ! $sppLvl->isBulanan()) {
-                continue;
-            }
-
             $selisih = max(0, (int) $tingkatSekarang - (int) $t);
             $tahunMulai = $taCurYear - $selisih;
 
             if ($tahunMulai < $tahunMasuk) {
+                continue;
+            }
+
+            $sppLvl = ($t === $tingkatSekarang && $siswa->spp && $siswa->spp->isBulanan())
+                ? $siswa->spp
+                : (Spp::untukTingkat($t, $tahunMulai.'/'.($tahunMulai + 1)) ?? $siswa->spp);
+
+            if (! $sppLvl || ! $sppLvl->isBulanan()) {
                 continue;
             }
 
@@ -98,7 +101,7 @@ class PembayaranService
                     continue;
                 }
 
-                $dibayar = (int) ($dibayarPerBulan->get($bulan.'|'.$tahun) ?? 0);
+                $dibayar = (int) ($dibayarPerBulan->get($sppLvl->id.'|'.$bulan.'|'.$tahun) ?? 0);
                 $sisa = max(0, $nominal - $dibayar);
 
                 if ($sisa <= 0) {
@@ -134,6 +137,10 @@ class PembayaranService
                 continue;
             }
 
+            $sppLvlUtama = ($t === $tingkatSekarang && $siswa->spp && $siswa->spp->isBulanan())
+                ? $siswa->spp
+                : (Spp::untukTingkat($t, $tahunMulai.'/'.($tahunMulai + 1)) ?? $siswa->spp);
+
             foreach (Spp::nonSppUntukTingkat($t, $tahunMulai.'/'.($tahunMulai + 1)) as $tarifNon) {
                 $nonSppList->push($tarifNon);
 
@@ -143,7 +150,7 @@ class PembayaranService
             }
 
             foreach (Spp::bulananUntukTingkat($t, $tahunMulai) as $tarifBulananLvl) {
-                if ($tarifBulananLvl->kategori !== Spp::KATEGORI_SPP) {
+                if (! $sppLvlUtama || (int) $tarifBulananLvl->id !== (int) $sppLvlUtama->id) {
                     $nonSppBulananList->push($tarifBulananLvl);
                 }
             }

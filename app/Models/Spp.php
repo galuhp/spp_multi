@@ -97,12 +97,16 @@ class Spp extends Model
             return null;
         }
 
+        $orderUtama = "CASE WHEN LOWER(COALESCE(nama, '')) LIKE '%tabungan%' THEN 1 ELSE 0 END";
+
         if ($tahunAjaran) {
             $exact = self::query()
                 ->where('kategori', self::KATEGORI_SPP)
                 ->where('tipe', self::TIPE_BULANAN)
                 ->where('tahun_ajaran', $tahunAjaran)
                 ->where('tingkat', $tingkat)
+                ->orderByRaw($orderUtama)
+                ->orderBy('id')
                 ->first();
 
             if ($exact) {
@@ -115,7 +119,9 @@ class Spp extends Model
             ->where('kategori', self::KATEGORI_SPP)
             ->where('tipe', self::TIPE_BULANAN)
             ->where('tingkat', $tingkat)
+            ->orderByRaw($orderUtama)
             ->orderByDesc('tahun_ajaran')
+            ->orderBy('id')
             ->first();
 
         if ($byTingkat) {
@@ -129,7 +135,9 @@ class Spp extends Model
             ->where(function (Builder $query): void {
                 $query->whereNull('tingkat')->orWhere('tingkat', '');
             })
+            ->orderByRaw($orderUtama)
             ->orderByDesc('tahun_ajaran')
+            ->orderBy('id')
             ->first();
 
         if ($byGlobalYear) {
@@ -142,7 +150,9 @@ class Spp extends Model
             ->where(function (Builder $query): void {
                 $query->whereNull('tingkat')->orWhere('tingkat', '');
             })
+            ->orderByRaw($orderUtama)
             ->orderByDesc('tahun_ajaran')
+            ->orderBy('id')
             ->first();
 
         if ($byGlobal) {
@@ -152,6 +162,8 @@ class Spp extends Model
         return self::query()
             ->where('kategori', self::KATEGORI_SPP)
             ->where('tipe', self::TIPE_BULANAN)
+            ->orderByRaw($orderUtama)
+            ->orderBy('id')
             ->first();
     }
 

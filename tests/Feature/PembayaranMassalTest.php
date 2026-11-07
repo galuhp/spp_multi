@@ -528,6 +528,54 @@ class PembayaranMassalTest extends TestCase
         $this->assertSame(2027, $terbuka['Januari']['tahun']);
     }
 
+    public function test_pembayaran_massal_mendukung_tarif_bulanan_lain_seperti_tabungan_per_bulan(): void
+    {
+        $tabungan = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_SPP,
+            'tipe' => Spp::TIPE_BULANAN,
+            'nama' => 'Tabungan per bulan',
+            'tahun' => 2027,
+            'tahun_ajaran' => '2027/2028',
+            'tingkat' => '10',
+            'nominal' => 35000,
+        ]);
+
+        $kedua = $this->buatSiswa(['nama' => 'Siti Aminah', 'nisn' => '0098765432', 'nis' => '00987654']);
+
+        $component = Livewire::test(CreatePembayaranGabungan::class)
+            ->set('jurusan_id', $this->jurusan->id)
+            ->set('kelas_id', $this->kelas->id)
+            ->call('bukaModal');
+
+        $groups = $component->instance()->nonSppBulananGroups;
+        $this->assertNotEmpty($groups);
+        $this->assertSame($tabungan->id, $groups[0]['id']);
+        $this->assertSame(35000, $groups[0]['nominal']);
+
+        $component
+            ->set('bulan', ['Juli'])
+            ->set('bulan_non_spp', ["{$tabungan->id}|Juli", "{$tabungan->id}|Agustus"])
+            ->call('simpan')
+            ->assertRedirectContains('/pembayaran/gabungan/');
+
+        $gabungan = PembayaranGabungan::query()->latest('id')->firstOrFail();
+
+        // 2 siswa x (SPP Juli 250.000 + Tabungan Juli 35.000 + Tabungan Agustus 35.000 = 320.000) = 640.000
+        $this->assertSame(640000, (int) $gabungan->total_diterima);
+        $this->assertDatabaseHas('pembayarans', [
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $tabungan->id,
+            'bulan_dibayar' => 'Juli',
+            'jumlah_bayar' => 35000,
+        ]);
+        $this->assertDatabaseHas('pembayarans', [
+            'siswa_id' => $kedua->id,
+            'spp_id' => $tabungan->id,
+            'bulan_dibayar' => 'Agustus',
+            'jumlah_bayar' => 35000,
+        ]);
+    }
+
     private function buatKelasTahunAjaranLalu(): Kelas
     {
         $tahunAjaran = TahunAjaran::query()->firstOrCreate(

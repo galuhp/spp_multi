@@ -224,6 +224,7 @@
             $bulanList = $this->bulanOptions;
             $bulanPerTahun = $this->bulanGroupedByTahun;
             $infoTahunAjaran = $this->infoTahunAjaran;
+            $nonSppBulananGroups = $this->nonSppBulananGroups;
             $nonSppList = $this->nonSppOptions;
             $nonSppTerpilih = array_map('intval', $this->non_spp_ids);
         @endphp
@@ -313,6 +314,72 @@
                         @endif
                     </div>
 
+                    {{-- Tarif Bulanan Lainnya (mis. Tabungan per bulan) --}}
+                    @foreach ($nonSppBulananGroups as $grupBulanan)
+                        <div class="space-y-3 border-t border-gray-100 pt-4 dark:border-gray-800" wire:key="grup-bulanan-non-spp-{{ $grupBulanan['id'] }}">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
+                                        {{ $grupBulanan['nama'] }}
+                                    </span>
+                                    <span class="ml-1 font-mono text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                                        (Rp {{ number_format($grupBulanan['nominal'], 0, ',', '.') }} / bulan)
+                                    </span>
+                                </div>
+                                @if ($grupBulanan['bulan_options'] !== [])
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <x-filament::button type="button" color="gray" size="xs" outlined wire:click="pilihSemuaBulanTarif({{ $grupBulanan['id'] }})">
+                                            Semua Bulan
+                                        </x-filament::button>
+                                        <x-filament::button type="button" color="gray" size="xs" outlined wire:click="kosongkanBulanTarif({{ $grupBulanan['id'] }})">
+                                            Kosongkan
+                                        </x-filament::button>
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if ($grupBulanan['grouped'] !== [])
+                                <div class="space-y-3.5">
+                                    @foreach ($grupBulanan['grouped'] as $tahunKalender => $daftarBulan)
+                                        <div class="rounded-xl border border-gray-200/80 bg-gray-50/50 p-3 dark:border-gray-800 dark:bg-gray-800/30" wire:key="grup-bulanan-{{ $grupBulanan['id'] }}-{{ $tahunKalender }}">
+                                            <div class="mb-2 flex items-center justify-between gap-2">
+                                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-800 dark:text-gray-200 tabular-nums">
+                                                    <span class="size-1.5 rounded-full bg-primary-500"></span>
+                                                    Tahun {{ $tahunKalender }}
+                                                    <span class="font-normal text-gray-500 dark:text-gray-400">
+                                                        ({{ (int) $tahunKalender === (int) $infoTahunAjaran['tahun_mulai'] ? 'Semester Ganjil • Jul–Des' : 'Semester Genap • Jan–Jun' }})
+                                                    </span>
+                                                </span>
+                                                <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums">
+                                                    {{ count($daftarBulan) }} bulan terbuka
+                                                </span>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                                                @foreach ($daftarBulan as $namaBulan)
+                                                    @php
+                                                        $kunciBulanTarif = $grupBulanan['id'].'|'.$namaBulan;
+                                                    @endphp
+                                                    <label class="pm-month bg-white dark:bg-gray-900" wire:key="bulan-non-spp-{{ $grupBulanan['id'] }}-{{ $tahunKalender }}-{{ $namaBulan }}">
+                                                        <input type="checkbox"
+                                                            wire:model.live="bulan_non_spp"
+                                                            value="{{ $kunciBulanTarif }}"
+                                                            @checked(in_array($kunciBulanTarif, $this->bulan_non_spp, true))>
+                                                        <span class="font-medium">{{ $namaBulan }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    Seluruh bulan {{ $grupBulanan['nama'] }} untuk siswa yang dipilih sudah lunas atau ditanggung pemerintah.
+                                </p>
+                            @endif
+                        </div>
+                    @endforeach
+
                     {{-- Tarif / Pos Biaya Lain (Non-SPP) --}}
                     <div class="space-y-2.5 border-t border-gray-100 pt-4 dark:border-gray-800">
                         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -382,7 +449,7 @@
                             wire:click="simpan"
                             wire:loading.attr="disabled"
                             wire:target="simpan"
-                            :disabled="$this->bulan === [] && $this->non_spp_ids === []">
+                            :disabled="$this->bulan === [] && $this->bulan_non_spp === [] && $this->non_spp_ids === []">
                             <span wire:loading.remove wire:target="simpan">Simpan &amp; Cetak Kuitansi</span>
                             <span wire:loading wire:target="simpan">Memproses...</span>
                         </x-filament::button>

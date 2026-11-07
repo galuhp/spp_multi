@@ -277,7 +277,11 @@ class CreatePembayaranGabungan extends CreateRecord
         ])));
 
         return Spp::query()
-            ->where('kategori', '!=', Spp::KATEGORI_SPP)
+            ->where(function ($query): void {
+                $query->where('kategori', '!=', Spp::KATEGORI_SPP)
+                    ->orWhere('tipe', Spp::TIPE_BULANAN);
+            })
+            ->when($contohSiswa?->spp_id, fn ($query, $sppId) => $query->where('id', '!=', $sppId))
             ->when($tahunTarif || $tahunAjaran, function ($query) use ($tahunTarif, $tahunAjaran): void {
                 $query->where(function ($subquery) use ($tahunTarif, $tahunAjaran): void {
                     if ($tahunTarif) {

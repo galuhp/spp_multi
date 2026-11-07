@@ -210,7 +210,7 @@ class EntriPembayaranKasir extends Page
         $monthlyGroups = [];
 
         foreach ($tarifBulananList as $tarifBulanan) {
-            $isSppUtama = $tarifBulanan->kategori === Spp::KATEGORI_SPP;
+            $isSppUtama = $spp && (int) $tarifBulanan->id === (int) $spp->id;
             $nominalBulanan = (int) $tarifBulanan->nominal;
             $groupMonths = [];
 
@@ -224,7 +224,9 @@ class EntriPembayaranKasir extends Page
                     $terbuka = $items->get($key);
 
                     if (! $terbuka) {
-                        $status = $ditanggungPos ? 'ditanggung' : 'lunas';
+                        $status = $ditanggungPos
+                            ? 'ditanggung'
+                            : ($tanggunganPemerintah->isSppDitanggung($siswa, $tarifBulanan, $periode['bulan'], $periode['tahun']) ? 'ditanggung' : 'lunas');
                     } elseif ($index < $indexSekarang) {
                         $status = 'tunggakan';
                     } elseif ($index === $indexSekarang) {

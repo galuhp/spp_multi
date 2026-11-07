@@ -224,6 +224,49 @@ class EntriPembayaranKasirTest extends TestCase
         $this->assertSame($this->spp->id, $monthlyGroups[0]['id']);
         $this->assertSame($tabungan->id, $monthlyGroups[1]['id']);
         $this->assertCount(12, $monthlyGroups[1]['months']);
+        $this->assertSame(50000, $monthlyGroups[1]['months'][0]['nominal']);
+    }
+
+    public function test_tarif_bulanan_kedua_dengan_kategori_spp_tetap_memakai_nominal_dan_status_sendiri(): void
+    {
+        $tabunganSpp = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_SPP,
+            'tipe' => Spp::TIPE_BULANAN,
+            'nama' => 'Tabungan per bulan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 35000,
+        ]);
+
+        // Bayar SPP utama bulan Juli (Rp 250.000), sedangkan Tabungan per bulan belum dibayar
+        Pembayaran::query()->create([
+            'kode_transaksi' => 'SPP-JULI-UTAMA',
+            'user_id' => $this->admin->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => '2026-07-10',
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 250000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $component = Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id);
+
+        $monthlyGroups = collect($component->instance()->kasirData['monthly_groups'])->keyBy('id');
+
+        $grupSpp = $monthlyGroups->get($this->spp->id);
+        $grupTabungan = $monthlyGroups->get($tabunganSpp->id);
+
+        $this->assertNotNull($grupSpp);
+        $this->assertNotNull($grupTabungan);
+
+        // Juli pada SPP utama harus lunas, sedangkan Juli pada Tabungan per bulan tetap 35.000 dan belum lunas
+        $this->assertSame('lunas', $grupSpp['months'][0]['status']);
+        $this->assertNotSame('lunas', $grupTabungan['months'][0]['status']);
+        $this->assertSame(35000, $grupTabungan['months'][0]['nominal']);
     }
 
     public function test_kasir_dapat_menyimpan_spp_dan_biaya_lain_dalam_satu_kuitansi(): void
