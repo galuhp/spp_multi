@@ -263,13 +263,26 @@ class ProsesKelasTest extends TestCase
 
     public function test_opsi_tahun_ajaran_tujuan_tidak_memuat_tahun_ajaran_asal(): void
     {
+        $tahunSebelumnya = TahunAjaran::query()->create([
+            'nama' => '2026/2027',
+            'tanggal_mulai' => '2026-07-01',
+            'tanggal_selesai' => '2027-06-30',
+            'aktif' => false,
+        ]);
+
         $component = Livewire::test(KenaikanKelas::class)
             ->set('tahun_ajaran_asal_id', $this->asal->id);
 
         $options = $component->instance()->getTahunAjaranTujuanOptionsProperty();
 
         $this->assertArrayNotHasKey($this->asal->id, $options);
+        $this->assertArrayNotHasKey($tahunSebelumnya->id, $options);
         $this->assertArrayHasKey($this->tujuan->id, $options);
+
+        // Memilih tahun ajaran tujuan yang lebih kecil dari asal harus ditolak
+        $component->set('tahun_ajaran_tujuan_id', $tahunSebelumnya->id)
+            ->assertSet('tahun_ajaran_tujuan_id', null)
+            ->assertSet('galat', 'Tahun ajaran tujuan harus lebih besar dari tahun ajaran asal.');
     }
 
     public function test_tagihan_siswa_mendukung_pencarian_nama_dan_filter_kelas(): void

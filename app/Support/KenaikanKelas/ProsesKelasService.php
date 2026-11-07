@@ -309,6 +309,13 @@ class ProsesKelasService
             throw new RuntimeException('Tahun ajaran asal dan tujuan tidak boleh sama.');
         }
 
+        $namaTahunAsal = (string) TahunAjaran::query()->whereKey($tahunAjaranAsalId)->value('nama');
+        $namaTahunTujuan = (string) TahunAjaran::query()->whereKey($tahunAjaranTujuanId)->value('nama');
+
+        if ($namaTahunAsal !== '' && $namaTahunTujuan !== '' && strcmp($namaTahunTujuan, $namaTahunAsal) <= 0) {
+            throw new RuntimeException('Tahun ajaran tujuan harus lebih besar dari tahun ajaran asal.');
+        }
+
         $kelasAsal = Kelas::query()->findOrFail($kelasAsalId);
 
         if ($kelasAsal->tahun_ajaran_id !== null && (int) $kelasAsal->tahun_ajaran_id !== $tahunAjaranAsalId) {

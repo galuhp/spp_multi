@@ -76,16 +76,26 @@ class KenaikanKelas extends Page
     }
 
     /**
+     * Only academic years strictly greater than the selected source academic year may be chosen as destination.
+     *
      * @return array<int, string>
      */
     public function getTahunAjaranTujuanOptionsProperty(): array
     {
+        if (! $this->tahun_ajaran_asal_id) {
+            return [];
+        }
+
+        $namaAsal = TahunAjaran::query()->whereKey($this->tahun_ajaran_asal_id)->value('nama');
+
+        if (! $namaAsal) {
+            return [];
+        }
+
         return TahunAjaran::query()
-            ->when(
-                $this->tahun_ajaran_asal_id,
-                fn ($query) => $query->whereKeyNot($this->tahun_ajaran_asal_id),
-            )
-            ->orderByDesc('nama')
+            ->whereKeyNot($this->tahun_ajaran_asal_id)
+            ->where('nama', '>', $namaAsal)
+            ->orderBy('nama')
             ->pluck('nama', 'id')
             ->all();
     }
@@ -130,7 +140,7 @@ class KenaikanKelas extends Page
      */
     public function getKelasTujuanOptionsProperty(): array
     {
-        if (! $this->tahun_ajaran_tujuan_id) {
+        if (! $this->tahun_ajaran_tujuan_id || ! $this->isTahunAjaranTujuanValid()) {
             return [];
         }
 
@@ -186,7 +196,7 @@ class KenaikanKelas extends Page
      */
     public function getSiswaProperty(): Collection
     {
-        if (! $this->kelas_asal_id || ! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
+        if (! $this->kelas_asal_id || ! $this->tahun_ajaran_tujuan_id || ! $this->isTahunAjaranTujuanValid()) {
             return collect();
         }
 
@@ -231,7 +241,7 @@ class KenaikanKelas extends Page
         $this->hasil = null;
         $this->galat = null;
 
-        if (! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_tujuan_id === $this->tahun_ajaran_asal_id) {
+        if (! $this->tahun_ajaran_tujuan_id || ! $this->isTahunAjaranTujuanValid()) {
             $this->tahun_ajaran_tujuan_id = $this->tebakTahunAjaranTujuan($this->tahun_ajaran_asal_id);
         }
     }
@@ -244,11 +254,20 @@ class KenaikanKelas extends Page
         $this->hasil = null;
         $this->galat = null;
 
-        if ($this->tahun_ajaran_asal_id && $this->tahun_ajaran_tujuan_id === $this->tahun_ajaran_asal_id) {
-            $this->tahun_ajaran_tujuan_id = null;
-            $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
+        if ($this->tahun_ajaran_asal_id && $this->tahun_ajaran_tujuan_id) {
+            if ($this->tahun_ajaran_tujuan_id === $this->tahun_ajaran_asal_id) {
+                $this->tahun_ajaran_tujuan_id = null;
+                $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
 
-            return;
+                return;
+            }
+
+            if (! $this->isTahunAjaranTujuanValid()) {
+                $this->tahun_ajaran_tujuan_id = null;
+                $this->galat = 'Tahun ajaran tujuan harus lebih besar dari tahun ajaran asal.';
+
+                return;
+            }
         }
 
         if ($this->kelas_asal_id && $this->tahun_ajaran_tujuan_id) {
@@ -339,7 +358,7 @@ class KenaikanKelas extends Page
 
         $kelas = $this->kelas_asal_id ? Kelas::query()->find($this->kelas_asal_id) : null;
 
-        if (! $kelas || ! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
+        if (! $kelas || ! $this->tahun_ajaran_tujuan_id || ! $this->isTahunAjaranTujuanValid()) {
             return;
         }
 
@@ -375,6 +394,12 @@ class KenaikanKelas extends Page
 
         if ($this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
             $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
+
+            return;
+        }
+
+        if (! $this->isTahunAjaranTujuanValid()) {
+            $this->galat = 'Tahun ajaran tujuan harus lebih besar dari tahun ajaran asal.';
 
             return;
         }
@@ -467,16 +492,34 @@ class KenaikanKelas extends Page
             ->get();
     }
 
+    protected function isTahunAjaranTujuanValid(): bool
+    {
+        if (! $this->tahun_ajaran_asal_id || ! $this->tahun_ajaran_tujuan_id || $this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
+            return false;
+        }
+
+        $namaAsal = (string) TahunAjaran::query()->whereKey($this->tahun_ajaran_asal_id)->value('nama');
+        $namaTujuan = (string) TahunAjaran::query()->whereKey($this->tahun_ajaran_tujuan_id)->value('nama');
+
+        return $namaAsal !== '' && $namaTujuan !== '' && strcmp($namaTujuan, $namaAsal) > 0;
+    }
+
     protected function tebakTahunAjaranTujuan(?int $asalId): ?int
     {
         if (! $asalId) {
             return null;
         }
 
+        $namaAsal = TahunAjaran::query()->whereKey($asalId)->value('nama');
+
+        if (! $namaAsal) {
+            return null;
+        }
+
         return TahunAjaran::query()
             ->whereKeyNot($asalId)
+            ->where('nama', '>', $namaAsal)
             ->orderBy('nama')
-            ->where('nama', '>', TahunAjaran::query()->whereKey($asalId)->value('nama'))
             ->value('id');
     }
 }
