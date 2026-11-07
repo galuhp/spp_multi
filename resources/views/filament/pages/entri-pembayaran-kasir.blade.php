@@ -249,9 +249,12 @@
                     class="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-4 sm:items-center">
                     <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900">
                         <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-                            <div>
-                                <h3 class="text-base font-semibold text-gray-950 dark:text-white">Konfirmasi Pembayaran</h3>
-                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ $siswa->nama }} &bull; {{ $siswa->kelas?->nama_kelas }}</p>
+                            <div class="min-w-0">
+                                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Konfirmasi Pembayaran</h3>
+                                <p class="mt-1 truncate text-lg font-bold text-gray-950 dark:text-white">{{ $siswa->nama }}</p>
+                                <p class="mt-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                    {{ $siswa->kelas?->nama_kelas ?: '-' }} &bull; NISN {{ $siswa->nisn ?: '-' }}
+                                </p>
                             </div>
                             <x-filament::icon-button icon="heroicon-o-x-mark" color="gray" size="sm"
                                 label="Tutup" @click="bayar = false" />

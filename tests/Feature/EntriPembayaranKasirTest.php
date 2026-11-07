@@ -252,6 +252,21 @@ class EntriPembayaranKasirTest extends TestCase
         $this->assertSame('lunas', $grupSpp['months'][0]['status']);
         $this->assertNotSame('lunas', $grupTabungan['months'][0]['status']);
         $this->assertSame(35000, $grupTabungan['months'][0]['nominal']);
+
+        // Uraian kuitansi (namaPos) membedakan SPP dan Tabungan per bulan
+        $pembayaranTabungan = Pembayaran::query()->create([
+            'kode_transaksi' => 'TAB-JULI-2026',
+            'user_id' => $this->admin->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $tabunganSpp->id,
+            'tgl_bayar' => '2026-07-10',
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 35000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $this->assertSame('Tabungan per bulan Bulan Juli 2026', $pembayaranTabungan->namaPos());
     }
 
     public function test_kasir_dapat_menyimpan_spp_dan_biaya_lain_dalam_satu_kuitansi(): void

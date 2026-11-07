@@ -204,12 +204,18 @@ class Pembayaran extends Model
     public function namaPos(): string
     {
         $kategori = $this->spp?->kategori ?? 'SPP';
+        $nama = trim((string) ($this->spp?->nama ?? ''));
 
         if ($this->bulan_dibayar) {
-            return "{$kategori} Bulan {$this->bulan_dibayar} {$this->tahun_dibayar}";
+            $isSppBaku = strcasecmp($kategori, 'SPP') === 0
+                && ($nama === '' || strcasecmp($nama, 'SPP') === 0 || strcasecmp($nama, 'SPP Bulanan') === 0 || strcasecmp($nama, 'Biaya Sekolah per bulan') === 0);
+
+            $prefix = $isSppBaku ? 'SPP' : ($nama !== '' ? $nama : $kategori);
+
+            return "{$prefix} Bulan {$this->bulan_dibayar} {$this->tahun_dibayar}";
         }
 
-        $label = $this->spp?->nama ?: "{$kategori} TA {$this->spp?->tahun_ajaran}";
+        $label = $nama !== '' ? $nama : "{$kategori} TA {$this->spp?->tahun_ajaran}";
 
         return $label;
     }
