@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Jurusans\RelationManagers;
 
-use App\Models\TahunAjaran;
+use App\Models\ProfilSekolah;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -44,20 +44,7 @@ class KelasRelationManager extends RelationManager
                     ->required(),
                 Select::make('tingkat')
                     ->label('Tingkat')
-                    ->options([
-                        '1' => '1 (I)',
-                        '2' => '2 (II)',
-                        '3' => '3 (III)',
-                        '4' => '4 (IV)',
-                        '5' => '5 (V)',
-                        '6' => '6 (VI)',
-                        '7' => '7 (VII)',
-                        '8' => '8 (VIII)',
-                        '9' => '9 (IX)',
-                        'X' => 'X (10)',
-                        'XI' => 'XI (11)',
-                        'XII' => 'XII (12)',
-                    ])
+                    ->options(fn (): array => ProfilSekolah::tingkatKelasOptions())
                     ->required(),
                 Select::make('tahun_ajaran_id')
                     ->label('Tahun Ajaran (Opsional)')

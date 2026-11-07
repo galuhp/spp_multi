@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Kelas\Tables;
 
+use App\Models\ProfilSekolah;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -52,20 +53,7 @@ class KelasTable
                     ->relationship('tahunAjaran', 'nama'),
                 SelectFilter::make('tingkat')
                     ->label('Filter Tingkat')
-                    ->options([
-                        '1' => 'Kelas 1',
-                        '2' => 'Kelas 2',
-                        '3' => 'Kelas 3',
-                        '4' => 'Kelas 4',
-                        '5' => 'Kelas 5',
-                        '6' => 'Kelas 6',
-                        '7' => 'Kelas 7',
-                        '8' => 'Kelas 8',
-                        '9' => 'Kelas 9',
-                        'X' => 'Kelas X',
-                        'XI' => 'Kelas XI',
-                        'XII' => 'Kelas XII',
-                    ]),
+                    ->options(fn (): array => ProfilSekolah::tingkatKelasOptions()),
                 SelectFilter::make('jurusan_id')
                     ->label('Filter Jurusan')
                     ->relationship('jurusan', 'nama'),

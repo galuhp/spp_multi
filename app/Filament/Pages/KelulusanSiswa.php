@@ -86,7 +86,7 @@ class KelulusanSiswa extends Page
                 $query->where('tahun_ajaran_id', $this->tahun_ajaran_id)
                     ->orWhereNull('tahun_ajaran_id');
             })
-            ->whereIn('tingkat', ['12', '13', 'XII', '6', 'VI', '9', 'IX'])
+            ->whereIn('tingkat', \App\Models\ProfilSekolah::tingkatAkhirValues())
             ->orderBy('nama_kelas')
             ->get()
             ->mapWithKeys(fn (Kelas $kelas): array => [

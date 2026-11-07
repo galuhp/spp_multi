@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Spps\Tables;
 
+use App\Models\ProfilSekolah;
 use App\Models\Spp;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -79,7 +80,7 @@ class SppsTable
                     ]),
                 SelectFilter::make('tingkat')
                     ->label('Tingkat')
-                    ->options(Spp::TINGKAT_LIST),
+                    ->options(fn (): array => ProfilSekolah::tingkatSppOptions()),
             ])
             ->recordActions([
                 EditAction::make(),

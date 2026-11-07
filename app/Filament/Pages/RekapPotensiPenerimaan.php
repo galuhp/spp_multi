@@ -169,6 +169,6 @@ class RekapPotensiPenerimaan extends Page
      */
     public function getTingkatListProperty(): array
     {
-        return Spp::TINGKAT_LIST;
+        return \App\Models\ProfilSekolah::tingkatSppOptions();
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Pembayaran;
+use App\Models\ProfilSekolah;
 use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
@@ -62,7 +63,7 @@ class EntriPembayaranKasir extends Page
      */
     public function getTingkatOptionsProperty(): array
     {
-        return ['semua' => 'Semua'] + Spp::TINGKAT_LIST;
+        return ['semua' => 'Semua'] + ProfilSekolah::tingkatSppOptions();
     }
 
     /**

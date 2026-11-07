@@ -106,4 +106,136 @@ class ProfilSekolah extends Model
 
         return implode(', ', $parts);
     }
+
+    public const JENJANG_LIST = [
+        'SD' => 'SD (Kelas 1 – 6)',
+        'MI' => 'MI (Kelas 1 – 6)',
+        'SMP' => 'SMP (Kelas 7 – 9)',
+        'MTs' => 'MTs (Kelas 7 – 9)',
+        'SMA' => 'SMA (Kelas 10 – 12 / X – XII)',
+        'MA' => 'MA (Kelas 10 – 12 / X – XII)',
+        'SMK' => 'SMK (Kelas 10 – 12 / X – XII)',
+        'SEMUA' => 'Semua Jenjang / Terpadu (Kelas 1 – 12)',
+    ];
+
+    /**
+     * Get the normalized school education level (SD, MI, SMP, MTs, SMA, MA, SMK, or SEMUA).
+     */
+    public function normalizedJenjang(): string
+    {
+        $raw = mb_strtoupper(trim((string) $this->jenjang));
+
+        return match ($raw) {
+            'SD', 'SD/MI' => 'SD',
+            'MI' => 'MI',
+            'SMP', 'SMP/MTS' => 'SMP',
+            'MTS' => 'MTs',
+            'SMA', 'SMA/MA' => 'SMA',
+            'MA' => 'MA',
+            'SMK' => 'SMK',
+            'SEMUA', 'TERPADU', 'ALL' => 'SEMUA',
+            default => 'SMK',
+        };
+    }
+
+    /**
+     * Class level options (`KelasForm`, `KelasTable`, `KelasRelationManager`) filtered by the configured school jenjang.
+     *
+     * @return array<string, string>
+     */
+    public static function tingkatKelasOptions(?string $jenjang = null): array
+    {
+        $level = $jenjang !== null
+            ? (new self(['jenjang' => $jenjang]))->normalizedJenjang()
+            : static::current()->normalizedJenjang();
+
+        $sd = [
+            '1' => 'Kelas 1 (I - SD/MI)',
+            '2' => 'Kelas 2 (II - SD/MI)',
+            '3' => 'Kelas 3 (III - SD/MI)',
+            '4' => 'Kelas 4 (IV - SD/MI)',
+            '5' => 'Kelas 5 (V - SD/MI)',
+            '6' => 'Kelas 6 (VI - SD/MI)',
+        ];
+
+        $smp = [
+            '7' => 'Kelas 7 (VII - SMP/MTs)',
+            '8' => 'Kelas 8 (VIII - SMP/MTs)',
+            '9' => 'Kelas 9 (IX - SMP/MTs)',
+        ];
+
+        $smaSmk = [
+            'X' => 'Kelas X (10 - SMA/SMK/MA)',
+            'XI' => 'Kelas XI (11 - SMA/SMK/MA)',
+            'XII' => 'Kelas XII (12 - SMA/SMK/MA)',
+        ];
+
+        return match ($level) {
+            'SD', 'MI' => $sd,
+            'SMP', 'MTs' => $smp,
+            'SMA', 'MA', 'SMK' => $smaSmk,
+            default => $sd + $smp + $smaSmk,
+        };
+    }
+
+    /**
+     * Numeric-keyed level options (`SppForm`, `SppsTable`, `LaporanTunggakan`, `RekapPotensiPenerimaan`, `EntriPembayaranKasir`, `CreatePembayaranGabungan`)
+     * filtered by the configured school jenjang.
+     *
+     * @return array<string, string>
+     */
+    public static function tingkatSppOptions(?string $jenjang = null): array
+    {
+        $level = $jenjang !== null
+            ? (new self(['jenjang' => $jenjang]))->normalizedJenjang()
+            : static::current()->normalizedJenjang();
+
+        $sd = [
+            '1' => 'Kelas 1 (I)',
+            '2' => 'Kelas 2 (II)',
+            '3' => 'Kelas 3 (III)',
+            '4' => 'Kelas 4 (IV)',
+            '5' => 'Kelas 5 (V)',
+            '6' => 'Kelas 6 (VI)',
+        ];
+
+        $smp = [
+            '7' => 'Kelas 7 (VII)',
+            '8' => 'Kelas 8 (VIII)',
+            '9' => 'Kelas 9 (IX)',
+        ];
+
+        $smaSmk = [
+            '10' => 'Kelas X (10)',
+            '11' => 'Kelas XI (11)',
+            '12' => 'Kelas XII (12)',
+        ];
+
+        return match ($level) {
+            'SD', 'MI' => $sd,
+            'SMP', 'MTs' => $smp,
+            'SMA', 'MA', 'SMK' => $smaSmk,
+            default => $sd + $smp + $smaSmk,
+        };
+    }
+
+    /**
+     * Final/graduation grade values (numeric and Roman) for the configured school jenjang.
+     *
+     * @return array<int, string>
+     */
+    public static function tingkatAkhirValues(?string $jenjang = null): array
+    {
+        $level = $jenjang !== null
+            ? (new self(['jenjang' => $jenjang]))->normalizedJenjang()
+            : static::current()->normalizedJenjang();
+
+        return match ($level) {
+            'SD', 'MI' => ['6', 'VI'],
+            'SMP', 'MTs' => ['9', 'IX'],
+            'SMA', 'MA', 'SMK' => ['12', '13', 'XII', 'XIII'],
+            default => ['6', 'VI', '9', 'IX', '12', '13', 'XII', 'XIII'],
+        };
+    }
 }
+

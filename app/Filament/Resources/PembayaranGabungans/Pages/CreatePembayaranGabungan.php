@@ -78,15 +78,11 @@ class CreatePembayaranGabungan extends CreateRecord
     }
 
     /**
-     * @return array<int, string>
+     * @return array<string, string>
      */
     public function getTingkatOptionsProperty(): array
     {
-        return [
-            '10' => 'Kelas X',
-            '11' => 'Kelas XI',
-            '12' => 'Kelas XII',
-        ];
+        return \App\Models\ProfilSekolah::tingkatSppOptions();
     }
 
     /**
@@ -662,12 +658,7 @@ class CreatePembayaranGabungan extends CreateRecord
 
     protected function formatTingkat(?string $tingkat): string
     {
-        return match ($tingkat) {
-            '10' => 'X',
-            '11' => 'XI',
-            '12' => 'XII',
-            default => (string) $tingkat,
-        };
+        return Spp::labelTingkat($tingkat);
     }
 
     /**

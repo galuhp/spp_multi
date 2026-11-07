@@ -7,6 +7,7 @@ use App\Models\ProfilSekolah;
 use App\Models\RolePermission;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -43,7 +44,9 @@ class ProfilSekolahSettings extends Page
     public function mount(): void
     {
         $profil = ProfilSekolah::current();
-        $this->form->fill($profil->toArray());
+        $data = $profil->toArray();
+        $data['jenjang'] = $profil->normalizedJenjang();
+        $this->form->fill($data);
     }
 
     public function form(Schema $schema): Schema
@@ -94,9 +97,10 @@ class ProfilSekolahSettings extends Page
                                     ->label('NPSN')
                                     ->placeholder('Nomor Pokok Sekolah Nasional')
                                     ->required(),
-                                TextInput::make('jenjang')
+                                Select::make('jenjang')
                                     ->label('Jenjang Pendidikan')
-                                    ->placeholder('SMK / SMA / SMP')
+                                    ->options(ProfilSekolah::JENJANG_LIST)
+                                    ->helperText('Menentukan pilihan Tingkat Kelas yang muncul pada form Kelas, Tarif SPP, Kasir, dan Laporan.')
                                     ->required(),
                             ]),
                     ]),

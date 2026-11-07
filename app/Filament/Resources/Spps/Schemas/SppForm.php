@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Spps\Schemas;
 
+use App\Models\ProfilSekolah;
 use App\Models\Spp;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -66,7 +67,7 @@ class SppForm
 
                 Select::make('tingkat')
                     ->label('Tingkat Berlaku')
-                    ->options(Spp::TINGKAT_LIST)
+                    ->options(fn (): array => ProfilSekolah::tingkatSppOptions())
                     ->required(fn (Get $get): bool => $get('kategori') === Spp::KATEGORI_SPP)
                     ->unique(
                         ignoreRecord: true,

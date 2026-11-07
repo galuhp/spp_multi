@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Kelas\Schemas;
 
-use App\Models\TahunAjaran;
+use App\Models\ProfilSekolah;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
@@ -17,20 +17,7 @@ class KelasForm
             ->components([
                 Select::make('tingkat')
                     ->label('Tingkat Kelas')
-                    ->options([
-                        '1' => 'Kelas 1 (I - SD)',
-                        '2' => 'Kelas 2 (II - SD)',
-                        '3' => 'Kelas 3 (III - SD)',
-                        '4' => 'Kelas 4 (IV - SD)',
-                        '5' => 'Kelas 5 (V - SD)',
-                        '6' => 'Kelas 6 (VI - SD)',
-                        '7' => 'Kelas 7 (VII - SMP)',
-                        '8' => 'Kelas 8 (VIII - SMP)',
-                        '9' => 'Kelas 9 (IX - SMP)',
-                        'X' => 'Kelas X (10 - SMA/SMK)',
-                        'XI' => 'Kelas XI (11 - SMA/SMK)',
-                        'XII' => 'Kelas XII (12 - SMA/SMK)',
-                    ])
+                    ->options(fn (): array => ProfilSekolah::tingkatKelasOptions())
                     ->searchable()
                     ->required(),
                 TextInput::make('nama_kelas')
