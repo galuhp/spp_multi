@@ -95,6 +95,10 @@ class AdminPanelProvider extends PanelProvider
                 fn (): View => view('filament.partials.pembayaran-form-scripts'),
             )
             ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): View => view('filament.partials.livewire-session-recovery'),
+            )
+            ->renderHook(
                 PanelsRenderHook::SIDEBAR_START,
                 fn (): View => view('filament.partials.sidebar-toggle-button'),
             )
@@ -112,6 +116,10 @@ class AdminPanelProvider extends PanelProvider
                 'profile' => fn (Action $action): Action => $action->label('Profil Saya'),
                 'logout' => fn (Action $action): Action => $action->label('Keluar'),
             ])
+            // Livewire melaporkan halaman yang kedaluwarsa karena deploy baru (release token
+            // mismatch) sebagai HTTP 419. Biarkan handler Livewire yang menanganinya agar
+            // halaman dimuat ulang otomatis, bukan menampilkan notifikasi error.
+            ->disabledErrorNotification(419)
             ->navigationGroups([
                 'Transaksi SPP',
                 'Laporan',

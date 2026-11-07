@@ -11,6 +11,7 @@ use App\Models\ProfilSekolah;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -74,6 +75,22 @@ class FilamentPanelTest extends TestCase
             ->assertSee('Username atau kata sandi tidak sesuai.');
 
         $this->assertGuest();
+    }
+
+    public function test_halaman_kedaluwarsa_setelah_deploy_memuat_ulang_otomatis(): void
+    {
+        $admin = User::factory()->create([
+            'role' => UserRole::Admin,
+        ]);
+
+        $notifikasi = Filament::getPanel('admin')->getErrorNotifications();
+
+        $this->assertTrue($notifikasi[419]['isDisabled']);
+
+        $this->actingAs($admin)
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('livewire-419-muat-ulang-terakhir', false);
     }
 
     public function test_admin_can_access_dashboard_and_all_resources(): void
