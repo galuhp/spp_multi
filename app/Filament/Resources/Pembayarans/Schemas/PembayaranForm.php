@@ -237,31 +237,54 @@ class PembayaranForm
                                         }
                                     })
                                     ->get()
-                                    ->filter(function (Spp $tarif) use ($siswa, $tanggungan): bool {
-                                        if ($tarif->isBulanan()) {
-                                            return false;
-                                        }
-
+                                    ->reduce(function (array $options, Spp $tarif) use ($siswa, $tanggungan): array {
                                         if ($tanggungan->isPosDitanggung($siswa, $tarif)) {
-                                            return false;
+                                            return $options;
                                         }
 
-                                        $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
+                                        $nominal = (int) $tarif->nominal;
+                                        $pembayarans = $siswa->pembayarans->where('spp_id', $tarif->id);
+                                        $nama = $tarif->nama ?: $tarif->kategori;
 
-                                        return ((int) $tarif->nominal - $dibayar) > 0;
-                                    })
-                                    ->mapWithKeys(function (Spp $tarif) use ($siswa): array {
-                                        $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
-                                        $sisa = max(0, (int) $tarif->nominal - $dibayar);
+                                        if ($tarif->isBulanan()) {
+                                            foreach (Pembayaran::bulanTahunAjaran($tarif->tahunMulai()) as $periode) {
+                                                $bulan = $periode['bulan'];
+                                                $tahun = $periode['tahun'];
 
-                                        return [$tarif->id => "{$tarif->kategori} - {$tarif->nama} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')'];
-                                    })
-                                    ->all();
+                                                if ($tahun < $siswa->tahunMasuk() || ! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+                                                    continue;
+                                                }
+
+                                                $dibayar = (int) $pembayarans
+                                                    ->where('bulan_dibayar', $bulan)
+                                                    ->where('tahun_dibayar', $tahun)
+                                                    ->sum('jumlah_bayar');
+                                                $sisa = max(0, $nominal - $dibayar);
+
+                                                if ($sisa <= 0) {
+                                                    continue;
+                                                }
+
+                                                $options[$tarif->id.'|'.$bulan.'|'.$tahun] = "{$tarif->kategori} - {$nama} — {$bulan} {$tahun} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
+                                            }
+
+                                            return $options;
+                                        }
+
+                                        $dibayar = (int) $pembayarans->sum('jumlah_bayar');
+                                        $sisa = max(0, $nominal - $dibayar);
+
+                                        if ($sisa > 0) {
+                                            $options[$tarif->id] = "{$tarif->kategori} - {$nama} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
+                                        }
+
+                                        return $options;
+                                    }, []);
                             })
                             ->columns(1)
                             ->visible(fn (Get $get): bool => in_array('non_spp', (array) $get('bayar_non_spp'), true))
                             ->required(fn (Get $get): bool => in_array('non_spp', (array) $get('bayar_non_spp'), true))
-                            ->helperText('Centang biaya lain yang akan dibayar. Pos bulanan (mis. Tabungan) dibayar melalui Kasir Cepat agar dapat dipilih per bulan.')
+                            ->helperText('Centang biaya lain yang akan dibayar. Pos bulanan (mis. Tabungan) ditampilkan per bulan.')
                             ->columnSpanFull(),
                     ]),
 

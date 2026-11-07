@@ -18,6 +18,11 @@ use UnitEnum;
 
 class KartuPembayaranSiswa extends Page
 {
+    /**
+     * Sementara dinonaktifkan. Ubah ke true untuk mengaktifkan kembali.
+     */
+    public const AKTIF = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
 
     protected static UnitEnum|string|null $navigationGroup = 'Laporan';
@@ -38,9 +43,18 @@ class KartuPembayaranSiswa extends Page
 
     public static function canAccess(): bool
     {
+        if (! self::AKTIF) {
+            return false;
+        }
+
         $user = auth()->user();
 
         return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::LAPORAN);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return self::AKTIF && parent::shouldRegisterNavigation();
     }
 
     public function mount(): void

@@ -21,6 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 # nilai dari deploy.env tidak mengarah ke folder root release.
 PULL_APP_ROOT="${APP_ROOT:-$SCRIPT_DIR}"
 BRANCH="${BRANCH:-main}"
+PHP_VERSION="${PHP_VERSION:-8.4}"
 PHP_BIN="${PHP_BIN:-php}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
 BUILD_ASSETS="${BUILD_ASSETS:-0}"
@@ -33,6 +34,8 @@ if [ -f "$CONFIG_FILE" ]; then
 fi
 
 APP_ROOT="$PULL_APP_ROOT"
+PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php${PHP_VERSION}-fpm}"
+RELOAD_FPM="${RELOAD_FPM:-1}"
 
 if [ "$(id -u)" -eq 0 ]; then
     echo "Jalankan sebagai user deploy, bukan root." >&2
@@ -95,6 +98,7 @@ echo "==> Cache ulang konfigurasi, route, view, event"
 "$PHP_BIN" artisan route:cache
 "$PHP_BIN" artisan event:cache
 "$PHP_BIN" artisan view:cache
+"$PHP_BIN" artisan filament:optimize-clear || true
 "$PHP_BIN" artisan filament:optimize || true
 
 echo "==> Restart queue worker (jika ada)"
@@ -102,6 +106,11 @@ echo "==> Restart queue worker (jika ada)"
 
 echo "==> Permission cache"
 chmod -R ug+rwX bootstrap/cache
+
+echo "==> Reload PHP-FPM (agar OPcache tidak memakai class lama)"
+if [ "$RELOAD_FPM" = "1" ] && command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl reload "$PHP_FPM_SERVICE" || echo "Gagal reload $PHP_FPM_SERVICE; reload manual jika perlu." >&2
+fi
 
 echo "==> Selesai"
 "$PHP_BIN" artisan up

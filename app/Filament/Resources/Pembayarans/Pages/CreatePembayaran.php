@@ -138,31 +138,55 @@ class CreatePembayaran extends CreateRecord
             }
         }
 
-        $nonSppIds = collect($pilihNonSpp ? ($data['non_spp_ids'] ?? []) : [])
+        $nonSppKeys = collect($pilihNonSpp ? ($data['non_spp_ids'] ?? []) : [])
             ->filter()
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn ($key): string => (string) $key)
             ->unique()
             ->values();
 
-        if ($pilihNonSpp && $nonSppIds->isEmpty()) {
+        if ($pilihNonSpp && $nonSppKeys->isEmpty()) {
             $this->tolak('Pilih minimal satu pos biaya lainnya.');
         }
 
         $validatedNonSpp = [];
 
-        foreach ($nonSppIds as $tarifId) {
-            $tarif = Spp::find($tarifId);
+        foreach ($nonSppKeys as $key) {
+            [$tarifId, $bulan, $tahun] = array_pad(explode('|', $key), 3, null);
+            $tarif = Spp::find((int) $tarifId);
 
             if (! $tarif || $tarif->kategori === Spp::KATEGORI_SPP) {
                 $this->tolak('Pos biaya yang dipilih tidak valid.');
             }
 
-            if ($tarif->isBulanan()) {
-                $this->tolak("Pos {$tarif->kategori} ditagih bulanan. Gunakan Kasir Cepat agar dapat memilih bulan.");
-            }
-
             if ($tanggunganPemerintah->isPosDitanggung($siswa, $tarif)) {
                 $this->tolak("Tagihan {$tarif->kategori} ditanggung pemerintah.");
+            }
+
+            if ($tarif->isBulanan()) {
+                if (! $bulan || ! $tahun) {
+                    $this->tolak('Bulan tagihan bulanan tidak valid.');
+                }
+
+                $tahun = (int) $tahun;
+                $dibayar = (int) $siswa->pembayarans
+                    ->where('spp_id', $tarif->id)
+                    ->where('bulan_dibayar', $bulan)
+                    ->where('tahun_dibayar', $tahun)
+                    ->sum('jumlah_bayar');
+                $sisa = max(0, (int) $tarif->nominal - $dibayar);
+
+                if ($sisa <= 0) {
+                    $this->tolak("Tagihan {$tarif->kategori} bulan {$bulan} {$tahun} sudah lunas.");
+                }
+
+                $validatedNonSpp[] = [
+                    'tarif' => $tarif,
+                    'jumlah' => $sisa,
+                    'bulan' => $bulan,
+                    'tahun' => $tahun,
+                ];
+
+                continue;
             }
 
             $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
@@ -172,7 +196,12 @@ class CreatePembayaran extends CreateRecord
                 $this->tolak("Tagihan {$tarif->kategori} sudah lunas.");
             }
 
-            $validatedNonSpp[] = ['tarif' => $tarif, 'jumlah' => $sisa];
+            $validatedNonSpp[] = [
+                'tarif' => $tarif,
+                'jumlah' => $sisa,
+                'bulan' => null,
+                'tahun' => (int) $tarif->tahun,
+            ];
         }
 
         $created = [];
@@ -202,8 +231,8 @@ class CreatePembayaran extends CreateRecord
                     'siswa_id' => $siswa->id,
                     'spp_id' => $item['tarif']->id,
                     'tgl_bayar' => $data['tgl_bayar'],
-                    'bulan_dibayar' => null,
-                    'tahun_dibayar' => $item['tarif']->tahun,
+                    'bulan_dibayar' => $item['bulan'],
+                    'tahun_dibayar' => $item['tahun'],
                     'jumlah_bayar' => $item['jumlah'],
                     'metode_pembayaran' => $data['metode_pembayaran'],
                     'catatan' => $data['catatan'] ?? null,

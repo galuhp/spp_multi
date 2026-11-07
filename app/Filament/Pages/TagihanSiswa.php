@@ -191,9 +191,11 @@ class TagihanSiswa extends Page
         if (! $siswa) {
             return [
                 'bulanStatus' => [],
+                'matriksBulanan' => [],
                 'totalLunas' => 0,
                 'totalBelumLunas' => 0,
                 'nonSppStatus' => [],
+                'nonSppSekaliBayar' => [],
                 'totalNonSppLunas' => 0,
                 'totalNonSppBelumLunas' => 0,
                 'totalDitanggung' => 0,
@@ -490,17 +492,120 @@ class TagihanSiswa extends Page
 
         $totalBelumLunas += $totalTunggakanPrior;
 
+        $nonSppSekaliBayar = array_values(array_filter(
+            $nonSppStatus,
+            fn (array $item): bool => $item['bulan'] === null,
+        ));
+
         return [
             'bulanStatus' => $bulanStatus,
+            'matriksBulanan' => $this->susunMatriksBulanan($bulanStatus, $nonSppStatus),
             'totalLunas' => $totalLunas,
             'totalBelumLunas' => $totalBelumLunas,
             'tunggakanPrior' => $tunggakanPrior,
             'totalTunggakanPrior' => $totalTunggakanPrior,
             'nonSppStatus' => $nonSppStatus,
+            'nonSppSekaliBayar' => $nonSppSekaliBayar,
             'totalNonSppLunas' => $totalNonSppLunas,
             'totalNonSppBelumLunas' => $totalNonSppBelumLunas,
             'totalDitanggung' => $totalDitanggung,
             'totalNonSppDitanggung' => $totalNonSppDitanggung,
         ];
+    }
+
+    /**
+     * Gabungkan seluruh tarif bulanan (SPP dan pos non-SPP bertipe bulanan) per bulan.
+     *
+     * @param  array<int, array<string, mixed>>  $bulanStatus
+     * @param  array<int, array<string, mixed>>  $nonSppStatus
+     * @return array<int, array<string, mixed>>
+     */
+    protected function susunMatriksBulanan(array $bulanStatus, array $nonSppStatus): array
+    {
+        $matriks = [];
+
+        $urutanBulanan = function (string $bulan, int $tahun): int {
+            $indeks = array_search($bulan, Pembayaran::TAHUN_AJARAN_BULAN_LIST, true);
+            $indeks = $indeks === false ? 0 : $indeks;
+            $tahunAjaran = $indeks >= 6 ? $tahun - 1 : $tahun;
+
+            return ($tahunAjaran * 12) + $indeks;
+        };
+
+        foreach ($bulanStatus as $item) {
+            $kunci = "{$item['bulan']}|{$item['tahun']}";
+
+            $matriks[$kunci] ??= [
+                'bulan' => $item['bulan'],
+                'tahun' => $item['tahun'],
+                'urutan' => $urutanBulanan($item['bulan'], (int) $item['tahun']),
+                'spp' => null,
+                'pos_lain' => [],
+            ];
+
+            $matriks[$kunci]['spp'] = $item;
+        }
+
+        foreach ($nonSppStatus as $item) {
+            if ($item['bulan'] === null) {
+                continue;
+            }
+
+            $kunci = "{$item['bulan']}|{$item['tahun']}";
+
+            $matriks[$kunci] ??= [
+                'bulan' => $item['bulan'],
+                'tahun' => (int) $item['tahun'],
+                'urutan' => $urutanBulanan($item['bulan'], (int) $item['tahun']),
+                'spp' => null,
+                'pos_lain' => [],
+            ];
+
+            $ditanggung = (bool) $item['ditanggung'];
+            $dibayar = (int) $item['dibayar'];
+            $sisa = (int) $item['sisa'];
+
+            $matriks[$kunci]['pos_lain'][] = [
+                'nama' => $item['tarif']->nama ?: $item['tarif']->kategori,
+                'kategori' => $item['tarif']->kategori,
+                'nominal' => (int) $item['nominal'],
+                'dibayar' => $dibayar,
+                'sisa' => $sisa,
+                'status' => $ditanggung ? 'ditanggung' : ($sisa === 0 && $dibayar > 0 ? 'lunas' : ($dibayar > 0 ? 'sebagian' : 'belum')),
+                'lunas' => (bool) $item['lunas'],
+                'ditanggung' => $ditanggung,
+                'pembayaran' => $item['pembayarans']->sortByDesc('id')->first(),
+            ];
+        }
+
+        foreach ($matriks as $kunci => $bulan) {
+            $pos = [];
+
+            if ($bulan['spp'] !== null) {
+                $pos[] = $bulan['spp'];
+            }
+
+            $pos = array_merge($pos, $bulan['pos_lain']);
+
+            $total = array_sum(array_map(fn (array $baris): int => (int) $baris['nominal'], $pos));
+            $totalDibayar = array_sum(array_map(fn (array $baris): int => (int) $baris['dibayar'], $pos));
+            $totalSisa = array_sum(array_map(fn (array $baris): int => (int) $baris['sisa'], $pos));
+            $lunas = array_reduce($pos, fn (bool $bawa, array $baris): bool => $bawa && ($baris['lunas'] || $baris['ditanggung']), true);
+            $ditanggung = array_reduce($pos, fn (bool $bawa, array $baris): bool => $bawa && $baris['ditanggung'], true);
+            $sebagian = ! $lunas && array_reduce($pos, fn (bool $bawa, array $baris): bool => $bawa || $baris['dibayar'] > 0 || $baris['ditanggung'], false);
+
+            $matriks[$kunci]['total'] = $total;
+            $matriks[$kunci]['total_dibayar'] = $totalDibayar;
+            $matriks[$kunci]['total_sisa'] = $totalSisa;
+            $matriks[$kunci]['lunas'] = $lunas;
+            $matriks[$kunci]['ditanggung'] = $ditanggung;
+            $matriks[$kunci]['sebagian'] = $sebagian;
+        }
+
+        $matriks = array_values($matriks);
+
+        usort($matriks, fn (array $a, array $b): int => $a['urutan'] <=> $b['urutan']);
+
+        return $matriks;
     }
 }
