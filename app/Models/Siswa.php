@@ -45,6 +45,16 @@ class Siswa extends Model
             if (filled($siswa->no_telp)) {
                 $siswa->no_telp = \App\Support\ImporSiswa\PembacaNilai::normalisasiHp((string) $siswa->no_telp) ?? trim((string) $siswa->no_telp);
             }
+
+            if ($siswa->kelas_id && (blank($siswa->spp_id) || $siswa->isDirty('kelas_id'))) {
+                $kelas = $siswa->relationLoaded('kelas') ? $siswa->kelas : Kelas::with('tahunAjaran')->find($siswa->kelas_id);
+                if ($kelas) {
+                    $tarif = Spp::untukKelas($kelas);
+                    if ($tarif) {
+                        $siswa->spp_id = $tarif->id;
+                    }
+                }
+            }
         });
 
         static::creating(function (Siswa $siswa): void {

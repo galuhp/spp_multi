@@ -25,6 +25,7 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | 17 | `profil_sekolahs` | Identitas sekolah (nama, NPSN, alamat, kepala sekolah) untuk kop dokumen/laporan |
 | 18 | `role_permissions` | Matriks hak akses menu per role (dashboard, transaksi SPP, portal siswa, kesiswaan, master data, pengaturan akses) |
 | 19 | `log_aktivitas` | Log/audit trail aktivitas pengguna: aksi, subjek yang diubah, deskripsi, data tambahan, dan IP address |
+| 20 | `pengeluaran_sekolahs` | Transaksi pengeluaran operasional dan belanja kas sekolah (nomor bukti otomatis `EXP-...`, tanggal, kategori, keperluan, nominal, penerima, metode, bukti nota, petugas, tahun ajaran) |
 
 ## Tabel Framework (bawaan Laravel)
 
@@ -37,7 +38,7 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | `failed_jobs` | Pekerjaan antrean yang gagal dieksekusi |
 | `migrations` | Catatan migrasi database yang sudah dijalankan |
 
-Total saat ini: **19 tabel aplikasi + 6 tabel framework = 25 tabel**.
+Total saat ini: **20 tabel aplikasi + 6 tabel framework = 26 tabel**.
 
 ---
 
@@ -153,3 +154,34 @@ Catatan:
 - Alokasi Pembayaran Gabungan memakai identitas tagihan per bulan SPP: `spp_id + bulan + tahun`, bukan tabel `tagihan` terpisah.
 - Kelebihan bayar ditolak; sisa tagihan dihitung dari `spps.nominal` dikurangi pembayaran non-void.
 - Tarif non-SPP yang berlaku difilter berdasarkan `tahun` atau `tahun_ajaran` milik tarif SPP siswa.
+
+---
+
+# Rincian Tabel `pengeluaran_sekolahs`
+
+Tabel `pengeluaran_sekolahs` menyimpan **transaksi kas keluar dan belanja operasional sekolah** (ATK, gaji/honor, sarpras, utilitas, konsumsi, dsb.).
+
+- Model: `App\Models\PengeluaranSekolah`
+- Nama tabel: `pengeluaran_sekolahs`
+- Primary key: `id`
+- Timestamps: `created_at`, `updated_at`
+
+## Struktur Kolom
+
+| Kolom | Tipe | Nullable | Default | Keterangan |
+|---|---|---|---|---|
+| `id` | bigint, auto increment | tidak | — | Primary key |
+| `nomor_transaksi` | varchar(40) | tidak | — | Nomor bukti transaksi unik (`EXP-YYYYMMDD-XXXX`) |
+| `tanggal` | date | tidak | — | Tanggal transaksi pengeluaran |
+| `kategori` | varchar(50) | tidak | — | Kategori belanja (Operasional Kantor, Gaji & Honor, ATK & Percetakan, Sarpras, dsb.) |
+| `keperluan` | varchar(255) | tidak | — | Uraian/keperluan belanja |
+| `nominal` | integer unsigned | tidak | — | Nilai pengeluaran dalam Rupiah |
+| `penerima` | varchar(100) | ya | `null` | Nama toko/vendor/pihak penerima dana |
+| `metode_pembayaran` | varchar(30) | tidak | `'Tunai'` | Metode pembayaran (`Tunai`, `Transfer Bank`) |
+| `catatan` | text | ya | `null` | Keterangan/catatan rincian tambahan |
+| `bukti_transaksi` | varchar(255) | ya | `null` | Lokasi berkas unggahan nota/kuitansi/faktur |
+| `user_id` | foreignId (users) | tidak | — | ID petugas/staf yang mencatat transaksi |
+| `tahun_ajaran_id` | foreignId (tahun_ajarans) | ya | `null` | ID tahun ajaran operasional berjalan |
+| `created_at` | datetime | ya | `null` | Waktu dibuat |
+| `updated_at` | datetime | ya | `null` | Waktu diperbarui |
+

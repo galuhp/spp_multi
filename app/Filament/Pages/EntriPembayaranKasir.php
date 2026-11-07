@@ -164,6 +164,19 @@ class EntriPembayaranKasir extends Page
 
         $months = [];
 
+        // Tunggakan SPP tahun-tahun ajaran sebelumnya (riwayat kelas)
+        foreach ($items->where('tipe', 'spp') as $unpaidSpp) {
+            if ($spp && (int) $unpaidSpp['spp_id'] !== (int) $spp->id) {
+                $months[] = [
+                    'key' => $unpaidSpp['key'],
+                    'bulan' => $unpaidSpp['bulan'],
+                    'tahun' => $unpaidSpp['tahun'],
+                    'nominal' => (int) $unpaidSpp['sisa'],
+                    'status' => 'tunggakan',
+                ];
+            }
+        }
+
         if ($spp?->isBulanan()) {
             foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $index => $periode) {
                 $key = "spp:{$spp->id}:{$periode['bulan']}:{$periode['tahun']}";

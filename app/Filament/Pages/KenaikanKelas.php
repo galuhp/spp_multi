@@ -222,12 +222,13 @@ class KenaikanKelas extends Page
                     ->all(),
             );
 
-        return $siswaList->map(function ($siswa) use ($defaultId, $tingkatAkhir, $sudahAdaIds): array {
+        return $siswaList->map(function ($siswa) use ($defaultId, $tingkatAkhir, $sudahAdaIds, $service): array {
             return [
                 'siswa' => $siswa,
                 'sudah_ada' => isset($sudahAdaIds[$siswa->id]),
                 'tingkat_akhir' => $tingkatAkhir,
                 'default_kelas_id' => $defaultId,
+                'tunggakan' => $service->tunggakan($siswa, $this->tahun_ajaran_asal_id),
             ];
         });
     }

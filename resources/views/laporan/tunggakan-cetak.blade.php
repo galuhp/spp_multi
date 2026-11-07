@@ -41,6 +41,7 @@
         $siswa = $laporan['siswa'];
         $tahunAjaran = $laporan['tahun_ajaran'];
         $bulan = collect($laporan['bulan']);
+        $isPerKelas = (($filters['mode'] ?? '') === 'per_kelas') || filled($filters['kelas_id'] ?? null);
         $perHalaman = 18;
         $halamanData = $siswa->isEmpty() ? collect([collect()]) : $siswa->chunk($perHalaman);
         $totalHalaman = 1 + $halamanData->count() + 1;
@@ -50,6 +51,7 @@
             'tanpa_tarif' => 'Tanpa Tarif',
             'semua' => 'Semua Siswa',
         ][$filters['status'] ?? 'semua'] ?? 'Semua Siswa';
+        $grupKelas = $siswa->groupBy(fn ($item) => (string) ($item['kelas']->id ?? '0'));
     @endphp
 
     <div class="no-print max-w-6xl mx-auto mb-4 flex items-center justify-between">
@@ -62,7 +64,135 @@
         </button>
     </div>
 
-    <!-- Ringkasan -->
+    @if ($isPerKelas)
+        {{-- ==================== CETAK PER KELAS ==================== --}}
+        @forelse ($grupKelas as $kelasId => $siswaKelasList)
+            @php
+                $kelasObj = $siswaKelasList->first()['kelas'] ?? null;
+                $namaKelas = $kelasObj ? $kelasObj->nama_kelas : 'Tanpa Kelas';
+                $jurusanKelas = $kelasObj?->jurusan?->nama ? ' — ' . $kelasObj->jurusan->nama : '';
+                $totalTunggakanSppKelas = $siswaKelasList->sum('tunggakan_spp');
+                $totalTunggakanNonSppKelas = $siswaKelasList->sum('tunggakan_non_spp');
+                $totalTunggakanKelas = $siswaKelasList->sum('tunggakan');
+                $jumlahMenunggakKelas = $siswaKelasList->filter(fn ($s) => $s['tunggakan'] > 0)->count();
+            @endphp
+            <section class="report-page max-w-6xl mx-auto mb-6 bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-zinc-200">
+                <div class="mb-3 flex items-center gap-3 border-b border-zinc-400 pb-2">
+                    @if ($sekolah->logoUrl())
+                        <img src="{{ $sekolah->logoUrl() }}" alt="Logo {{ $sekolah->nama_sekolah }}" class="h-9 w-9 shrink-0 object-contain">
+                    @endif
+                    <div class="min-w-0">
+                        <h1 class="text-sm font-bold uppercase leading-tight tracking-wide">
+                            {{ $sekolah->nama_sekolah }}{{ $sekolah->kota ? ' — ' . strtoupper($sekolah->kota) : '' }}
+                        </h1>
+                        <p class="text-[10px] leading-tight text-zinc-600">
+                            {{ $sekolah->alamatLengkap() }} &bull; Telp. {{ $sekolah->no_telp }} &bull; Email: {{ $sekolah->email }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mb-3 text-center">
+                    <h2 class="text-sm font-bold uppercase underline">DAFTAR TUNGGAKAN SISWA PER KELAS</h2>
+                    <div class="mt-0.5 text-[11px] font-semibold text-zinc-900">
+                        KELAS: {{ strtoupper($namaKelas) }}{{ strtoupper($jurusanKelas) }}
+                    </div>
+                    <div class="mt-0.5 text-[10px] text-zinc-700">
+                        <span>Tahun Pelajaran: <strong>{{ $tahunAjaran?->nama ?? '-' }}</strong></span>
+                        @if($bulan->isNotEmpty())
+                            <span class="ml-3">&bull; Periode SPP: <strong>{{ $bulan->first()['bulan'] }} {{ $bulan->first()['tahun'] }} s/d {{ $bulan->last()['bulan'] }} {{ $bulan->last()['tahun'] }}</strong></span>
+                        @endif
+                        <span class="ml-3">&bull; Status: <strong>{{ $statusLabel }}</strong></span>
+                        <span class="ml-3">&bull; Menunggak: <strong>{{ $jumlahMenunggakKelas }} dari {{ $siswaKelasList->count() }} siswa</strong></span>
+                    </div>
+                </div>
+
+                <table class="w-full text-left border-collapse text-[10px] border border-zinc-300">
+                    <thead>
+                        <tr class="bg-zinc-100 border-b border-zinc-300 font-bold uppercase text-zinc-800">
+                            <th class="py-1.5 px-2 border-r border-zinc-300 w-8 text-center">No</th>
+                            <th class="py-1.5 px-2 border-r border-zinc-300">NISN</th>
+                            <th class="py-1.5 px-2 border-r border-zinc-300">Nama Siswa</th>
+                            <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Tarif SPP</th>
+                            <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Tunggakan SPP</th>
+                            <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Tunggakan Non-SPP</th>
+                            <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Total Tunggakan</th>
+                            <th class="py-1.5 px-2 border-r border-zinc-300">Bulan SPP Menunggak</th>
+                            <th class="py-1.5 px-2">Pos Non-SPP</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200">
+                        @forelse ($siswaKelasList as $item)
+                            <tr class="{{ $item['tunggakan'] > 0 ? '' : 'bg-zinc-50/50' }}">
+                                <td class="py-1.5 px-2 border-r border-zinc-200 text-center">{{ $loop->iteration }}</td>
+                                <td class="py-1.5 px-2 border-r border-zinc-200 font-mono whitespace-nowrap">{{ $item['siswa']->nisn ?: '-' }}</td>
+                                <td class="py-1.5 px-2 border-r border-zinc-200 font-semibold">{{ $item['siswa']->nama }}</td>
+                                <td class="py-1.5 px-2 border-r border-zinc-200 text-right whitespace-nowrap">
+                                    {{ $item['nominal'] > 0 ? 'Rp '.number_format($item['nominal'], 0, ',', '.') : '-' }}
+                                </td>
+                                <td class="py-1.5 px-2 border-r border-zinc-200 text-right whitespace-nowrap">
+                                    {{ $item['tunggakan_spp'] > 0 ? 'Rp '.number_format($item['tunggakan_spp'], 0, ',', '.') : '-' }}
+                                </td>
+                                <td class="py-1.5 px-2 border-r border-zinc-200 text-right whitespace-nowrap">
+                                    {{ $item['tunggakan_non_spp'] > 0 ? 'Rp '.number_format($item['tunggakan_non_spp'], 0, ',', '.') : '-' }}
+                                </td>
+                                <td class="py-1.5 px-2 border-r border-zinc-200 text-right font-bold whitespace-nowrap {{ $item['tunggakan'] > 0 ? 'text-rose-700' : 'text-emerald-700' }}">
+                                    {{ $item['tunggakan'] > 0 ? 'Rp '.number_format($item['tunggakan'], 0, ',', '.') : 'LUNAS' }}
+                                </td>
+                                <td class="py-1.5 px-2 border-r border-zinc-200 text-[9px]">
+                                    {{ $item['bulan_tertunggak'] === [] ? '-' : implode(', ', $item['bulan_tertunggak']) }}
+                                </td>
+                                <td class="py-1.5 px-2 text-[9px]">
+                                    {{ $item['pos_non_spp_tertunggak'] === [] ? '-' : implode(', ', $item['pos_non_spp_tertunggak']) }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="py-6 text-center text-zinc-400">Tidak ada data siswa untuk kelas ini.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot>
+                        <tr class="border-t-2 border-black font-bold bg-zinc-50 text-[10px]">
+                            <td colspan="4" class="py-1.5 px-3 border-r border-zinc-300 text-right uppercase">Total Tunggakan Kelas {{ $namaKelas }}:</td>
+                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap">{{ 'Rp '.number_format($totalTunggakanSppKelas, 0, ',', '.') }}</td>
+                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap">{{ 'Rp '.number_format($totalTunggakanNonSppKelas, 0, ',', '.') }}</td>
+                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap font-bold text-rose-700">{{ 'Rp '.number_format($totalTunggakanKelas, 0, ',', '.') }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="mt-10 grid grid-cols-2 gap-10 text-center text-xs">
+                    <div>
+                        <p class="text-zinc-600 mb-16">
+                            Mengetahui,<br>
+                            <strong>Wali Kelas {{ $namaKelas }}</strong>
+                        </p>
+                        <p class="font-bold underline text-xs">( .................................................... )</p>
+                        <p class="text-[10px] text-zinc-500">NIP / ID: .......................................</p>
+                    </div>
+                    <div>
+                        <p class="text-zinc-600 mb-16">
+                            {{ $sekolah->kota ?? 'Bandung' }}, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+                            <strong>Bendahara / Petugas Keuangan</strong>
+                        </p>
+                        <p class="font-bold underline text-xs">{{ auth()->user()->name }}</p>
+                        <p class="text-[10px] text-zinc-500">NIP / ID: {{ auth()->user()->username }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex items-center justify-between border-t border-zinc-200 pt-1.5 text-[9px] text-zinc-500">
+                    <span>{{ $sekolah->nama_sekolah }} — Daftar Tunggakan Kelas {{ $namaKelas }}</span>
+                    <span>Dicetak pada {{ now()->translatedFormat('d/m/Y H:i') }}</span>
+                </div>
+            </section>
+        @empty
+            <div class="max-w-6xl mx-auto bg-white p-8 rounded-xl text-center text-zinc-500 border border-zinc-200">
+                Tidak ada data tunggakan untuk filter yang dipilih.
+            </div>
+        @endforelse
+    @else
+        {{-- ==================== CETAK REKAP LAPORAN LENGKAP ==================== --}}
     <section class="report-page max-w-6xl mx-auto mb-6 bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-zinc-200">
         <div class="mb-3 flex items-center gap-3 border-b border-zinc-400 pb-2">
             @if ($sekolah->logoUrl())
@@ -344,5 +474,6 @@
             <span>Halaman {{ $totalHalaman }} dari {{ $totalHalaman }}</span>
         </div>
     </section>
+    @endif
 </body>
 </html>

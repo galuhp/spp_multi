@@ -89,9 +89,13 @@
                             Seluruh siswa aktif otomatis terisi dengan kelas tujuan batch di atas. Anda tetap dapat mengubah status atau kelas tujuan secara manual per siswa.
                         </p>
                     </div>
+                    @php
+                        $totalTunggakanSiswa = $siswaList->sum(fn ($b) => $b['tunggakan']['nominal'] ?? 0);
+                    @endphp
                     <div class="flex flex-wrap gap-2 text-xs tabular-nums">
                         <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Naik: {{ $jumlahNaik }}</span>
                         <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">Tinggal: {{ $jumlahTinggal }}</span>
+                        <span class="rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300">Total Tunggakan: Rp {{ number_format($totalTunggakanSiswa, 0, ',', '.') }}</span>
                     </div>
                 </div>
 
@@ -101,6 +105,7 @@
                             <tr>
                                 <th class="px-3 py-2">NISN</th>
                                 <th class="px-3 py-2">Nama</th>
+                                <th class="px-3 py-2">Tunggakan SPP</th>
                                 <th class="px-3 py-2">Status</th>
                                 <th class="px-3 py-2">Kelas Tujuan</th>
                                 <th class="px-3 py-2">Catatan</th>
@@ -108,10 +113,24 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-gray-800">
                             @foreach ($siswaList as $baris)
-                                @php $siswa = $baris['siswa']; @endphp
+                                @php
+                                    $siswa = $baris['siswa'];
+                                    $tunggakan = $baris['tunggakan'] ?? ['jumlah_bulan' => 0, 'nominal' => 0];
+                                @endphp
                                 <tr wire:key="siswa-{{ $siswa->id }}">
                                     <td class="px-3 py-2 font-mono text-xs text-slate-500 dark:text-gray-400">{{ $siswa->nisn ?: '-' }}</td>
                                     <td class="px-3 py-2 font-medium text-slate-900 dark:text-white">{{ $siswa->nama }}</td>
+                                    <td class="px-3 py-2 text-xs tabular-nums">
+                                        @if (($tunggakan['jumlah_bulan'] ?? 0) > 0)
+                                            <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">
+                                                {{ $tunggakan['jumlah_bulan'] }} bln &bull; Rp {{ number_format($tunggakan['nominal'], 0, ',', '.') }}
+                                            </span>
+                                        @else
+                                            <span class="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300">
+                                                Lunas
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-3 py-2">
                                         <select wire:model.live="keputusan.{{ $siswa->id }}.status"
                                             class="w-32 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">

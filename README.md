@@ -7,14 +7,15 @@ Aplikasi web manajemen pembayaran SPP (Sumbangan Pembinaan Pendidikan) dan biaya
 | Modul | Deskripsi |
 |---|---|
 | **Data Master & Siklus Ajaran** | CRUD Tahun Ajaran, Kompetensi Keahlian (Jurusan), **Master Kelas Lintas Tahun Ajaran** (Tingkat 1–12 / I–XII), dan Siswa (dilengkapi **Tahun Masuk / Angkatan**, pencarian, filter kelas, impor Excel staging, & opsi buat akun portal otomatis) |
-| **Tarif SPP & Biaya Non-SPP** | Tarif SPP bulanan per Tahun Ajaran & Tingkat, serta biaya sekali bayar/cicilan (Uang Gedung, Seragam, Praktik, Ujian, atau kategori kustom) |
-| **Kenaikan Kelas & Kelulusan** | Kenaikan kelas massal dengan **Kelas Tujuan Batch** otomatis (mendukung pola SMK sejurusan maupun SD/SMP lintas nama kelas), sinkronisasi tarif SPP tahun ajaran baru, pencatatan jejak `riwayat_kelas` (`kelas_id` & `spp_id` per tahun ajaran), fitur *Rollback Batch*, dan pengarsipan kelulusan |
-| **Transaksi & Loket Kasir Cepat** | Loket Kasir Cepat (*POS Style*) & Form Standar, visualisasi kartu 12 bulan (Juli–Juni), multi-bulan & multi-pos dalam 1 kuitansi, cicilan, serta pencegahan pembayaran ganda |
+| **Tarif SPP & Biaya Non-SPP** | Tarif SPP bulanan per Tahun Ajaran & Tingkat, penetapan otomatis tarif baku tingkat rombel, serta biaya sekali bayar/cicilan (Uang Gedung, Seragam, Praktik, Ujian, atau kategori kustom) |
+| **Kenaikan Kelas & Kelulusan** | Kenaikan kelas massal dengan **Kelas Tujuan Batch** otomatis (mendukung pola SMK sejurusan maupun SD/SMP lintas nama kelas), **retensi tunggakan historis lintas tahun ajaran**, sinkronisasi tarif SPP tahun ajaran baru, pencatatan jejak `riwayat_kelas` (`kelas_id` & `spp_id` per tahun ajaran), fitur *Rollback Batch*, dan pengarsipan kelulusan |
+| **Transaksi & Loket Kasir Cepat** | Loket Kasir Cepat (*POS Style*) & Form Standar, visualisasi kartu 12 bulan (Juli–Juni), pelunasan tunggakan tahun ajaran sebelumnya, multi-bulan & multi-pos dalam 1 kuitansi, cicilan, serta pencegahan pembayaran ganda |
+| **Pengeluaran Operasional Sekolah** | Pencatatan transaksi belanja kas operasional sekolah (ATK, Sarpras, Gaji/Honor, Utilitas, Konsumsi, dsb.), nomor bukti otomatis `EXP-YYYYMMDD-XXXX`, unggah nota/faktur, dan cetak Bukti Pengeluaran Kas resmi |
 | **Pembayaran Gabungan / Kolektif** | Setoran kolektif satu kelas (modal pilih bulan SPP **dikelompokkan per Tahun Kalender / Semester** dengan banner info Tahun Ajaran, serta **otomatis menyembunyikan bulan yang sudah lunas** pada seluruh siswa terpilih) dan impor rekonsiliasi transfer bank (`.xlsx`) |
 | **Kuitansi & Verifikasi QR Code** | Cetak kuitansi resmi ber-terbilang Rupiah otomatis & QR Code ber-token HMAC-SHA256 untuk verifikasi publik anti-palsu, serta pembatalan transaksi (*Void*) aman audit |
 | **Tanggungan Pemerintah / Beasiswa** | Penandaan siswa penerima bantuan pemerintah (SPP penuh atau pos biaya tertentu) beserta periode berlaku & proteksi tagihan otomatis |
-| **Laporan & Buku Besar Siswa** | Laporan Penerimaan, Laporan Tunggakan, Rekap Potensi vs Realisasi, Kartu Pembayaran Siswa (*Student Ledger*), dan Laporan Siswa Ditanggung Pemerintah |
-| **Portal Mandiri Siswa** | Siswa/orang tua memantau kartu SPP 12 bulan, rincian biaya non-SPP, riwayat transaksi, dan mencetak ulang kuitansi |
+| **Laporan & Buku Besar Siswa** | Laporan Penerimaan, Laporan Tunggakan & **Cetak Tunggakan per Kelas** (lembar distribusi Wali Kelas ber-page-break), Rekap Potensi vs Realisasi, Kartu Pembayaran Siswa (*Student Ledger*), dan Laporan Siswa Ditanggung Pemerintah |
+| **Portal Mandiri Siswa** | Siswa/orang tua memantau kartu SPP 12 bulan, deteksi tunggakan tahun ajaran sebelumnya, rincian biaya non-SPP, riwayat transaksi, dan mencetak ulang kuitansi |
 | **Pengguna, Role & Lisensi Paket** | Tiga peran (`admin`, `petugas`, `siswa`), Login Google OAuth, matriks izin modul (`role_permissions`), Log Aktivitas, serta sistem **Segmentasi Paket `basic` & `pro`** |
 
 ## Hak Akses
@@ -25,8 +26,9 @@ Aplikasi web manajemen pembayaran SPP (Sumbangan Pembinaan Pendidikan) dan biaya
 | Jurusan, Kelas, Tarif SPP, Tahun Ajaran, Pengguna, Role | ✓ | ✗ | ✗ |
 | Data Siswa, Kenaikan Kelas, Kelulusan | ✓ | ✓* | ✗ |
 | Entri Pembayaran, Kasir Cepat, Pembayaran Gabungan & Kuitansi | ✓ | ✓ | ✗ |
+| Pengeluaran Operasional Sekolah & Cetak Voucher | ✓ | ✓ | ✗ |
 | Void Transaksi | ✓ | ✗ | ✗ |
-| Laporan & Rekapitulasi | ✓ | ✓ | ✗ |
+| Laporan & Rekapitulasi (termasuk Cetak per Kelas) | ✓ | ✓ | ✗ |
 | Tagihan & Riwayat Pribadi (Portal Siswa) | ✗ | ✗ | ✓ |
 
 *\*Hak akses tiap modul dapat dikustomisasi secara dinamis melalui menu **Manajemen Role** (`role_permissions`).*

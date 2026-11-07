@@ -40,6 +40,13 @@ Dokumen ini merangkum seluruh fitur utama **Aplikasi E-SPP Sekolah** dengan baha
    - Transaksi salah input tidak dihapus dari database melainkan di-*void* oleh Administrator dengan **wajib mengisi alasan pembatalan**.
    - Nomor kuitansi tetap tersimpan dalam urutan dan tercatat di riwayat audit serta Kartu Pembayaran Siswa.
 
+5. **Transaksi Pengeluaran Operasional Sekolah (Kas Keluar)**
+   - **Pencatatan Belanja Sekolah Lengkap**: Mencatat seluruh pengeluaran kas operasional (Operasional Kantor, Gaji & Honor Guru/Staf, ATK & Percetakan, Sarana & Prasarana, Kegiatan Pembelajaran/Siswa, Utilitas Listrik/Air/Internet, Pemeliharaan & Kebersihan, Konsumsi, dsb.).
+   - **Penomoran Voucher Otomatis**: Setiap transaksi pengeluaran mendapatkan kode bukti unik otomatis (`EXP-YYYYMMDD-XXXX`).
+   - **Unggah Bukti Transaksi Fisik**: Menyertakan foto/berkas nota, kuitansi, atau faktur pembelian.
+   - **Cetak Bukti Pengeluaran Kas (Kuitansi Keluar)**: Dilengkapi format cetak dokumen resmi ber-kop sekolah dengan tanda tangan Penerima Uang, Bendahara Sekolah, dan mengetahui Kepala Sekolah.
+   - **Filter & Rekapitulasi Real-Time**: Dilengkapi filter berdasarkan kategori, metode pembayaran, tahun ajaran, dan rentang tanggal dengan ringkasan otomatis total nominal pengeluaran.
+
 ---
 
 ## 2. Modul Tanggungan Pemerintah / Beasiswa
@@ -67,6 +74,9 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
    - Buku besar kronologis per siswa dalam satu tahun ajaran yang memuat kolom Debit (tagihan jatuh tempo), Kredit (pembayaran masuk), Saldo berjalan, serta daftar transaksi yang pernah di-*void*.
 5. **Laporan Siswa Ditanggung Pemerintah**
    - Daftar siswa penerima bantuan aktif maupun yang sudah dicabut beserta total nilai nominal tanggungannya.
+6. **Cetak Tunggakan Siswa per Kelas (Distribusi Wali Kelas)**
+   - Mendukung pencetakan daftar tunggakan yang dipisahkan rapi per rombel kelas (*page-break* otomatis untuk setiap kelas atau cetak langsung dari tombol aksi per kelas).
+   - Setiap lembar cetak kelas memuat kop surat sekolah resmi, identitas rombel, tabel siswa menunggak (NISN, Nama, Tarif SPP, Tunggakan SPP, Tunggakan Non-SPP, Total Tunggakan, Bulan Menunggak), subtotal per kelas, serta lembar tanda tangan **Wali Kelas** dan **Bendahara Sekolah**.
 
 ---
 
@@ -76,6 +86,7 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
    - Siswa/orang tua dapat login menggunakan **NISN** untuk melihat status pelunasan setiap bulan dari Juli s.d. Juni secara visual.
 2. **Rincian Tagihan & Biaya Non-SPP**
    - Menampilkan total yang sudah dibayar, sisa kewajiban SPP maupun pos non-SPP, serta penanda bulan yang ditanggung pemerintah.
+   - **Deteksi Tunggakan Tahun Ajaran Lalu**: Jika siswa memiliki tunggakan dari kelas/tahun ajaran sebelumnya, sistem otomatis menampilkan kartu peringatan khusus dengan rincian bulan dan nominal yang wajib dilunasi.
 3. **Riwayat Transaksi & Cetak Ulang Kuitansi Mandiri**
    - Unduh atau cetak ulang kuitansi pembayaran resmi kapan saja dari HP atau komputer rumah.
 
@@ -86,10 +97,12 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
 1. **Data Induk Siswa, Angkatan Masuk & Wali**
    - Pencatatan biodata lengkap (NISN, NIS, NIK, TTL, Agama, Alamat, Tanggal Masuk, **Tahun Masuk / Angkatan**) beserta data Ayah, Ibu, dan Nomor HP Wali.
    - Saat siswa didaftarkan (misal masuk tahun `2026`), sistem otomatis mencatat penempatan kelas awalnya di `riwayat_kelas` untuk tahun ajaran berjalan sehingga masa studi siswa (3 tahun untuk SMP/SMA/SMK atau 6 tahun untuk SD) terekam berkesinambungan.
-2. **Impor Siswa Massal via Excel dengan Area *Staging***
-   - Unggah ribuan data siswa lewat template Excel resmi.
+2. **Impor Siswa Massal via Excel & Penetapan Tarif Baku per Tingkat**
+   - Unggah ribuan data siswa lewat template Excel resmi yang memuat lembar rujukan kelas, kompetensi keahlian, dan tarif SPP per tingkat.
+   - **Tarif Baku per Tingkat**: Seluruh siswa dalam satu tingkat rombel otomatis terkunci mengikuti tarif SPP baku tingkat tersebut (contoh: Tingkat 10/11/12) sehingga tidak terjadi ketidaksesuaian tarif.
    - Dilengkapi pratinjau validasi per baris (*Valid* / *Error* beserta alasan detailnya), opsi timpa data lama, dan ringkasan hasil impor sebelum benar-benar disimpan ke database.
-3. **Kenaikan Kelas Massal (*Batch*) Fleksibel & Riwayat Kelas per Tahun Ajaran**
+3. **Kenaikan Kelas Massal (*Batch*) & Retensi Tunggakan Lintas Tahun Ajaran**
+   - **Retensi Tunggakan Lintas Tahun Ajaran**: Saat siswa naik kelas ke tingkat dan tahun ajaran baru, tunggakan dari tahun-tahun sebelumnya tidak hilang/terhapus, melainkan tetap tersimpan di riwayat dan otomatis muncul pada indikator Kenaikan Kelas, Matriks Tagihan Siswa, Loket Kasir, dan Laporan Tunggakan.
    - **Pilihan Kelas Tujuan Batch Otomatis**: Saat memilih Kelas Asal (misal `IX RPL 1` atau `Kelas 1A`), sistem otomatis menyarankan Kelas Tujuan tingkat berikutnya (`X RPL 1` atau `Kelas 2A`) dan mengisi kolom Kelas Tujuan seluruh siswa secara serentak (*batch*).
    - **Override Manual per Siswa**: Setelah terisi secara *batch*, operator tetap bebas mengubah Kelas Tujuan pada siswa tertentu secara manual di tabel (mendukung **pola SMK** yang jurusannya tetap selama sekolah maupun **pola SD/SMP** yang bisa lintas nama rombel seperti `Kelas 1A` → `Kelas 2B`).
    - **Jejak Riwayat Kelas & Tarif SPP Historis**: Menyimpan `kelas_id` dan `spp_id` per `tahun_ajaran_id` di tabel `riwayat_kelas`, sekaligus memperbarui kelas aktif dan tarif SPP siswa ke Tahun Ajaran tujuan.
@@ -131,9 +144,11 @@ Aplikasi telah dilengkapi sistem *feature gate* bawaan (`SPP_TIER=basic|pro`) un
 | Entri Pembayaran SPP Standar & Cetak Kuitansi | ✓ | ✓ |
 | Laporan Penerimaan & Laporan Tunggakan Dasar | ✓ | ✓ |
 | **Loket Kasir Cepat (*POS Style*)** | — | ✓ |
+| **Transaksi Pengeluaran Operasional Sekolah & Cetak Voucher Kas Keluar** | — | ✓ |
 | **Pembayaran Gabungan / Kolektif Kelas & Rekonsiliasi Bank (Excel)** | — | ✓ |
-| **Impor Siswa Massal via Excel (*Staging Validation*)** | — | ✓ |
-| **Kenaikan Kelas *Batch* & Kelulusan Massal + *Rollback*** | — | ✓ |
+| **Impor Siswa Massal via Excel (*Staging Validation* & Tarif Baku Tingkat)** | — | ✓ |
+| **Kenaikan Kelas *Batch*, Retensi Tunggakan & Kelulusan Massal + *Rollback*** | — | ✓ |
+| **Cetak Tunggakan per Kelas (Lembar Distribusi Wali Kelas)** | — | ✓ |
 | **Tanggungan Pemerintah / Beasiswa & Laporan Beasiswa** | — | ✓ |
 | **Rekap Potensi vs Realisasi Penerimaan & Kartu Pembayaran Siswa (*Ledger*)** | — | ✓ |
 | **Verifikasi QR Code Kuitansi Publik Anti-Palsu (HMAC-SHA256)** | — | ✓ |

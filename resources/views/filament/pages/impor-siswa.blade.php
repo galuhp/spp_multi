@@ -89,6 +89,9 @@
                             <option value="{{ $id }}">{{ $label }}</option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-[11px] text-slate-500 dark:text-gray-400">
+                        Siswa dalam 1 tingkat otomatis mengikuti tarif baku tingkatnya (contoh: Tingkat 10/11/12). Pilihan di atas digunakan sebagai acuan/default.
+                    </p>
                     @error('spp_id')
                         <p class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ $message }}</p>
                     @enderror

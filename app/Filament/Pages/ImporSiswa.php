@@ -82,30 +82,17 @@ class ImporSiswa extends Page
             ? TahunAjaran::query()->find($this->tahun_ajaran_id)
             : null;
 
-        if ($tahunAjaran !== null) {
-            $opsi = Spp::query()
-                ->where('kategori', Spp::KATEGORI_SPP)
-                ->where('tahun_ajaran', $tahunAjaran->nama)
-                ->orderBy('tahun')
-                ->get();
+        $query = Spp::query()
+            ->where('kategori', Spp::KATEGORI_SPP);
 
-            if ($opsi->isNotEmpty()) {
-                return $opsi
-                    ->unique('tahun_ajaran')
-                    ->mapWithKeys(fn (Spp $spp): array => [
-                        $spp->id => "TA {$spp->tahun_ajaran} - {$spp->formattedNominal()}",
-                    ])
-                    ->all();
-            }
+        if ($tahunAjaran !== null) {
+            $query->where('tahun_ajaran', $tahunAjaran->nama);
         }
 
-        return Spp::query()
-            ->where('kategori', Spp::KATEGORI_SPP)
-            ->orderBy('tahun_ajaran')
-            ->get()
-            ->unique('tahun_ajaran')
+        return $query->orderBy('tingkat')->orderBy('tahun_ajaran')->get()
             ->mapWithKeys(fn (Spp $spp): array => [
-                $spp->id => "TA {$spp->tahun_ajaran} - {$spp->formattedNominal()}",
+                $spp->id => ($spp->tingkat ? 'Tingkat '.Spp::labelTingkat($spp->tingkat).' — ' : 'Semua Tingkat — ')
+                    ."TA {$spp->tahun_ajaran} - {$spp->formattedNominal()}",
             ])
             ->all();
     }

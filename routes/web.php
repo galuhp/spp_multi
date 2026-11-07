@@ -70,6 +70,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
         Route::get('/pembayaran/{pembayaran}/cetak', [PembayaranController::class, 'cetak'])->name('pembayaran.cetak');
 
+        // Cetak Bukti Pengeluaran Kas
+        Route::get('/pengeluaran/{pengeluaran}/cetak', [\App\Http\Controllers\PengeluaranController::class, 'cetak'])->name('pengeluaran.cetak');
+
         // Laporan & Rekap Pembayaran
         Route::get('/laporan', [LegacyRedirectController::class, 'laporanIndex'])->name('laporan.index');
         Route::get('/laporan/cetak', [LaporanController::class, 'cetak'])->name('laporan.cetak');

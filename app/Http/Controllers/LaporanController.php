@@ -133,6 +133,7 @@ class LaporanController extends Controller
             'tingkat' => $request->query('tingkat'),
             'status' => (string) $request->query('status', 'menunggak'),
             'urutkan' => (string) $request->query('urutkan', 'kelas'),
+            'mode' => (string) $request->query('mode', ''),
         ];
 
         return view('laporan.tunggakan-cetak', [

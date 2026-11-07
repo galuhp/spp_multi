@@ -94,6 +94,27 @@ class DaftarReferensiSheet implements FromArray, WithColumnWidths, WithStyles, W
         }
 
         $baris[] = ['', '', '', ''];
+        $baris[] = ['TARIF SPP SESUAI TINGKAT (RUJUKAN OTOMATIS)', '', '', ''];
+        $this->barisJudul[] = count($baris);
+        $baris[] = ['Tingkat', 'Tahun Ajaran', 'Nominal SPP', 'Keterangan'];
+
+        $tarifs = \App\Models\Spp::query()
+            ->where('kategori', \App\Models\Spp::KATEGORI_SPP)
+            ->where('tipe', \App\Models\Spp::TIPE_BULANAN)
+            ->orderBy('tahun_ajaran')
+            ->orderBy('tingkat')
+            ->get();
+
+        foreach ($tarifs as $spp) {
+            $baris[] = [
+                $spp->tingkat ? 'Tingkat '.\App\Models\Spp::labelTingkat($spp->tingkat) : 'Semua Tingkat',
+                (string) $spp->tahun_ajaran,
+                'Rp '.number_format((float) $spp->nominal, 0, ',', '.').' / bulan',
+                'Tarif baku tingkat '.$spp->tingkat,
+            ];
+        }
+
+        $baris[] = ['', '', '', ''];
         $baris[] = ['AGAMA', '', '', ''];
         $this->barisJudul[] = count($baris);
         $baris[] = ['Agama', '', '', ''];

@@ -272,10 +272,56 @@ class TagihanSiswa extends Page
             ];
         }
 
+        // Tunggakan tahun ajaran sebelumnya dari riwayat kelas
+        $siswa->loadMissing(['riwayatKelas.spp', 'riwayatKelas.tahunAjaran']);
+        $tunggakanPrior = [];
+        $totalTunggakanPrior = 0;
+
+        foreach ($siswa->riwayatKelas as $riwayat) {
+            $tarifPrior = $riwayat->spp;
+            if (! $tarifPrior || ! $tarifPrior->isBulanan() || (int) $tarifPrior->id === (int) ($siswa->spp?->id ?? 0)) {
+                continue;
+            }
+
+            $tahunMulaiPrior = Pembayaran::tahunMulaiTarif($tarifPrior);
+            $nominalPrior = (int) $tarifPrior->nominal;
+
+            foreach (Pembayaran::bulanTahunAjaran($tahunMulaiPrior) as $periodePrior) {
+                $bPrior = $periodePrior['bulan'];
+                $tPrior = $periodePrior['tahun'];
+
+                if ($tanggunganPemerintah->isSppDitanggung($siswa, $tarifPrior, $bPrior, $tPrior)) {
+                    continue;
+                }
+
+                $dibayarPrior = (int) $riwayatPembayaran
+                    ->where('spp_id', $tarifPrior->id)
+                    ->where('bulan_dibayar', $bPrior)
+                    ->sum('jumlah_bayar');
+
+                $sisaPrior = max(0, $nominalPrior - $dibayarPrior);
+                if ($sisaPrior > 0) {
+                    $totalTunggakanPrior += $sisaPrior;
+                    $tunggakanPrior[] = [
+                        'tahun_ajaran' => $tarifPrior->tahun_ajaran ?: ($riwayat->tahunAjaran?->nama ?? '-'),
+                        'bulan' => $bPrior,
+                        'tahun' => $tPrior,
+                        'nominal' => $nominalPrior,
+                        'dibayar' => $dibayarPrior,
+                        'sisa' => $sisaPrior,
+                    ];
+                }
+            }
+        }
+
+        $totalBelumLunas += $totalTunggakanPrior;
+
         return [
             'bulanStatus' => $bulanStatus,
             'totalLunas' => $totalLunas,
             'totalBelumLunas' => $totalBelumLunas,
+            'tunggakanPrior' => $tunggakanPrior,
+            'totalTunggakanPrior' => $totalTunggakanPrior,
             'nonSppStatus' => $nonSppStatus,
             'totalNonSppLunas' => $totalNonSppLunas,
             'totalNonSppBelumLunas' => $totalNonSppBelumLunas,

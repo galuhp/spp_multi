@@ -173,6 +173,7 @@
                             <th class="px-4 py-3.5 text-right">Total Tagihan</th>
                             <th class="px-4 py-3.5 text-right">Total Tunggakan</th>
                             <th class="px-4 py-3.5 text-right">Capaian</th>
+                            <th class="px-4 py-3.5 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -193,6 +194,14 @@
                                 <td class="px-4 py-3 text-right">Rp {{ number_format($kelas['tagihan'], 0, ',', '.') }}</td>
                                 <td class="px-4 py-3 text-right font-semibold text-rose-600 dark:text-rose-400">Rp {{ number_format($kelas['tunggakan'], 0, ',', '.') }}</td>
                                 <td class="px-4 py-3 text-right">{{ number_format($kelas['persentase'], 1, ',', '.') }}%</td>
+                                <td class="px-4 py-3 text-center">
+                                    <a href="{{ route('laporan.tunggakan.cetak', array_filter(['tahun_ajaran_id' => $tahun_ajaran_id, 'kelas_id' => $kelas['kelas']->id, 'status' => $status])) }}"
+                                        target="_blank"
+                                        class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+                                        <x-filament::icon icon="heroicon-o-printer" class="size-3.5" />
+                                        <span>Cetak Kelas</span>
+                                    </a>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

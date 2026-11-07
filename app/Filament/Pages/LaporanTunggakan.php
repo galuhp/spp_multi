@@ -85,8 +85,22 @@ class LaporanTunggakan extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('cetak_per_kelas')
+                ->label('Cetak Semua per Kelas')
+                ->icon(Heroicon::OutlinedDocumentDuplicate)
+                ->color('gray')
+                ->url(fn (): string => route('laporan.tunggakan.cetak', array_filter([
+                    'tahun_ajaran_id' => $this->tahun_ajaran_id,
+                    'kelas_id' => $this->kelas_id,
+                    'tingkat' => $this->tingkat,
+                    'status' => $this->status,
+                    'urutkan' => $this->urutkan,
+                    'mode' => 'per_kelas',
+                ], fn ($nilai): bool => filled($nilai))))
+                ->openUrlInNewTab(),
+
             Action::make('cetak')
-                ->label('Cetak Laporan / PDF')
+                ->label('Cetak Rekap Laporan')
                 ->icon(Heroicon::OutlinedPrinter)
                 ->color('primary')
                 ->url(fn (): string => route('laporan.tunggakan.cetak', array_filter([

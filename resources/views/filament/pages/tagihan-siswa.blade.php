@@ -167,6 +167,49 @@
                 </x-ui.card>
             </div>
 
+            @if(($tagihan['totalTunggakanPrior'] ?? 0) > 0)
+                <div class="rounded-xl border border-rose-300 bg-rose-50/70 p-5 shadow-xs dark:border-rose-500/30 dark:bg-rose-950/30">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex size-2 rounded-full bg-rose-600 animate-pulse"></span>
+                            <h3 class="text-sm font-bold text-rose-900 dark:text-rose-200">
+                                Tunggakan Tahun Pelajaran Sebelumnya (Wajib Dilunasi)
+                            </h3>
+                        </div>
+                        <span class="rounded-md bg-rose-600 px-2.5 py-1 text-xs font-bold text-white tabular-nums">
+                            Total: Rp {{ number_format($tagihan['totalTunggakanPrior'], 0, ',', '.') }}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-xs text-rose-700 dark:text-rose-300">
+                        Siswa masih memiliki tanggungan iuran SPP dari kelas/tahun ajaran sebelumnya yang belum terselesaikan.
+                    </p>
+                    <div class="mt-3 overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="border-b border-rose-200 bg-rose-100/60 font-semibold text-rose-900 dark:border-rose-900 dark:bg-rose-900/40 dark:text-rose-200">
+                                <tr>
+                                    <th class="px-3 py-2">Tahun Ajaran</th>
+                                    <th class="px-3 py-2">Bulan Tagihan</th>
+                                    <th class="px-3 py-2 text-right">Tarif</th>
+                                    <th class="px-3 py-2 text-right">Sudah Dibayar</th>
+                                    <th class="px-3 py-2 text-right">Sisa Tunggakan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-rose-100 bg-white/70 dark:divide-rose-900/50 dark:bg-gray-900/50">
+                                @foreach($tagihan['tunggakanPrior'] as $tp)
+                                    <tr>
+                                        <td class="px-3 py-2 font-medium text-slate-800 dark:text-gray-200">{{ $tp['tahun_ajaran'] }}</td>
+                                        <td class="px-3 py-2 text-slate-700 dark:text-gray-300">{{ $tp['bulan'] }} {{ $tp['tahun'] }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-gray-400">Rp {{ number_format($tp['nominal'], 0, ',', '.') }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums text-emerald-600 dark:text-emerald-400">Rp {{ number_format($tp['dibayar'], 0, ',', '.') }}</td>
+                                        <td class="px-3 py-2 text-right font-bold tabular-nums text-rose-600 dark:text-rose-400">Rp {{ number_format($tp['sisa'], 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
             <!-- Matriks SPP Bulanan -->
             <x-ui.card class="!max-w-none !p-6">
                 <div class="mb-4">

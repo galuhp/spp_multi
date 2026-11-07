@@ -27,10 +27,24 @@ class PembayaranService
     public function tagihanTerbuka(Siswa $siswa): array
     {
         $items = [];
-        $siswa->loadMissing(['spp', 'kelas']);
-        $tarif = $siswa->spp;
+        $siswa->loadMissing(['spp', 'kelas', 'riwayatKelas.spp']);
 
-        if ($tarif) {
+        // Collect all distinct tariffs assigned to the student (historical from riwayat_kelas + current)
+        $daftarTarif = collect();
+        foreach ($siswa->riwayatKelas as $riwayat) {
+            if ($riwayat->spp) {
+                $daftarTarif->push($riwayat->spp);
+            }
+        }
+        if ($siswa->spp) {
+            $daftarTarif->push($siswa->spp);
+        }
+
+        $daftarTarif = $daftarTarif->unique('id')
+            ->sortBy(fn (Spp $t): int => Pembayaran::tahunMulaiTarif($t))
+            ->values();
+
+        foreach ($daftarTarif as $tarif) {
             if ($tarif->isBulanan()) {
                 $tahunMulai = Pembayaran::tahunMulaiTarif($tarif);
 
@@ -44,6 +58,7 @@ class PembayaranService
                     ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
                 $nominal = (int) $tarif->nominal;
+                $isPriorYear = $siswa->spp && (int) $tarif->id !== (int) $siswa->spp->id;
 
                 foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
                     $bulan = $periode['bulan'];
@@ -60,6 +75,10 @@ class PembayaranService
                         continue;
                     }
 
+                    $label = $isPriorYear && $tarif->tahun_ajaran
+                        ? "SPP {$bulan} {$tahun} ({$tarif->tahun_ajaran})"
+                        : "SPP {$bulan} {$tahun}";
+
                     $items[] = [
                         'key' => "spp:{$tarif->id}:{$bulan}:{$tahun}",
                         'spp_id' => $tarif->id,
@@ -68,7 +87,7 @@ class PembayaranService
                         'nominal' => $nominal,
                         'dibayar' => min($dibayar, $nominal),
                         'sisa' => $sisa,
-                        'label' => "SPP {$bulan} {$tahun}",
+                        'label' => $label,
                         'tipe' => 'spp',
                     ];
                 }
