@@ -352,6 +352,21 @@ server {
     access_log /var/log/nginx/spp-access.log;
     error_log /var/log/nginx/spp-error.log;
 
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 256;
+    gzip_types
+        text/plain
+        text/css
+        text/javascript
+        application/javascript
+        application/json
+        application/xml
+        image/svg+xml
+        font/woff2;
+
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
     }
@@ -364,6 +379,13 @@ server {
         fastcgi_param HTTP_X_FORWARDED_PROTO https;
         fastcgi_param HTTP_X_FORWARDED_FOR \$proxy_add_x_forwarded_for;
         fastcgi_read_timeout 300;
+    }
+
+    location ^~ /build/assets/ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+        try_files \$uri =404;
     }
 
     location ~* \.(?:css|js|jpg|jpeg|png|gif|ico|svg|woff2?)$ {
