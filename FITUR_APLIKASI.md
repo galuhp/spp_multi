@@ -25,6 +25,8 @@ Dokumen ini merangkum seluruh fitur utama **Aplikasi E-SPP Sekolah** dengan baha
 
 2. **Pembayaran Gabungan / Kolektif Massal**
    - **Setoran Kolektif per Kelas**: Pilih kelas (berdasarkan Kompetensi Keahlian atau Tingkat), centang banyak siswa sekaligus, lalu pilih bulan SPP **dan/atau** tarif biaya lain (Non-SPP) dalam satu jendela.
+   - **Pengelompokan Bulan SPP per Tahun Kalender & Info Tahun Ajaran**: Di dalam modal pilih tagihan, daftar bulan SPP dikelompokkan rapi per tahun kalender (**Semester Ganjil Juli–Desember** dan **Semester Genap Januari–Juni**) lengkap dengan banner informasi **Tahun Ajaran** di bagian atas.
+   - **Penyaringan Cerdas Bulan Lunas**: Apabila bulan SPP tertentu (misal Juni) **sudah lunas atau ditanggung pemerintah pada seluruh siswa yang dicentang**, maka *checkbox* bulan tersebut otomatis disembunyikan agar kasir fokus pada bulan yang masih memiliki tagihan terbuka.
    - **Impor Rekonsiliasi Transfer Bank (Excel)**: Unggah mutasi/daftar transfer bank via template `.xlsx`; sistem otomatis mencocokkan NIS/NISN dan mengalokasikan ke tagihan tertua (*FIFO*) atau sesuai alokasi manual.
    - **Kontrol Rekonsiliasi Draft → Posting**: Validasi otomatis apakah total uang diterima sama persis dengan total rincian baris siswa sebelum diposting, lengkap dengan unduhan laporan baris error (`.csv`).
    - **Cetak Kuitansi Massal & Lembar Rekap Setoran**: Cetak seluruh kuitansi siswa dalam satu batch sekaligus beserta lembar rekapitulasi kolektifnya.
@@ -79,15 +81,18 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
 
 ---
 
-## 5. Modul Kesiswaan & Siklus Tahun Ajaran
+## 5. Modul Kesiswaan & Siklus Tahun Ajaran Lintas Jenjang (SD / SMP / SMA / SMK)
 
-1. **Data Induk Siswa & Wali**
-   - Pencatatan biodata lengkap (NISN, NIS, NIK, TTL, Agama, Alamat, Tanggal Masuk) beserta data Ayah, Ibu, dan Nomor HP Wali.
+1. **Data Induk Siswa, Angkatan Masuk & Wali**
+   - Pencatatan biodata lengkap (NISN, NIS, NIK, TTL, Agama, Alamat, Tanggal Masuk, **Tahun Masuk / Angkatan**) beserta data Ayah, Ibu, dan Nomor HP Wali.
+   - Saat siswa didaftarkan (misal masuk tahun `2026`), sistem otomatis mencatat penempatan kelas awalnya di `riwayat_kelas` untuk tahun ajaran berjalan sehingga masa studi siswa (3 tahun untuk SMP/SMA/SMK atau 6 tahun untuk SD) terekam berkesinambungan.
 2. **Impor Siswa Massal via Excel dengan Area *Staging***
    - Unggah ribuan data siswa lewat template Excel resmi.
    - Dilengkapi pratinjau validasi per baris (*Valid* / *Error* beserta alasan detailnya), opsi timpa data lama, dan ringkasan hasil impor sebelum benar-benar disimpan ke database.
-3. **Kenaikan Kelas Massal & Riwayat Kelas**
-   - Memindahkan siswa antartingkat (X → XI → XII) pada pergantian tahun ajaran dengan status *Naik Kelas* atau *Tinggal Kelas*, otomatis menyinkronkan tarif SPP tingkat baru, dan menyimpan jejak `riwayat_kelas` agar laporan tahun ajaran lama tetap akurat.
+3. **Kenaikan Kelas Massal (*Batch*) Fleksibel & Riwayat Kelas per Tahun Ajaran**
+   - **Pilihan Kelas Tujuan Batch Otomatis**: Saat memilih Kelas Asal (misal `IX RPL 1` atau `Kelas 1A`), sistem otomatis menyarankan Kelas Tujuan tingkat berikutnya (`X RPL 1` atau `Kelas 2A`) dan mengisi kolom Kelas Tujuan seluruh siswa secara serentak (*batch*).
+   - **Override Manual per Siswa**: Setelah terisi secara *batch*, operator tetap bebas mengubah Kelas Tujuan pada siswa tertentu secara manual di tabel (mendukung **pola SMK** yang jurusannya tetap selama sekolah maupun **pola SD/SMP** yang bisa lintas nama rombel seperti `Kelas 1A` → `Kelas 2B`).
+   - **Jejak Riwayat Kelas & Tarif SPP Historis**: Menyimpan `kelas_id` dan `spp_id` per `tahun_ajaran_id` di tabel `riwayat_kelas`, sekaligus memperbarui kelas aktif dan tarif SPP siswa ke Tahun Ajaran tujuan.
    - Dilengkapi fitur **Batalkan Batch (*Rollback*)** apabila belum ada pembayaran di tahun ajaran baru.
 4. **Kelulusan & Pengarsipan Siswa Kelas Akhir**
    - Meluluskan siswa tingkat akhir secara massal lengkap dengan pengecekan sisa tunggakan, memindahkan ke status arsip, serta fitur koreksi (keluarkan dari arsip dengan alasan tercatat).
@@ -96,9 +101,9 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
 
 ## 6. Modul Master Data & Pengaturan Sekolah
 
-1. **Master Tahun Ajaran** — Pengelolaan periode tahun ajaran aktif dan historis.
-2. **Master Kompetensi Keahlian (Jurusan) & Rombel Kelas** — Pengaturan kode jurusan, tingkat kelas (X/XI/XII), dan kapasitas siswa per rombel.
-3. **Master Tarif SPP per Tingkat & Pos Biaya Non-SPP** — Mendukung tarif SPP berbeda untuk tiap tingkat kelas (X, XI, XII) serta pos biaya sekali bayar/cicilan (Uang Gedung, Seragam, Praktik, Ujian, atau kategori kustom).
+1. **Master Tahun Ajaran** — Pengelolaan periode tahun ajaran aktif dan historis (jadwal lintas tahun kalender Juli–Juni).
+2. **Master Kompetensi Keahlian (Jurusan) & Master Rombel Kelas Lintas Tahun Ajaran** — Kelas (`X RPL 1`, `XI RPL 1`, `IX-A`, `Kelas 1A`, dst. untuk tingkat `1`–`12` / `I`–`XII`) bersifat **Master Rombel lintas tahun ajaran** sehingga tidak perlu membuat ulang kelas yang sama setiap ganti tahun ajaran.
+3. **Master Tarif SPP per Tahun Ajaran & Pos Biaya Non-SPP** — Tagihan mengikuti **Tahun Ajaran**, mendukung tarif SPP per tingkat kelas maupun biaya sekali bayar/cicilan (Uang Gedung, Seragam, Praktik, Ujian, atau kategori kustom).
 4. **Profil & Identitas Sekolah Dinamis** — Pengaturan nama aplikasi, logo sekolah, nama instansi/pemerintah daerah, alamat, kontak, hingga nama & NIP Kepala Sekolah yang otomatis tampil di seluruh kop laporan dan kuitansi.
 
 ---
@@ -113,3 +118,25 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
    - Mencatat setiap aktivitas sensitif (pembuatan/pembatalan pembayaran, perubahan role, kenaikan kelas, impor data) lengkap dengan waktu, nama pelaku, deskripsi, dan alamat IP.
 4. **Performa Tinggi & Siap Produksi**
    - Dibangun di atas Laravel & Filament modern dengan dukungan penuh caching in-memory **Redis**, **PHP OPcache**, serta skrip otomatis untuk *deployment zero-downtime* (`deploy.sh`), *rollback* instan, dan pencadangan terenkripsi (`backup.sh`).
+
+---
+
+## 8. Segmentasi Paket Produk (Basic vs Pro)
+
+Aplikasi telah dilengkapi sistem *feature gate* bawaan (`SPP_TIER=basic|pro`) untuk memudahkan pemasaran dalam dua edisi:
+
+| Fitur / Modul | Paket **Basic** | Paket **Pro** |
+|---|:---:|:---:|
+| Master Data (Tahun Ajaran, Jurusan, Master Kelas Lintas TA, Siswa, Tarif SPP & Non-SPP) | ✓ (Kuota s.d. 200 Siswa Aktif) | ✓ (**Unlimited Siswa**) |
+| Entri Pembayaran SPP Standar & Cetak Kuitansi | ✓ | ✓ |
+| Laporan Penerimaan & Laporan Tunggakan Dasar | ✓ | ✓ |
+| **Loket Kasir Cepat (*POS Style*)** | — | ✓ |
+| **Pembayaran Gabungan / Kolektif Kelas & Rekonsiliasi Bank (Excel)** | — | ✓ |
+| **Impor Siswa Massal via Excel (*Staging Validation*)** | — | ✓ |
+| **Kenaikan Kelas *Batch* & Kelulusan Massal + *Rollback*** | — | ✓ |
+| **Tanggungan Pemerintah / Beasiswa & Laporan Beasiswa** | — | ✓ |
+| **Rekap Potensi vs Realisasi Penerimaan & Kartu Pembayaran Siswa (*Ledger*)** | — | ✓ |
+| **Verifikasi QR Code Kuitansi Publik Anti-Palsu (HMAC-SHA256)** | — | ✓ |
+| **Portal Mandiri Siswa & Orang Tua** | — | ✓ |
+| **Login Google OAuth & Manajemen Matriks Hak Akses + Log Audit** | — | ✓ |
+

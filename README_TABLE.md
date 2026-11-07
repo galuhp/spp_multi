@@ -10,12 +10,12 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | 2 | `password_reset_tokens` | Token permintaan reset password berdasarkan email |
 | 3 | `sessions` | Sesi login aktif (payload sesi, IP address, user agent) |
 | 4 | `jurusans` | Master jurusan/kompetensi keahlian (kode, nama, deskripsi) |
-| 5 | `kelas` | Master kelas per jurusan (tingkat 10/11/12) dengan tahun ajaran berlaku |
+| 5 | `kelas` | Master kelas per jurusan (tingkat 1–12 / I–XII untuk SD, SMP, SMA, SMK); `tahun_ajaran_id` bersifat opsional (lintas tahun ajaran / master rombel) |
 | 6 | `tahun_ajarans` | Master tahun ajaran (nama, tanggal mulai/selesai, penanda ajaran aktif) |
-| 7 | `siswas` | Data induk siswa: identitas (NISN, NIS, NIK), kelahiran, kontak, status, dan arsip/lulus; terhubung ke user login, kelas, dan tarif SPP |
+| 7 | `siswas` | Data induk siswa: identitas (NISN, NIS, NIK), `tahun_masuk` (angkatan), kelahiran, kontak, status, dan arsip/lulus; terhubung ke user login, kelas aktif, dan tarif SPP berjalan |
 | 8 | `wali` | Data orang tua/wali per siswa (nama ayah, ibu, wali, dan nomor HP) |
-| 9 | `riwayat_kelas` | Riwayat penempatan kelas siswa per tahun ajaran, termasuk hasil proses naik kelas/kelulusan (status, batch) |
-| 10 | `spps` | Master tarif dan kategori pembayaran: SPP bulanan per tingkat (X/XI/XII) serta biaya non-SPP (uang gedung, seragam, praktik, ujian) dengan tingkat opsional |
+| 9 | `riwayat_kelas` | Riwayat penempatan kelas (`kelas_id`) dan tarif SPP (`spp_id`) siswa per `tahun_ajaran_id`, termasuk hasil proses naik kelas/kelulusan (status, batch) |
+| 10 | `spps` | Master tarif dan kategori pembayaran per tahun ajaran: SPP bulanan per tingkat (1–12 / I–XII) serta biaya non-SPP (uang gedung, seragam, praktik, ujian) dengan tingkat opsional |
 | 11 | `pembayarans` | Transaksi pembayaran SPP/non-SPP per baris; beberapa baris dapat berbagi satu kode kuitansi (SPP multi-bulan atau gabungan SPP + biaya lain), termasuk relasi ke setoran gabungan dan status void |
 | 12 | `pembayaran_gabungan` | Header setoran gabungan (setoran per kelas, transfer bank, catatan manual) dengan status draft → memproses → diposting → void |
 | 13 | `pembayaran_gabungan_baris` | Rincian tiap baris setoran gabungan: siswa, jumlah, alokasi ke tagihan, validasi, dan peta ke transaksi `pembayarans` |
