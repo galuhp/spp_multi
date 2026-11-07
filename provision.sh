@@ -308,10 +308,10 @@ listen.owner = www-data
 listen.group = www-data
 listen.mode = 0660
 pm = dynamic
-pm.max_children = 5
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
+pm.max_children = 10
+pm.start_servers = 3
+pm.min_spare_servers = 2
+pm.max_spare_servers = 5
 pm.max_requests = 500
 php_admin_value[memory_limit] = 256M
 php_admin_value[upload_max_filesize] = 50M
@@ -323,9 +323,12 @@ EOF
 cat >"/etc/php/${PHP_VERSION}/fpm/conf.d/99-spp.ini" <<'EOF'
 opcache.enable=1
 opcache.memory_consumption=128
+opcache.interned_strings_buffer=16
 opcache.max_accelerated_files=20000
 opcache.validate_timestamps=0
 opcache.revalidate_freq=0
+opcache.jit=1255
+opcache.jit_buffer_size=64M
 expose_php=Off
 EOF
 

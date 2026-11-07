@@ -36,14 +36,24 @@ class RiwayatPembayaranSiswa extends Page
         abort_unless($this->siswa, 404, 'Data siswa untuk akun ini tidak ditemukan.');
     }
 
+    protected ?Siswa $cachedSiswa = null;
+
+    protected bool $siswaResolved = false;
+
     public function getSiswaProperty(): ?Siswa
     {
+        if ($this->siswaResolved) {
+            return $this->cachedSiswa;
+        }
+
         $user = auth()->user();
 
         $siswa = $user?->siswa
             ?? ($user ? Siswa::where('nisn', $user->username)->first() : null);
 
-        return $siswa?->loadMissing(['kelas.jurusan']);
+        $this->siswaResolved = true;
+
+        return $this->cachedSiswa = $siswa?->loadMissing(['kelas.jurusan']);
     }
 
     public function getPembayaransProperty(): LengthAwarePaginator

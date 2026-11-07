@@ -138,13 +138,23 @@ class TagihanSiswa extends Page
             ->get();
     }
 
+    protected ?Siswa $cachedSiswa = null;
+
+    protected ?int $cachedSiswaId = null;
+
     public function getSiswaProperty(): ?Siswa
     {
         if (! $this->selectedSiswaId) {
             return null;
         }
 
-        return Siswa::with(['kelas.jurusan', 'spp'])->find($this->selectedSiswaId);
+        if ($this->cachedSiswaId === $this->selectedSiswaId && $this->cachedSiswa !== null) {
+            return $this->cachedSiswa;
+        }
+
+        $this->cachedSiswaId = $this->selectedSiswaId;
+
+        return $this->cachedSiswa = Siswa::with(['kelas.jurusan', 'spp'])->find($this->selectedSiswaId);
     }
 
     public function getTagihanDataProperty(): array

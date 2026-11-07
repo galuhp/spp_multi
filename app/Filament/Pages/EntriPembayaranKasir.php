@@ -111,13 +111,23 @@ class EntriPembayaranKasir extends Page
         $this->dispatch('focus-cari');
     }
 
+    protected ?Siswa $cachedSiswa = null;
+
+    protected ?int $cachedSiswaId = null;
+
     public function getSiswaProperty(): ?Siswa
     {
         if (! $this->selectedSiswaId) {
             return null;
         }
 
-        return Siswa::query()
+        if ($this->cachedSiswaId === $this->selectedSiswaId && $this->cachedSiswa !== null) {
+            return $this->cachedSiswa;
+        }
+
+        $this->cachedSiswaId = $this->selectedSiswaId;
+
+        return $this->cachedSiswa = Siswa::query()
             ->with(['kelas.jurusan', 'spp', 'pembayarans'])
             ->aktif()
             ->find($this->selectedSiswaId);

@@ -117,6 +117,10 @@ class CreatePembayaranGabungan extends CreateRecord
             ->get();
     }
 
+    protected ?Collection $cachedSiswa = null;
+
+    protected ?int $cachedSiswaKelasId = null;
+
     /**
      * Active students of the selected class, ordered by name.
      *
@@ -128,7 +132,13 @@ class CreatePembayaranGabungan extends CreateRecord
             return collect();
         }
 
-        return Siswa::query()
+        if ($this->cachedSiswa !== null && $this->cachedSiswaKelasId === $this->kelas_id) {
+            return $this->cachedSiswa;
+        }
+
+        $this->cachedSiswaKelasId = $this->kelas_id;
+
+        return $this->cachedSiswa = Siswa::query()
             ->where('kelas_id', $this->kelas_id)
             ->aktif()
             ->orderBy('nama')
@@ -226,6 +236,9 @@ class CreatePembayaranGabungan extends CreateRecord
 
     public function updatedKelasId(): void
     {
+        $this->cachedSiswa = null;
+        $this->cachedSiswaKelasId = null;
+
         $this->siswa_ids = $this->siswa
             ->pluck('id')
             ->map(fn ($id): int => (int) $id)
@@ -239,7 +252,9 @@ class CreatePembayaranGabungan extends CreateRecord
 
     public function updatedSiswaIds(): void
     {
-        $this->hitungTotal();
+        if ($this->modal) {
+            $this->hitungTotal();
+        }
     }
 
     public function updatedBulan(): void
@@ -259,13 +274,15 @@ class CreatePembayaranGabungan extends CreateRecord
             ->map(fn ($id): int => (int) $id)
             ->all();
 
-        $this->hitungTotal();
+        if ($this->modal) {
+            $this->hitungTotal();
+        }
     }
 
     public function kosongkan(): void
     {
         $this->siswa_ids = [];
-        $this->hitungTotal();
+        $this->totalEstimasi = 0;
     }
 
     public function toggleSemua(): void
