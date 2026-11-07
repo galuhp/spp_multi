@@ -9,6 +9,8 @@ use App\Models\Siswa;
 use App\Models\Spp;
 use App\Support\Pembayaran\TanggunganPemerintahService;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
@@ -57,6 +59,28 @@ class TagihanSiswa extends Page
         } else {
             $this->selectedSiswaId = Siswa::query()->tanpaArsip()->orderBy('nama')->value('id');
         }
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('hitungUlangData')
+                ->label('Hitung Ulang & Sinkronkan Data')
+                ->icon(Heroicon::OutlinedArrowPath)
+                ->color('warning')
+                ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
+                ->requiresConfirmation()
+                ->modalHeading('Hitung Ulang & Sinkronkan Data Siswa')
+                ->modalDescription('Tindakan ini akan menghitung ulang tanggal masuk dan tahun masuk seluruh siswa di database agar tunggakan masa lalu dihitung secara akurat.')
+                ->action(function () {
+                    $hasil = Siswa::sinkronkanDataMasuk(true);
+                    Notification::make()
+                        ->title('Sinkronisasi Berhasil')
+                        ->body("Total {$hasil['total']} siswa diperiksa, {$hasil['diperbarui']} data berhasil diperbarui.")
+                        ->success()
+                        ->send();
+                }),
+        ];
     }
 
     public function updatedCaraPilih(): void

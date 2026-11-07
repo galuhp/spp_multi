@@ -313,4 +313,88 @@ class Siswa extends Model
 
         return true;
     }
+
+    /**
+     * Hitung ulang dan sinkronkan tanggal_masuk dan tahun_masuk untuk seluruh siswa yang sudah ada di database.
+     *
+     * @return array{total: int, diperbarui: int}
+     */
+    public static function sinkronkanDataMasuk(bool $force = false): array
+    {
+        $siswas = static::with(['kelas.tahunAjaran', 'riwayatKelas.tahunAjaran', 'spp'])->get();
+        $diperbarui = 0;
+
+        $tahunAktifNama = \Illuminate\Support\Facades\DB::table('tahun_ajarans')
+            ->where('aktif', true)
+            ->value('nama')
+            ?? \Illuminate\Support\Facades\DB::table('tahun_ajarans')->orderByDesc('nama')->value('nama');
+
+        $tahunAktifInt = 2026;
+        if ($tahunAktifNama && preg_match('/^(\d{4})/', $tahunAktifNama, $m)) {
+            $tahunAktifInt = (int) $m[1];
+        }
+
+        foreach ($siswas as $siswa) {
+            $taYear = $tahunAktifInt;
+            if ($siswa->kelas?->tahunAjaran?->nama && preg_match('/^(\d{4})/', $siswa->kelas->tahunAjaran->nama, $m)) {
+                $taYear = (int) $m[1];
+            }
+
+            $tingkatRaw = $siswa->kelas?->tingkat;
+            $tingkat = (int) (Spp::normalisasiTingkat($tingkatRaw) ?? 10);
+            $selisih = 0;
+            if ($tingkat >= 10 && $tingkat <= 13) {
+                $selisih = $tingkat - 10;
+            } elseif ($tingkat >= 7 && $tingkat <= 9) {
+                $selisih = $tingkat - 7;
+            } elseif ($tingkat >= 1 && $tingkat <= 6) {
+                $selisih = $tingkat - 1;
+            }
+
+            $tahunMasukKalkulasi = max(2000, $taYear - $selisih);
+
+            // Cek riwayat kelas paling awal jika ada
+            if ($siswa->riwayatKelas->isNotEmpty()) {
+                $riwayatAwal = $siswa->riwayatKelas
+                    ->sortBy(fn ($r) => $r->tahunAjaran?->tanggal_mulai ?? $r->tahunAjaran?->nama)
+                    ->first();
+
+                if ($riwayatAwal?->tahunAjaran?->nama && preg_match('/^(\d{4})/', $riwayatAwal->tahunAjaran->nama, $m)) {
+                    $tahunAwalRiwayat = (int) $m[1];
+                    if ($tahunAwalRiwayat < $tahunMasukKalkulasi) {
+                        $tahunMasukKalkulasi = $tahunAwalRiwayat;
+                    }
+                }
+            }
+
+            $needsUpdate = false;
+            $tglMasuk = $siswa->tanggal_masuk ? \Carbon\Carbon::parse($siswa->tanggal_masuk)->format('Y-m-d') : null;
+            $thnMasuk = $siswa->tahun_masuk ? (int) $siswa->tahun_masuk : null;
+
+            if ($force || empty($thnMasuk) || $thnMasuk > $taYear || $thnMasuk < 2000) {
+                if ($siswa->tahun_masuk !== $tahunMasukKalkulasi) {
+                    $siswa->tahun_masuk = $tahunMasukKalkulasi;
+                    $needsUpdate = true;
+                }
+            }
+
+            $targetTgl = "{$siswa->tahun_masuk}-07-01";
+            if ($force || empty($tglMasuk)) {
+                if ($tglMasuk !== $targetTgl) {
+                    $siswa->tanggal_masuk = $targetTgl;
+                    $needsUpdate = true;
+                }
+            }
+
+            if ($needsUpdate) {
+                $siswa->saveQuietly();
+                $diperbarui++;
+            }
+        }
+
+        return [
+            'total' => $siswas->count(),
+            'diperbarui' => $diperbarui,
+        ];
+    }
 }
