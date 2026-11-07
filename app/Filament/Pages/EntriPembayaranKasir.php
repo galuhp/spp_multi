@@ -164,9 +164,9 @@ class EntriPembayaranKasir extends Page
 
         $months = [];
 
-        // Tunggakan SPP tahun-tahun ajaran sebelumnya (riwayat kelas)
+        // Tunggakan SPP tahun-tahun ajaran sebelumnya (timeline riwayat kelas)
         foreach ($items->where('tipe', 'spp') as $unpaidSpp) {
-            if ($spp && (int) $unpaidSpp['spp_id'] !== (int) $spp->id) {
+            if ((int) $unpaidSpp['tahun'] < $tahunAjaranSekarang) {
                 $months[] = [
                     'key' => $unpaidSpp['key'],
                     'bulan' => $unpaidSpp['bulan'],
@@ -178,7 +178,7 @@ class EntriPembayaranKasir extends Page
         }
 
         if ($spp?->isBulanan()) {
-            foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $index => $periode) {
+            foreach (Pembayaran::bulanTahunAjaran($tahunAjaranSekarang) as $index => $periode) {
                 $key = "spp:{$spp->id}:{$periode['bulan']}:{$periode['tahun']}";
                 $terbuka = $items->get($key);
 
@@ -186,10 +186,6 @@ class EntriPembayaranKasir extends Page
                     $status = $tanggunganPemerintah->isSppDitanggung($siswa, $spp, $periode['bulan'], $periode['tahun'])
                         ? 'ditanggung'
                         : 'lunas';
-                } elseif ($tahunMulai < $tahunAjaranSekarang) {
-                    $status = 'tunggakan';
-                } elseif ($tahunMulai > $tahunAjaranSekarang) {
-                    $status = 'akan';
                 } elseif ($index < $indexSekarang) {
                     $status = 'tunggakan';
                 } elseif ($index === $indexSekarang) {
@@ -213,23 +209,16 @@ class EntriPembayaranKasir extends Page
             ->whereIn('id', $nonSppItems->pluck('spp_id')->unique()->all())
             ->get()
             ->keyBy('id');
-        $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
 
         $nonSpp = $nonSppItems
-            ->filter(function (array $item) use ($tarifNonSpp, $tingkat): bool {
-                $tarif = $tarifNonSpp->get($item['spp_id']);
-                $tarifTingkat = Spp::normalisasiTingkat($tarif?->tingkat);
-
-                return $tarif !== null
-                    && ($tarifTingkat === null || $tarifTingkat === $tingkat);
-            })
             ->map(function (array $item) use ($tarifNonSpp): array {
                 $tarif = $tarifNonSpp->get($item['spp_id']);
+                $labelTingkat = $tarif?->tingkat ? ' (Kelas ' . Spp::labelTingkat($tarif->tingkat) . ')' : '';
 
                 return [
                     'key' => $item['key'],
-                    'nama' => $tarif?->kategori ?: ($item['label'] ?? 'Biaya Lainnya'),
-                    'deskripsi' => $tarif?->nama ?: 'Sisa tagihan tahun ajaran ini',
+                    'nama' => ($tarif?->nama ?: ($tarif?->kategori ?: 'Biaya Lainnya')) . $labelTingkat,
+                    'deskripsi' => $tarif?->kategori ?: 'Sisa tagihan',
                     'sisa' => (int) $item['sisa'],
                 ];
             })
