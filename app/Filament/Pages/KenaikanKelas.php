@@ -166,6 +166,12 @@ class KenaikanKelas extends Page
                 ->get();
         }
 
+        if ($kelasAsal) {
+            $kandidat = $kandidat->filter(
+                fn (Kelas $kelas): bool => $service->isTingkatTujuanLebihBesar($kelasAsal, $kelas)
+            );
+        }
+
         return $kandidat
             ->sortBy(function (Kelas $kelas) use ($kelasAsal, $service, $tingkatNaik): string {
                 $tingkatNormal = (string) $service->normalisasiTingkat($kelas->tingkat);
@@ -173,6 +179,57 @@ class KenaikanKelas extends Page
                 $prioritasJurusan = ($kelasAsal && $kelasAsal->jurusan_id && (int) $kelas->jurusan_id === (int) $kelasAsal->jurusan_id) ? '0' : '1';
 
                 return "{$prioritasTingkat}-{$prioritasJurusan}-".str_pad($tingkatNormal, 3, '0', STR_PAD_LEFT).'-'.$kelas->nama_kelas;
+            })
+            ->mapWithKeys(fn (Kelas $kelas): array => [
+                $kelas->id => $this->formatLabelKelas($kelas, true),
+            ])
+            ->all();
+    }
+
+    /**
+     * Target classes for students retaining the same level (tinggal kelas).
+     *
+     * @return array<int, string>
+     */
+    public function getKelasTinggalOptionsProperty(): array
+    {
+        if (! $this->tahun_ajaran_tujuan_id || ! $this->isTahunAjaranTujuanValid()) {
+            return [];
+        }
+
+        $kelasAsal = $this->kelas_asal_id ? Kelas::query()->find($this->kelas_asal_id) : null;
+        $service = app(ProsesKelasService::class);
+
+        $kandidat = Kelas::query()
+            ->with('jurusan')
+            ->where(function ($query): void {
+                $query->where('tahun_ajaran_id', $this->tahun_ajaran_tujuan_id)
+                    ->orWhereNull('tahun_ajaran_id');
+            })
+            ->orderBy('tingkat')
+            ->orderBy('nama_kelas')
+            ->get();
+
+        if ($kandidat->isEmpty()) {
+            $kandidat = Kelas::query()
+                ->with('jurusan')
+                ->orderBy('tingkat')
+                ->orderBy('nama_kelas')
+                ->get();
+        }
+
+        if ($kelasAsal) {
+            $tingkatAsal = $service->normalisasiTingkat($kelasAsal->tingkat);
+            $kandidat = $kandidat->filter(
+                fn (Kelas $kelas): bool => $service->normalisasiTingkat($kelas->tingkat) === $tingkatAsal
+            );
+        }
+
+        return $kandidat
+            ->sortBy(function (Kelas $kelas) use ($kelasAsal): string {
+                $prioritasJurusan = ($kelasAsal && $kelasAsal->jurusan_id && (int) $kelas->jurusan_id === (int) $kelasAsal->jurusan_id) ? '0' : '1';
+
+                return "{$prioritasJurusan}-".$kelas->nama_kelas;
             })
             ->mapWithKeys(fn (Kelas $kelas): array => [
                 $kelas->id => $this->formatLabelKelas($kelas, true),
@@ -286,6 +343,19 @@ class KenaikanKelas extends Page
      */
     public function updatedKelasTujuanBatchId(): void
     {
+        if ($this->kelas_tujuan_batch_id && $this->kelas_asal_id) {
+            $kelasAsal = Kelas::query()->find($this->kelas_asal_id);
+            $kelasTujuan = Kelas::query()->find($this->kelas_tujuan_batch_id);
+
+            if ($kelasAsal && $kelasTujuan && ! app(ProsesKelasService::class)->isTingkatTujuanLebihBesar($kelasAsal, $kelasTujuan)) {
+                $this->kelas_tujuan_batch_id = null;
+                $this->galat = 'Tingkatan tujuan harus lebih besar dari tingkatan asal.';
+                Notification::make()->title('Tingkatan tidak valid')->body($this->galat)->danger()->send();
+
+                return;
+            }
+        }
+
         $this->terapkanKelasTujuanBatch();
     }
 
@@ -314,11 +384,29 @@ class KenaikanKelas extends Page
     {
         [$siswaId, $field] = array_pad(explode('.', $key), 2, null);
 
-        if ($field !== 'status' || ! is_numeric($siswaId)) {
+        if (! is_numeric($siswaId)) {
             return;
         }
 
-        $this->sesuaikanKelasTujuan((int) $siswaId, (string) $value);
+        if ($field === 'status') {
+            $this->sesuaikanKelasTujuan((int) $siswaId, (string) $value);
+
+            return;
+        }
+
+        if ($field === 'kelas_tujuan_id' && filled($value) && $this->kelas_asal_id) {
+            $status = $this->keputusan[(int) $siswaId]['status'] ?? RiwayatKelas::STATUS_NAIK;
+            if ($status === RiwayatKelas::STATUS_NAIK) {
+                $kelasAsal = Kelas::query()->find($this->kelas_asal_id);
+                $kelasTujuan = Kelas::query()->find((int) $value);
+
+                if ($kelasAsal && $kelasTujuan && ! app(ProsesKelasService::class)->isTingkatTujuanLebihBesar($kelasAsal, $kelasTujuan)) {
+                    $this->keputusan[(int) $siswaId]['kelas_tujuan_id'] = null;
+                    $this->galat = 'Tingkatan tujuan harus lebih besar dari tingkatan asal.';
+                    Notification::make()->title('Tingkatan tidak valid')->body($this->galat)->danger()->send();
+                }
+            }
+        }
     }
 
     protected function sesuaikanKelasTujuan(int $siswaId, string $status): void
@@ -336,7 +424,12 @@ class KenaikanKelas extends Page
                 ?? $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id)?->id;
 
             if ($targetId) {
-                $this->keputusan[$siswaId]['kelas_tujuan_id'] = (int) $targetId;
+                $targetKelas = Kelas::query()->find($targetId);
+                if ($targetKelas && $service->isTingkatTujuanLebihBesar($kelas, $targetKelas)) {
+                    $this->keputusan[$siswaId]['kelas_tujuan_id'] = (int) $targetId;
+                } else {
+                    $this->keputusan[$siswaId]['kelas_tujuan_id'] = null;
+                }
             }
 
             return;
@@ -373,7 +466,9 @@ class KenaikanKelas extends Page
         }
 
         $default = $service->kelasTujuanDefault($kelas, $this->tahun_ajaran_tujuan_id);
-        $this->kelas_tujuan_batch_id = $default?->id;
+        $this->kelas_tujuan_batch_id = ($default && $service->isTingkatTujuanLebihBesar($kelas, $default))
+            ? $default->id
+            : null;
 
         foreach ($service->siswaKelas($this->kelas_asal_id, $this->tahun_ajaran_asal_id) as $siswa) {
             $this->keputusan[$siswa->id] = [
@@ -406,6 +501,19 @@ class KenaikanKelas extends Page
             Notification::make()->title('Tahun ajaran tidak valid')->body($this->galat)->danger()->send();
 
             return false;
+        }
+
+        $kelasAsal = Kelas::query()->find($this->kelas_asal_id);
+        $service = app(ProsesKelasService::class);
+
+        if ($this->kelas_tujuan_batch_id && $kelasAsal) {
+            $kelasTujuanBatch = Kelas::query()->find($this->kelas_tujuan_batch_id);
+            if ($kelasTujuanBatch && ! $service->isTingkatTujuanLebihBesar($kelasAsal, $kelasTujuanBatch)) {
+                $this->galat = 'Tingkatan tujuan harus lebih besar dari tingkatan asal.';
+                Notification::make()->title('Tingkatan tidak valid')->body($this->galat)->danger()->send();
+
+                return false;
+            }
         }
 
         $siswaList = $this->siswa;
@@ -441,6 +549,19 @@ class KenaikanKelas extends Page
                 Notification::make()->title('Kelas tujuan belum lengkap')->body($this->galat)->danger()->send();
 
                 return false;
+            }
+
+            $status = $this->keputusan[$siswaId]['status'] ?? RiwayatKelas::STATUS_NAIK;
+            $tujuanId = $this->keputusan[$siswaId]['kelas_tujuan_id'] ?? null;
+
+            if ($status === RiwayatKelas::STATUS_NAIK && filled($tujuanId) && $kelasAsal) {
+                $kelasTujuan = Kelas::query()->find((int) $tujuanId);
+                if ($kelasTujuan && ! $service->isTingkatTujuanLebihBesar($kelasAsal, $kelasTujuan)) {
+                    $this->galat = "Tingkatan tujuan untuk {$baris['siswa']->nama} ({$kelasTujuan->tingkat}) harus lebih besar dari tingkatan asal ({$kelasAsal->tingkat}).";
+                    Notification::make()->title('Tingkatan tidak valid')->body($this->galat)->danger()->send();
+
+                    return false;
+                }
             }
         }
 

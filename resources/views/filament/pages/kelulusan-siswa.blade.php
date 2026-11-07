@@ -87,7 +87,7 @@
 
                                 <x-filament::button type="button" size="sm" color="primary" wire:click="eksekusi"
                                     wire:loading.attr="disabled" wire:target="eksekusi"
-                                    @disabled($jumlahPilih === 0)
+                                    :disabled="$jumlahPilih === 0"
                                     wire:confirm="Yakin ingin langsung meluluskan dan mengarsipkan {{ $jumlahPilih }} siswa terpilih?">
                                     <x-filament::icon icon="heroicon-o-check-circle" class="size-4 mr-1 inline" />
                                     <span>Simpan &amp; Proses Kelulusan</span>
@@ -207,7 +207,7 @@
 
                                 <x-filament::button type="button" size="sm" color="primary" wire:click="eksekusi"
                                     wire:loading.attr="disabled" wire:target="eksekusi"
-                                    @disabled($jumlahPilih === 0)
+                                    :disabled="$jumlahPilih === 0"
                                     wire:confirm="Yakin ingin langsung meluluskan dan mengarsipkan {{ $jumlahPilih }} siswa terpilih?">
                                     <x-filament::icon icon="heroicon-o-check-circle" class="size-4 mr-1 inline" />
                                     <span>Simpan &amp; Proses Kelulusan</span>

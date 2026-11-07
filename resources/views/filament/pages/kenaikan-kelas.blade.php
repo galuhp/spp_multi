@@ -6,6 +6,7 @@
     @php
         $siswaList = $this->siswa;
         $kelasTujuanOptions = $this->kelasTujuanOptions;
+        $kelasTinggalOptions = $this->kelasTinggalOptions;
         $jumlahNaik = collect($keputusan)->where('status', 'naik')->count();
         $jumlahTinggal = collect($keputusan)->where('status', 'tinggal')->count();
         $service = app(\App\Support\KenaikanKelas\ProsesKelasService::class);
@@ -167,10 +168,15 @@
                                         </select>
                                     </td>
                                     <td class="px-3 py-2">
+                                        @php
+                                            $opsiKelasBaris = ($keputusan[$siswa->id]['status'] ?? 'naik') === 'tinggal'
+                                                ? $kelasTinggalOptions
+                                                : $kelasTujuanOptions;
+                                        @endphp
                                         <select wire:model.live="keputusan.{{ $siswa->id }}.kelas_tujuan_id"
                                             class="w-64 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                                             <option value="">Pilih kelas tujuan</option>
-                                            @foreach ($kelasTujuanOptions as $id => $label)
+                                            @foreach ($opsiKelasBaris as $id => $label)
                                                 <option value="{{ $id }}">{{ $label }}</option>
                                             @endforeach
                                         </select>

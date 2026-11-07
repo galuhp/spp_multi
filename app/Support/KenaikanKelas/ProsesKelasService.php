@@ -94,6 +94,21 @@ class ProsesKelasService
     }
 
     /**
+     * Check if the target class level is strictly greater than the origin class level.
+     */
+    public function isTingkatTujuanLebihBesar(Kelas $kelasAsal, Kelas $kelasTujuan): bool
+    {
+        $tingkatAsal = $this->normalisasiTingkat($kelasAsal->tingkat);
+        $tingkatTujuan = $this->normalisasiTingkat($kelasTujuan->tingkat);
+
+        if (! is_numeric($tingkatAsal) || ! is_numeric($tingkatTujuan)) {
+            return false;
+        }
+
+        return (int) $tingkatTujuan > (int) $tingkatAsal;
+    }
+
+    /**
      * Determine the default target class for a batch promotion:
      * 1. Prefer candidates at the next level (`tingkatBerikutnya`) with the same `jurusan_id` (SMK/SMA).
      * 2. If none match the same `jurusan_id`, fall back to any class at the next level (SD/SMP cross-class).
@@ -365,22 +380,21 @@ class ProsesKelasService
                 continue;
             }
 
-            $tingkatAsal = $this->normalisasiTingkat($kelasAsal->tingkat);
-            $tingkatTujuan = $this->normalisasiTingkat($kelasTujuan->tingkat);
-            $tingkatDiharapkan = $status === RiwayatKelas::STATUS_NAIK
-                ? $this->tingkatBerikutnya($tingkatAsal)
-                : $tingkatAsal;
+            if ($status === RiwayatKelas::STATUS_NAIK) {
+                if (! $this->isTingkatTujuanLebihBesar($kelasAsal, $kelasTujuan)) {
+                    $dilewati[] = "Tingkatan tujuan {$kelasTujuan->nama_kelas} ({$kelasTujuan->tingkat}) harus lebih besar dari tingkatan asal ({$kelasAsal->tingkat}) untuk {$siswa->nama}.";
 
-            // Untuk tingkat standar (9->10, 10->11, 11->12, 1->2, dst), validasi kesesuaian tingkat bila keduanya numerik standar
-            if (
-                $tingkatDiharapkan !== null
-                && is_numeric($tingkatAsal)
-                && is_numeric($tingkatTujuan)
-                && $tingkatTujuan !== $tingkatDiharapkan
-            ) {
-                $dilewati[] = "Kelas tujuan {$kelasTujuan->nama_kelas} tidak sesuai tingkat untuk {$siswa->nama}.";
+                    continue;
+                }
+            } elseif ($status === RiwayatKelas::STATUS_TINGGAL) {
+                $tingkatAsal = $this->normalisasiTingkat($kelasAsal->tingkat);
+                $tingkatTujuan = $this->normalisasiTingkat($kelasTujuan->tingkat);
 
-                continue;
+                if (is_numeric($tingkatAsal) && is_numeric($tingkatTujuan) && (int) $tingkatTujuan !== (int) $tingkatAsal) {
+                    $dilewati[] = "Kelas tujuan {$kelasTujuan->nama_kelas} tidak sesuai untuk siswa tinggal kelas {$siswa->nama}.";
+
+                    continue;
+                }
             }
 
             if (RiwayatKelas::query()

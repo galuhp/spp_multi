@@ -80,12 +80,16 @@ class ProsesKelasTest extends TestCase
         $kelasTujuan = $this->buatKelas('11', $this->tujuan, 'XI RPL 1');
         $siswa = $this->buatSiswa($kelasAsal);
 
-        RiwayatKelas::query()->create([
-            'siswa_id' => $siswa->id,
-            'kelas_id' => $kelasAsal->id,
-            'tahun_ajaran_id' => $this->asal->id,
-            'status' => RiwayatKelas::STATUS_AKTIF,
-        ]);
+        RiwayatKelas::query()->updateOrCreate(
+            [
+                'siswa_id' => $siswa->id,
+                'tahun_ajaran_id' => $this->asal->id,
+            ],
+            [
+                'kelas_id' => $kelasAsal->id,
+                'status' => RiwayatKelas::STATUS_AKTIF,
+            ]
+        );
 
         $keputusan = [
             $siswa->id => [
@@ -155,19 +159,51 @@ class ProsesKelasTest extends TestCase
 
     public function test_kelulusan_dengan_tunggakan_tetap_diarsipkan_dan_tunggakan_tercatat(): void
     {
+        \Carbon\Carbon::setTestNow('2028-06-30');
         $kelas = $this->buatKelas('12', $this->asal, 'XII RPL 1');
-        $siswa = $this->buatSiswa($kelas);
+        $siswa = $this->buatSiswa($kelas, ['tanggal_masuk' => '2027-07-01']);
 
-        RiwayatKelas::query()->create([
-            'siswa_id' => $siswa->id,
-            'kelas_id' => $kelas->id,
-            'tahun_ajaran_id' => $this->asal->id,
-            'status' => RiwayatKelas::STATUS_AKTIF,
-        ]);
+        RiwayatKelas::query()->updateOrCreate(
+            [
+                'siswa_id' => $siswa->id,
+                'tahun_ajaran_id' => $this->asal->id,
+            ],
+            [
+                'kelas_id' => $kelas->id,
+                'status' => RiwayatKelas::STATUS_AKTIF,
+            ]
+        );
 
         $tunggakan = $this->service->tunggakan($siswa->fresh());
         $this->assertSame(12, $tunggakan['jumlah_bulan']);
         $this->assertSame(3000000, $tunggakan['nominal']);
+
+        // Siswa dengan tunggakan tidak dapat diluluskan
+        $hasilTolak = $this->service->luluskan(
+            $this->asal->id,
+            $kelas->id,
+            [$siswa->id],
+            '2028-06-20',
+            $this->admin->id,
+        );
+        $this->assertSame(0, $hasilTolak['diproses']);
+        $this->assertNotEmpty($hasilTolak['dilewati']);
+
+        // Setelah seluruh tunggakan dilunasi
+        foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bln) {
+            $thn = in_array($bln, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2027 : 2028;
+            Pembayaran::query()->create([
+                'kode_transaksi' => 'SPP-'.uniqid(),
+                'siswa_id' => $siswa->id,
+                'spp_id' => $this->spp->id,
+                'user_id' => $this->admin->id,
+                'jumlah_bayar' => 250000,
+                'bulan_dibayar' => $bln,
+                'tahun_dibayar' => $thn,
+                'tgl_bayar' => '2028-06-19',
+                'metode_pembayaran' => 'Tunai',
+            ]);
+        }
 
         $hasil = $this->service->luluskan(
             $this->asal->id,
@@ -263,12 +299,14 @@ class ProsesKelasTest extends TestCase
 
     public function test_opsi_tahun_ajaran_tujuan_tidak_memuat_tahun_ajaran_asal(): void
     {
-        $tahunSebelumnya = TahunAjaran::query()->create([
-            'nama' => '2026/2027',
-            'tanggal_mulai' => '2026-07-01',
-            'tanggal_selesai' => '2027-06-30',
-            'aktif' => false,
-        ]);
+        $tahunSebelumnya = TahunAjaran::query()->firstOrCreate(
+            ['nama' => '2026/2027'],
+            [
+                'tanggal_mulai' => '2026-07-01',
+                'tanggal_selesai' => '2027-06-30',
+                'aktif' => false,
+            ]
+        );
 
         $component = Livewire::test(KenaikanKelas::class)
             ->set('tahun_ajaran_asal_id', $this->asal->id);
@@ -348,12 +386,16 @@ class ProsesKelasTest extends TestCase
         $kelasTujuan = $this->buatKelas('11', $this->tujuan, 'XI RPL 1');
         $siswa = $this->buatSiswa($kelasAsal);
 
-        RiwayatKelas::query()->create([
-            'siswa_id' => $siswa->id,
-            'kelas_id' => $kelasAsal->id,
-            'tahun_ajaran_id' => $this->asal->id,
-            'status' => RiwayatKelas::STATUS_AKTIF,
-        ]);
+        RiwayatKelas::query()->updateOrCreate(
+            [
+                'siswa_id' => $siswa->id,
+                'tahun_ajaran_id' => $this->asal->id,
+            ],
+            [
+                'kelas_id' => $kelasAsal->id,
+                'status' => RiwayatKelas::STATUS_AKTIF,
+            ]
+        );
 
         $hasil = $this->service->naikKelas(
             $this->asal->id,
@@ -454,20 +496,27 @@ class ProsesKelasTest extends TestCase
 
     public function test_siswa_masuk_2026_kelas_9_naik_ke_kelas_10_di_tahun_depan_dengan_master_kelas(): void
     {
-        $ta2627 = TahunAjaran::query()->create(['nama' => '2026/2027', 'is_active' => false]);
-        $ta2728 = TahunAjaran::query()->create(['nama' => '2027/2028', 'is_active' => true]);
+        TahunAjaran::query()->update(['aktif' => false]);
+        $ta2627 = TahunAjaran::query()->firstOrCreate(['nama' => '2026/2027'], ['aktif' => true]);
+        $ta2627->update(['aktif' => true]);
+        $ta2728 = TahunAjaran::query()->firstOrCreate(['nama' => '2027/2028'], ['aktif' => false]);
+        $ta2728->update(['aktif' => false]);
 
         $spp2627 = Spp::query()->create([
+            'nama' => 'SPP',
+            'tipe' => Spp::TIPE_BULANAN,
             'tahun_ajaran' => '2026/2027',
-            'tingkat' => 'IX',
+            'tingkat' => '9',
             'kategori' => Spp::KATEGORI_SPP,
             'tahun' => 2026,
             'nominal' => 250000,
         ]);
 
         $spp2728 = Spp::query()->create([
+            'nama' => 'SPP',
+            'tipe' => Spp::TIPE_BULANAN,
             'tahun_ajaran' => '2027/2028',
-            'tingkat' => 'X',
+            'tingkat' => '10',
             'kategori' => Spp::KATEGORI_SPP,
             'tahun' => 2027,
             'nominal' => 300000,
@@ -500,6 +549,18 @@ class ProsesKelasTest extends TestCase
             'status' => 'aktif',
         ]);
 
+        RiwayatKelas::query()->updateOrCreate(
+            [
+                'siswa_id' => $siswaA->id,
+                'tahun_ajaran_id' => $ta2627->id,
+            ],
+            [
+                'kelas_id' => $kelas9->id,
+                'spp_id' => $spp2627->id,
+                'status' => 'aktif',
+            ]
+        );
+
         // Pastikan riwayat awal di TA 2026/2027 tercatat di Kelas 9
         $riwayatAwal = RiwayatKelas::query()
             ->where('siswa_id', $siswaA->id)
@@ -509,8 +570,7 @@ class ProsesKelasTest extends TestCase
         $this->assertSame($kelas9->id, $riwayatAwal->kelas_id);
         $this->assertSame($spp2627->id, $riwayatAwal->spp_id);
 
-        // Di tahun depan (TA 2027/2028), Siswa A naik ke Kelas 10
-        Livewire::test(KenaikanKelas::class)
+        $comp = Livewire::test(KenaikanKelas::class)
             ->set('tahun_ajaran_asal_id', $ta2627->id)
             ->set('tahun_ajaran_tujuan_id', $ta2728->id)
             ->set('kelas_asal_id', $kelas9->id)
@@ -532,6 +592,102 @@ class ProsesKelasTest extends TestCase
         $this->assertNotNull($riwayat2728);
         $this->assertSame($kelas10->id, $riwayat2728->kelas_id);
         $this->assertSame($spp2728->id, $riwayat2728->spp_id);
+    }
+
+    public function test_opsi_kelas_tujuan_hanya_menampilkan_tingkat_yang_lebih_besar_dari_kelas_asal(): void
+    {
+        $kelasAsal10 = $this->buatKelas('10', $this->asal, 'X RPL 1');
+
+        $kelasTujuan9 = $this->buatKelas('9', $this->tujuan, 'IX SMP');
+        $kelasTujuan10 = $this->buatKelas('10', $this->tujuan, 'X RPL 2');
+        $kelasTujuan11 = $this->buatKelas('11', $this->tujuan, 'XI RPL 1');
+        $kelasTujuan12 = $this->buatKelas('12', $this->tujuan, 'XII RPL 1');
+
+        $this->buatSiswa($kelasAsal10, ['nama' => 'Siswa Test Level']);
+
+        $component = Livewire::test(KenaikanKelas::class)
+            ->set('tahun_ajaran_asal_id', $this->asal->id)
+            ->set('tahun_ajaran_tujuan_id', $this->tujuan->id)
+            ->set('kelas_asal_id', $kelasAsal10->id);
+
+        $opsiTujuan = $component->get('kelasTujuanOptions');
+        $this->assertArrayNotHasKey($kelasTujuan9->id, $opsiTujuan, 'Kelas tingkat 9 tidak boleh ada di pilihan naik kelas');
+        $this->assertArrayNotHasKey($kelasTujuan10->id, $opsiTujuan, 'Kelas tingkat 10 (sama) tidak boleh ada di pilihan naik kelas');
+        $this->assertArrayHasKey($kelasTujuan11->id, $opsiTujuan, 'Kelas tingkat 11 harus ada di pilihan naik kelas');
+        $this->assertArrayHasKey($kelasTujuan12->id, $opsiTujuan, 'Kelas tingkat 12 harus ada di pilihan naik kelas');
+
+        $opsiTinggal = $component->get('kelasTinggalOptions');
+        $this->assertArrayHasKey($kelasTujuan10->id, $opsiTinggal, 'Kelas tingkat 10 harus ada di pilihan tinggal kelas');
+        $this->assertArrayNotHasKey($kelasTujuan11->id, $opsiTinggal, 'Kelas tingkat 11 tidak boleh ada di pilihan tinggal kelas');
+    }
+
+    public function test_kenaikan_kelas_menolak_tingkat_tujuan_yang_sama_atau_lebih_rendah(): void
+    {
+        $kelasAsal = $this->buatKelas('10', $this->asal, 'X RPL 1');
+        $kelasSama = $this->buatKelas('10', $this->tujuan, 'X RPL 2');
+        $kelasTurun = $this->buatKelas('9', $this->tujuan, 'IX RPL');
+        $kelasNaik = $this->buatKelas('11', $this->tujuan, 'XI RPL 1');
+
+        $siswa = $this->buatSiswa($kelasAsal, ['nama' => 'Siswa Uji Validasi']);
+
+        $component = Livewire::test(KenaikanKelas::class)
+            ->set('tahun_ajaran_asal_id', $this->asal->id)
+            ->set('tahun_ajaran_tujuan_id', $this->tujuan->id)
+            ->set('kelas_asal_id', $kelasAsal->id);
+
+        // Uji coba set batch ke kelas tingkat sama
+        $component->set('kelas_tujuan_batch_id', $kelasSama->id)
+            ->assertSet('kelas_tujuan_batch_id', null)
+            ->assertSet('galat', 'Tingkatan tujuan harus lebih besar dari tingkatan asal.');
+
+        // Uji coba set per-siswa ke kelas tingkat sama
+        $component->set("keputusan.{$siswa->id}.kelas_tujuan_id", $kelasSama->id)
+            ->assertSet("keputusan.{$siswa->id}.kelas_tujuan_id", null)
+            ->assertSet('galat', 'Tingkatan tujuan harus lebih besar dari tingkatan asal.');
+
+        // Uji coba set per-siswa ke kelas tingkat lebih rendah
+        $component->set("keputusan.{$siswa->id}.kelas_tujuan_id", $kelasTurun->id)
+            ->assertSet("keputusan.{$siswa->id}.kelas_tujuan_id", null)
+            ->assertSet('galat', 'Tingkatan tujuan harus lebih besar dari tingkatan asal.');
+
+        // Set ke kelas tingkat lebih besar harus berhasil
+        $component->set("keputusan.{$siswa->id}.kelas_tujuan_id", $kelasNaik->id)
+            ->assertSet("keputusan.{$siswa->id}.kelas_tujuan_id", $kelasNaik->id);
+    }
+
+    public function test_service_naik_kelas_melewati_siswa_jika_tingkat_tujuan_tidak_lebih_besar(): void
+    {
+        $kelasAsal = $this->buatKelas('10', $this->asal, 'X RPL 1');
+        $kelasSama = $this->buatKelas('10', $this->tujuan, 'X RPL 2');
+        $siswa = $this->buatSiswa($kelasAsal, ['nama' => 'Siswa Coba Service']);
+
+        RiwayatKelas::query()->updateOrCreate(
+            [
+                'siswa_id' => $siswa->id,
+                'tahun_ajaran_id' => $this->asal->id,
+            ],
+            [
+                'kelas_id' => $kelasAsal->id,
+                'status' => RiwayatKelas::STATUS_AKTIF,
+            ]
+        );
+
+        $hasil = $this->service->naikKelas(
+            $this->asal->id,
+            $this->tujuan->id,
+            $kelasAsal->id,
+            [
+                $siswa->id => [
+                    'status' => RiwayatKelas::STATUS_NAIK,
+                    'kelas_tujuan_id' => $kelasSama->id,
+                ],
+            ],
+            $this->admin->id,
+        );
+
+        $this->assertSame(0, $hasil['diproses']);
+        $this->assertCount(1, $hasil['dilewati']);
+        $this->assertStringContainsString('harus lebih besar dari tingkatan asal', $hasil['dilewati'][0]);
     }
 
     private function buatKelas(string $tingkat, TahunAjaran $tahunAjaran, string $nama): Kelas
