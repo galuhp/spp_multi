@@ -68,7 +68,7 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div class="fi-section rounded-xl bg-white p-5 shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
             <span class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Penerimaan</span>
-            <div class="mt-2 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            <div class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-400">
                 Rp {{ number_format($totalPenerimaan, 0, ',', '.') }}
             </div>
         </div>
@@ -107,7 +107,7 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($pembayarans as $p)
                         <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
-                            <td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                            <td class="px-4 py-3 font-mono text-xs font-semibold text-primary-600 dark:text-primary-400">
                                 {{ $p->kode_transaksi }}
                             </td>
                             <td class="px-4 py-3 text-xs">
@@ -118,7 +118,7 @@
                                 <div class="text-xs text-gray-500">NISN: {{ $p->siswa?->nisn }} &bull; {{ $p->siswa?->kelas?->nama_kelas }}</div>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                                <span class="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
                                     {{ $p->spp?->kategori ?? 'SPP' }}
                                 </span>
                                 <div class="text-xs text-gray-500 mt-0.5">

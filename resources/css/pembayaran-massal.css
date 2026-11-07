@@ -26,11 +26,11 @@
     }
 
     .pm-choice:has(input:checked) {
-        @apply border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600/15 dark:border-indigo-400 dark:bg-indigo-950/40;
+        @apply border-primary-500 bg-primary-50/70 ring-2 ring-primary-500/15 dark:border-primary-400 dark:bg-primary-950/40;
     }
 
     .pm-choice input[type='radio'] {
-        @apply mt-0.5 size-4 shrink-0 accent-indigo-600;
+        @apply mt-0.5 size-4 shrink-0 accent-primary-600;
     }
 
     .pm-month {
@@ -38,15 +38,15 @@
     }
 
     .pm-month:has(input:checked) {
-        @apply border-indigo-600 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-950/40;
+        @apply border-primary-500 bg-primary-50/70 text-primary-700 dark:border-primary-400 dark:bg-primary-950/40;
     }
 
     .pm-month:has(input:checked) span {
-        @apply text-indigo-700 dark:text-indigo-200;
+        @apply text-primary-700 dark:text-primary-200;
     }
 
     .pm-month input[type='checkbox'] {
-        @apply size-4 shrink-0 accent-indigo-600;
+        @apply size-4 shrink-0 accent-primary-600;
     }
 
 }

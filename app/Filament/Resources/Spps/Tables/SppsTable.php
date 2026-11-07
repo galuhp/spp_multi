@@ -43,7 +43,7 @@ class SppsTable
                     ->label('Tipe')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => $state === 'bulanan' ? 'Bulanan' : 'Sekali Bayar')
-                    ->color(fn (string $state): string => $state === 'bulanan' ? 'purple' : 'emerald'),
+                    ->color(fn (string $state): string => $state === 'bulanan' ? 'sky' : 'emerald'),
                 TextColumn::make('tahun_ajaran')
                     ->label('Tahun Ajaran')
                     ->searchable()

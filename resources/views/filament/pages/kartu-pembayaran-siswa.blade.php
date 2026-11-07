@@ -67,7 +67,7 @@
 
     @if(! $kartu)
         <div class="fi-section rounded-xl bg-white px-6 py-12 text-center shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-950/50 dark:text-primary-300">
                 <x-filament::icon icon="heroicon-o-identification" class="h-6 w-6" />
             </div>
             <h3 class="mt-4 text-base font-semibold text-gray-950 dark:text-white">Belum ada siswa dipilih</h3>
@@ -265,7 +265,7 @@
             </div>
         @endif
 
-        <div class="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs text-indigo-800 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-200">
+        <div class="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-xs text-primary-800 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-200">
             Saldo positif berarti masih ada kewajiban; saldo negatif berarti kelebihan bayar. Tagihan SPP bulan mendatang tetap ditampilkan sebagai bagian dari kartu tahun ajaran.
         </div>
     @endif

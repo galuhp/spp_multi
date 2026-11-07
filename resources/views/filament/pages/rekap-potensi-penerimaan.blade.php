@@ -89,7 +89,7 @@
     </div>
 
     @if($bulan->isNotEmpty())
-        <div class="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-200">
+        <div class="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-200">
             Potensi SPP dihitung untuk periode
             <strong>{{ $bulan->first()['bulan'] }} {{ $bulan->first()['tahun'] }}</strong>
             s/d <strong>{{ $bulan->last()['bulan'] }} {{ $bulan->last()['tahun'] }}</strong>
@@ -141,7 +141,7 @@
 
         <div class="fi-section rounded-xl bg-white p-5 shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
             <span class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Capaian</span>
-            <div class="mt-2 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            <div class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-400">
                 {{ number_format($ringkasan['persentase'], 1, ',', '.') }}%
             </div>
             <p class="mt-1 text-[11px] text-rose-600 dark:text-rose-400">

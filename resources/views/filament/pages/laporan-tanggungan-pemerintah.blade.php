@@ -88,7 +88,7 @@
                                     {{ $row->siswa?->kelas?->nama_kelas ?? '-' }}
                                 </x-ui.table.cell>
                                 <x-ui.table.cell>
-                                    <x-ui.badge color="{{ $row->cakupan === \App\Models\SiswaTanggunganPemerintah::CAKUPAN_SPP ? 'indigo' : 'amber' }}">
+                                    <x-ui.badge color="{{ $row->cakupan === \App\Models\SiswaTanggunganPemerintah::CAKUPAN_SPP ? 'sky' : 'amber' }}">
                                         {{ $row->cakupanLabel() }}
                                     </x-ui.badge>
                                 </x-ui.table.cell>

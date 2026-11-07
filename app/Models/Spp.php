@@ -151,7 +151,7 @@ class Spp extends Model
     public function badgeClass(): string
     {
         return match ($this->kategori) {
-            self::KATEGORI_SPP => 'bg-purple-50 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300 border-purple-200/80 dark:border-purple-400/25',
+            self::KATEGORI_SPP => 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300 border-sky-200/80 dark:border-sky-400/25',
             self::KATEGORI_UANG_GEDUNG => 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 border-amber-200/80 dark:border-amber-400/25',
             self::KATEGORI_UANG_SERAGAM => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-400/25',
             self::KATEGORI_BIAYA_PRAKTIK => 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300 border-cyan-200/80 dark:border-cyan-400/25',

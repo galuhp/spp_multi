@@ -166,7 +166,7 @@
                                         wire:click="toggleSemua"
                                         @checked($semuaTerpilih)
                                         title="Centang / kosongkan semua"
-                                        class="size-4 rounded border-gray-300 accent-indigo-600">
+                                        class="size-4 rounded border-gray-300 accent-primary-600">
                                 </th>
                                 <th class="px-3 py-2.5">NISN</th>
                                 <th class="px-3 py-2.5">Nama Siswa</th>
@@ -180,7 +180,7 @@
                                             wire:model.live="siswa_ids"
                                             value="{{ $murid->id }}"
                                             @checked(in_array($murid->id, $terpilih, true))
-                                            class="size-4 rounded border-gray-300 accent-indigo-600">
+                                            class="size-4 rounded border-gray-300 accent-primary-600">
                                     </td>
                                     <td class="px-3 py-2.5 font-mono text-xs text-gray-700">{{ $murid->nisn ?: '-' }}</td>
                                     <td class="px-3 py-2.5 font-medium text-gray-900">{{ $murid->nama }}</td>

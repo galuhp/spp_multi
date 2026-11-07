@@ -13,7 +13,7 @@
             @if ($siswa)
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex min-w-0 items-center gap-3">
-                        <div class="flex size-11 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                        <div class="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
                             <x-heroicon-o-user class="size-5" />
                         </div>
                         <div class="min-w-0">
@@ -44,7 +44,7 @@
                                 <button type="button" wire:click="pilihTingkat('{{ $nilai }}')"
                                     aria-pressed="{{ $tingkat === (string) $nilai ? 'true' : 'false' }}"
                                     @class([
-                                        'rounded-md px-3.5 py-1.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
+                                        'rounded-md px-3.5 py-1.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
                                         'bg-white text-gray-900 shadow-sm dark:bg-gray-950 dark:text-white' => $tingkat === (string) $nilai,
                                         'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' => $tingkat !== (string) $nilai,
                                     ])>
@@ -61,21 +61,21 @@
                         <input type="search" wire:model.live.debounce.300ms="cari"
                             x-init="$nextTick(() => $el.focus())" x-on:focus-cari.window="$nextTick(() => $el.focus())" autofocus
                             placeholder="Ketik nama atau NISN..."
-                            class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                            class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                     </div>
 
                     @if (mb_strlen(trim($cari)) >= 2)
                         <div class="mt-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
                             @forelse ($this->siswaHasil as $hasil)
                                 <button type="button" wire:key="hasil-{{ $hasil->id }}" wire:click="pilihSiswa({{ $hasil->id }})"
-                                    class="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-3.5 py-3 text-left text-sm transition last:border-b-0 hover:bg-indigo-50/60 dark:border-gray-800 dark:hover:bg-indigo-950/30">
+                                    class="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-3.5 py-3 text-left text-sm transition last:border-b-0 hover:bg-primary-50/60 dark:border-gray-800 dark:hover:bg-primary-950/30">
                                     <span class="min-w-0">
                                         <span class="block truncate font-medium text-gray-900 dark:text-white">{{ $hasil->nama }}</span>
                                         <span class="block truncate text-xs text-gray-500 dark:text-gray-400">
                                             NISN {{ $hasil->nisn ?: '-' }} &bull; {{ $hasil->kelas?->nama_kelas ?: '-' }}
                                         </span>
                                     </span>
-                                    <span class="shrink-0 text-xs font-semibold text-indigo-600 dark:text-indigo-400">Pilih</span>
+                                    <span class="shrink-0 text-xs font-semibold text-primary-600 dark:text-primary-400">Pilih</span>
                                 </button>
                             @empty
                                 <p class="px-3.5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -112,15 +112,15 @@
                         <div class="inline-flex rounded-lg bg-gray-100 p-1 text-sm dark:bg-gray-800" role="tablist">
                             <button type="button" @click="tab = 'spp'"
                                 :class="tab === 'spp' ? 'bg-white shadow-sm font-medium text-gray-900 dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
-                                class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+                                class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                                 Iuran SPP Bulanan
-                                <span :class="selected.length ? '' : 'hidden'" x-cloak class="rounded-full bg-indigo-600 px-1.5 text-xs text-white" x-text="selected.length"></span>
+                                <span :class="selected.length ? '' : 'hidden'" x-cloak class="rounded-full bg-primary-600 px-1.5 text-xs text-white" x-text="selected.length"></span>
                             </button>
                             <button type="button" @click="tab = 'lain'"
                                 :class="tab === 'lain' ? 'bg-white shadow-sm font-medium text-gray-900 dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
-                                class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+                                class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                                 Biaya Lainnya
-                                <span :class="selectedLain.length ? '' : 'hidden'" x-cloak class="rounded-full bg-indigo-600 px-1.5 text-xs text-white" x-text="selectedLain.length"></span>
+                                <span :class="selectedLain.length ? '' : 'hidden'" x-cloak class="rounded-full bg-primary-600 px-1.5 text-xs text-white" x-text="selectedLain.length"></span>
                             </button>
                         </div>
 
@@ -178,7 +178,7 @@
                             <ul class="mt-3 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
                                 <template x-for="x in nonSpp" :key="x.key">
                                     <li class="flex items-center justify-between gap-3 px-4 py-3 transition"
-                                        :class="hasLain(x.key) ? 'bg-indigo-50 dark:bg-indigo-950/40' : ''">
+                                        :class="hasLain(x.key) ? 'bg-primary-50 dark:bg-primary-950/40' : ''">
                                         <div class="min-w-0">
                                             <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="x.nama"></p>
                                             <p class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="x.deskripsi"></p>
@@ -265,7 +265,7 @@
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Metode Pembayaran</label>
                                 <select x-model="metode"
-                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                                     <option value="Tunai">Tunai</option>
                                     <option value="Transfer Bank">Transfer Bank</option>
                                     <option value="QRIS">QRIS</option>
@@ -275,13 +275,13 @@
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Tanggal Pembayaran</label>
                                 <input type="date" x-model="tanggal"
-                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                             </div>
 
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Catatan (Opsional)</label>
                                 <textarea x-model="catatan" rows="2" placeholder="Catatan pembayaran..."
-                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white"></textarea>
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-950 dark:text-white"></textarea>
                             </div>
                         </div>
 
@@ -299,7 +299,7 @@
             </div>
         @else
             <div class="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center dark:border-gray-700 dark:bg-gray-900">
-                <div class="mx-auto flex size-11 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
+                <div class="mx-auto flex size-11 items-center justify-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-950/50 dark:text-primary-300">
                     <x-heroicon-o-receipt-percent class="size-5" />
                 </div>
                 <p class="mt-3 text-sm font-medium text-gray-900 dark:text-white">Belum ada siswa dipilih</p>
@@ -421,14 +421,14 @@
                     }
 
                     if (this.has(m.key)) {
-                        return 'border-indigo-600 bg-indigo-600 text-white shadow-sm';
+                        return 'border-primary-600 bg-primary-600 text-white shadow-sm';
                     }
 
                     if (m.status === 'tunggakan') {
-                        return 'border-amber-300 bg-amber-50/25 hover:border-indigo-500 dark:bg-gray-900';
+                        return 'border-amber-300 bg-amber-50/25 hover:border-primary-500 dark:bg-gray-900';
                     }
 
-                    return 'border-gray-200 bg-white hover:border-indigo-500 dark:border-gray-700 dark:bg-gray-900';
+                    return 'border-gray-200 bg-white hover:border-primary-500 dark:border-gray-700 dark:bg-gray-900';
                 },
 
                 submit() {
