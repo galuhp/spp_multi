@@ -6,22 +6,32 @@ use App\Enums\UserRole;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\PengeluaranSekolah;
+use App\Models\ProfilSekolah;
+use App\Models\RiwayatKelas;
+use App\Models\RolePermission;
 use App\Models\Siswa;
+use App\Models\SiswaTanggunganPemerintah;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Models\Wali;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's database based on tarif_biaya_sekolah.xlsx.
      */
     public function run(): void
     {
-        // 1. Users (Admin & Petugas)
+        // 0. Hapus data demo lama
+        $this->bersihkanDataLama();
+
+        // 1. Pengguna Utama (Admin, Petugas, Wali Kelas)
         $admin = User::firstOrCreate(
             ['username' => 'admin'],
             [
@@ -52,17 +62,35 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        \App\Models\RolePermission::firstOrCreate([
-            'role' => UserRole::WaliKelas->value,
-            'permission' => \App\Models\RolePermission::LAPORAN_TUNGGAKAN,
-        ]);
+        // 2. Hak Akses (Role Permissions)
+        $this->seedRolePermissions();
 
-        // 2. Jurusan
+        // 3. Profil Sekolah
+        ProfilSekolah::current();
+
+        // 4. Tahun Ajaran
+        TahunAjaran::query()->update(['aktif' => false]);
+        $daftarTA = [
+            ['nama' => '2024/2025', 'tanggal_mulai' => '2024-07-01', 'tanggal_selesai' => '2025-06-30', 'aktif' => false],
+            ['nama' => '2025/2026', 'tanggal_mulai' => '2025-07-01', 'tanggal_selesai' => '2026-06-30', 'aktif' => false],
+            ['nama' => '2026/2027', 'tanggal_mulai' => '2026-07-01', 'tanggal_selesai' => '2027-06-30', 'aktif' => true],
+        ];
+
+        $taModels = [];
+        foreach ($daftarTA as $ta) {
+            $taModels[$ta['nama']] = TahunAjaran::updateOrCreate(
+                ['nama' => $ta['nama']],
+                $ta
+            );
+        }
+        $taAktif = $taModels['2026/2027'];
+
+        // 5. Jurusan
         $jurusans = [
-            ['kode' => 'RPL', 'nama' => 'Rekayasa Perangkat Lunak', 'deskripsi' => 'Pengembangan perangkat lunak, web, dan aplikasi mobile.'],
-            ['kode' => 'TKJ', 'nama' => 'Teknik Komputer dan Jaringan', 'deskripsi' => 'Instalasi jaringan, server, dan infrastruktur IT.'],
-            ['kode' => 'DKV', 'nama' => 'Desain Komunikasi Visual', 'deskripsi' => 'Desain grafis, multimedia, video editing, dan animasi.'],
-            ['kode' => 'AKL', 'nama' => 'Akuntansi dan Keuangan Lembaga', 'deskripsi' => 'Pengelolaan pembukuan, perbankan, dan laporan keuangan.'],
+            ['kode' => 'RPL', 'nama' => 'Rekayasa Perangkat Lunak', 'deskripsi' => 'Pengembangan perangkat lunak, web, dan sistem cerdas.'],
+            ['kode' => 'TKJ', 'nama' => 'Teknik Komputer dan Jaringan', 'deskripsi' => 'Infrastruktur jaringan komputer, sistem server, dan cloud.'],
+            ['kode' => 'DKV', 'nama' => 'Desain Komunikasi Visual', 'deskripsi' => 'Desain grafis multimedia, ilustrasi, branding, dan periklanan.'],
+            ['kode' => 'AKL', 'nama' => 'Akuntansi dan Keuangan Lembaga', 'deskripsi' => 'Pengelolaan pembukuan keuangan lembaga dan perbankan.'],
         ];
 
         $jurusanModels = [];
@@ -70,237 +98,490 @@ class DatabaseSeeder extends Seeder
             $jurusanModels[$item['kode']] = Jurusan::firstOrCreate(['kode' => $item['kode']], $item);
         }
 
-        // 3. Kelas
+        // 6. Rombel Kelas (Sesuai jumlah siswa di Excel: X 53 siswa, XI 56 siswa, XII 52 siswa)
         $kelasList = [
-            ['nama_kelas' => 'X RPL 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['RPL']->id],
-            ['nama_kelas' => 'X RPL 2', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['RPL']->id],
-            ['nama_kelas' => 'XI RPL 1', 'tingkat' => '11', 'jurusan_id' => $jurusanModels['RPL']->id],
-            ['nama_kelas' => 'XII RPL 1', 'tingkat' => '12', 'jurusan_id' => $jurusanModels['RPL']->id],
-            ['nama_kelas' => 'X TKJ 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['TKJ']->id],
-            ['nama_kelas' => 'XI TKJ 1', 'tingkat' => '11', 'jurusan_id' => $jurusanModels['TKJ']->id],
-            ['nama_kelas' => 'X DKV 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['DKV']->id],
-            ['nama_kelas' => 'X AKL 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['AKL']->id],
+            ['nama_kelas' => 'X RPL 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['RPL']->id, 'wali_kelas_id' => $walikelas->id],
+            ['nama_kelas' => 'X TKJ 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['TKJ']->id, 'wali_kelas_id' => null],
+            ['nama_kelas' => 'XI RPL 1', 'tingkat' => '11', 'jurusan_id' => $jurusanModels['RPL']->id, 'wali_kelas_id' => null],
+            ['nama_kelas' => 'XI TKJ 1', 'tingkat' => '11', 'jurusan_id' => $jurusanModels['TKJ']->id, 'wali_kelas_id' => null],
+            ['nama_kelas' => 'XII RPL 1', 'tingkat' => '12', 'jurusan_id' => $jurusanModels['RPL']->id, 'wali_kelas_id' => null],
+            ['nama_kelas' => 'XII TKJ 1', 'tingkat' => '12', 'jurusan_id' => $jurusanModels['TKJ']->id, 'wali_kelas_id' => null],
         ];
 
         $kelasModels = [];
-        foreach ($kelasList as $kelas) {
-            $kelasModels[$kelas['nama_kelas']] = Kelas::firstOrCreate(
-                ['nama_kelas' => $kelas['nama_kelas']],
-                $kelas
+        foreach ($kelasList as $kelasData) {
+            $kelasModels[$kelasData['nama_kelas']] = Kelas::create(
+                $kelasData + ['tahun_ajaran_id' => $taAktif->id]
             );
         }
 
-        if (isset($kelasModels['X RPL 1'])) {
-            $kelasModels['X RPL 1']->update(['wali_kelas_id' => $walikelas->id]);
-        }
+        // 7. Tarif Biaya Sekolah Resmi (Sesuai Lampiran Excel tarif_biaya_sekolah.xlsx)
+        $sppModels = $this->seedTarifExcel();
 
-        // 4. Tahun Ajaran
-        TahunAjaran::query()->update(['aktif' => false]);
+        // 8. Siswa & Profil Orang Tua (161 Siswa Realistis)
+        // Kelas X: 53 siswa (27 X RPL 1, 26 X TKJ 1)
+        // Kelas XI: 56 siswa (28 XI RPL 1, 28 XI TKJ 1)
+        // Kelas XII: 52 siswa (26 XII RPL 1, 26 XII TKJ 1)
+        $siswasXRPL = $this->buatDaftarSiswa(27, '10', $kelasModels['X RPL 1'], $sppModels['10']['SPP'], 10001001, 26001, 2026, $taAktif, true);
+        $siswasXTKJ = $this->buatDaftarSiswa(26, '10', $kelasModels['X TKJ 1'], $sppModels['10']['SPP'], 10002001, 26028, 2026, $taAktif, false);
 
-        $tahunAjaranModels = [];
-        $daftarTahunAjaran = [
-            ['nama' => '2024/2025', 'tanggal_mulai' => '2024-07-01', 'tanggal_selesai' => '2025-06-30'],
-            ['nama' => '2025/2026', 'tanggal_mulai' => '2025-07-01', 'tanggal_selesai' => '2026-06-30'],
-            ['nama' => '2026/2027', 'tanggal_mulai' => '2026-07-01', 'tanggal_selesai' => '2027-06-30'],
+        $siswasXIRPL = $this->buatDaftarSiswa(28, '11', $kelasModels['XI RPL 1'], $sppModels['11']['SPP'], 11001001, 25001, 2025, $taAktif, false);
+        $siswasXITKJ = $this->buatDaftarSiswa(28, '11', $kelasModels['XI TKJ 1'], $sppModels['11']['SPP'], 11002001, 25029, 2025, $taAktif, false);
+
+        $siswasXIIRPL = $this->buatDaftarSiswa(26, '12', $kelasModels['XII RPL 1'], $sppModels['12']['SPP'], 12001001, 24001, 2024, $taAktif, false);
+        $siswasXIITKJ = $this->buatDaftarSiswa(26, '12', $kelasModels['XII TKJ 1'], $sppModels['12']['SPP'], 12002001, 24027, 2024, $taAktif, false);
+
+        // 9. Tanggungan Pemerintah / Beasiswa (Demo)
+        SiswaTanggunganPemerintah::create([
+            'siswa_id' => $siswasXRPL[5]->id,
+            'spp_id' => $sppModels['10']['SPP']->id,
+            'cakupan' => 'spp',
+            'tanggal_mulai' => '2026-07-01',
+            'keterangan' => 'Beasiswa Prestasi Kurang Mampu (Disdik Jabar)',
+        ]);
+
+        SiswaTanggunganPemerintah::create([
+            'siswa_id' => $siswasXIRPL[10]->id,
+            'spp_id' => $sppModels['11']['SPP']->id,
+            'cakupan' => 'semua',
+            'tanggal_mulai' => '2026-07-01',
+            'keterangan' => 'Bantuan Penuh Program Indonesia Pintar (PIP)',
+        ]);
+
+        // 10. Transaksi Pembayaran Demo (SPP Bulanan & Pos Non-SPP)
+        $this->seedPembayaranDemo(
+            $petugas,
+            $sppModels,
+            $siswasXRPL,
+            $siswasXTKJ,
+            $siswasXIRPL,
+            $siswasXITKJ,
+            $siswasXIIRPL,
+            $siswasXIITKJ
+        );
+
+        // 11. Pengeluaran Operasional Sekolah Demo
+        $this->seedPengeluaranDemo($petugas, $taAktif);
+    }
+
+    /**
+     * Membersihkan seluruh data demo lama.
+     */
+    private function bersihkanDataLama(): void
+    {
+        Pembayaran::query()->delete();
+        PengeluaranSekolah::query()->delete();
+        SiswaTanggunganPemerintah::query()->delete();
+        Wali::query()->delete();
+        RiwayatKelas::query()->delete();
+        Siswa::query()->delete();
+        Spp::query()->delete();
+        Kelas::query()->delete();
+        Jurusan::query()->delete();
+        User::where('role', UserRole::Siswa)->delete();
+    }
+
+    /**
+     * Menanamkan matriks izin peran (Role Permissions).
+     */
+    private function seedRolePermissions(): void
+    {
+        $permissions = [
+            // Admin
+            ['role' => 'admin', 'permission' => 'dashboard'],
+            ['role' => 'admin', 'permission' => 'transaksi_spp'],
+            ['role' => 'admin', 'permission' => 'laporan'],
+            ['role' => 'admin', 'permission' => 'laporan_tunggakan'],
+            ['role' => 'admin', 'permission' => 'portal_siswa'],
+            ['role' => 'admin', 'permission' => 'kesiswaan'],
+            ['role' => 'admin', 'permission' => 'master_data'],
+            ['role' => 'admin', 'permission' => 'pengaturan_akses'],
+            // Petugas
+            ['role' => 'petugas', 'permission' => 'dashboard'],
+            ['role' => 'petugas', 'permission' => 'transaksi_spp'],
+            ['role' => 'petugas', 'permission' => 'laporan'],
+            ['role' => 'petugas', 'permission' => 'laporan_tunggakan'],
+            ['role' => 'petugas', 'permission' => 'portal_siswa'],
+            ['role' => 'petugas', 'permission' => 'kesiswaan'],
+            // Wali Kelas (View Only Laporan Tunggakan)
+            ['role' => 'wali_kelas', 'permission' => 'dashboard'],
+            ['role' => 'wali_kelas', 'permission' => 'laporan_tunggakan'],
+            // Siswa
+            ['role' => 'siswa', 'permission' => 'dashboard'],
+            ['role' => 'siswa', 'permission' => 'portal_siswa'],
         ];
 
-        foreach ($daftarTahunAjaran as $tahunAjaran) {
-            $tahunAjaranModels[$tahunAjaran['nama']] = TahunAjaran::updateOrCreate(
-                ['nama' => $tahunAjaran['nama']],
-                $tahunAjaran + ['aktif' => $tahunAjaran['nama'] === '2026/2027'],
-            );
+        foreach ($permissions as $p) {
+            RolePermission::firstOrCreate([
+                'role' => $p['role'],
+                'permission' => $p['permission'],
+            ]);
         }
+    }
 
-        foreach ($kelasModels as $kelas) {
-            $kelas->update(['tahun_ajaran_id' => $tahunAjaranModels['2026/2027']->id]);
-        }
+    /**
+     * Memasukkan tarif biaya sekolah sesuai tarif_biaya_sekolah.xlsx.
+     *
+     * @return array<string, array<string, Spp>>
+     */
+    private function seedTarifExcel(): array
+    {
+        $ta = '2026/2027';
+        $tahun = 2026;
 
-        // 5. SPP & Fee Tariffs
-        $this->buatTarifSpp(2025, '2024/2025', 200000, 'Tarif SPP TA 2024/2025');
-        $this->buatTarifSpp(2026, '2025/2026', 225000, 'Tarif SPP TA 2025/2026');
-        $spp2027 = $this->buatTarifSpp(2027, '2026/2027', 250000, 'Tarif SPP TA 2026/2027 (Berjalan)');
+        $kategoriMap = [
+            'biaya sekolah per bulan' => ['SPP', 'bulanan'],
+            'tabungan per bulan' => ['Tabungan', 'sekali_bayar'],
+            'pts ganjil' => ['Biaya Ujian', 'sekali_bayar'],
+            'pts genap' => ['Biaya Ujian', 'sekali_bayar'],
+            'pas ganjil' => ['Biaya Ujian', 'sekali_bayar'],
+            'pas genap' => ['Biaya Ujian', 'sekali_bayar'],
+            'praktek' => ['Biaya Praktik', 'sekali_bayar'],
+            'kegiatan sekolah' => ['Kegiatan Siswa', 'sekali_bayar'],
+            'kalender' => ['Lain-lain', 'sekali_bayar'],
+            'kaos olah raga' => ['Uang Seragam', 'sekali_bayar'],
+            'katelpak / almamater' => ['Uang Seragam', 'sekali_bayar'],
+            'map rapot' => ['Administrasi', 'sekali_bayar'],
+            'study banding' => ['Kegiatan Siswa', 'sekali_bayar'],
+            'anbk 1' => ['Biaya Ujian', 'sekali_bayar'],
+            'anbk 2' => ['Biaya Ujian', 'sekali_bayar'],
+            'prakerin' => ['Biaya Praktik', 'sekali_bayar'],
+            'cicilan 1' => ['Uang Gedung', 'sekali_bayar'],
+            'cicilan 2' => ['Uang Gedung', 'sekali_bayar'],
+            'cicilan 3' => ['Uang Gedung', 'sekali_bayar'],
+            'foto ijazah' => ['Kelulusan', 'sekali_bayar'],
+            'bimker' => ['Bimbingan Karier', 'sekali_bayar'],
+            'tasyakuran pelulusan' => ['Kelulusan', 'sekali_bayar'],
+        ];
 
-        $gedung2027 = Spp::firstOrCreate(
-            ['tahun' => 2027, 'kategori' => Spp::KATEGORI_UANG_GEDUNG],
-            [
-                'kategori' => Spp::KATEGORI_UANG_GEDUNG,
-                'tipe' => Spp::TIPE_SEKALI_BAYAR,
-                'nama' => 'Uang Gedung & Pengembangan Sarana',
-                'tahun_ajaran' => '2026/2027',
-                'nominal' => 2500000,
-                'keterangan' => 'Sumbangan fasilitas dan gedung siswa baru angkatan 2026/2027',
-            ]
-        );
-
-        $seragam2027 = Spp::firstOrCreate(
-            ['tahun' => 2027, 'kategori' => Spp::KATEGORI_UANG_SERAGAM],
-            [
-                'kategori' => Spp::KATEGORI_UANG_SERAGAM,
-                'tipe' => Spp::TIPE_SEKALI_BAYAR,
-                'nama' => 'Paket Seragam Sekolah Lengkap (4 Stel)',
-                'tahun_ajaran' => '2026/2027',
-                'nominal' => 850000,
-                'keterangan' => 'Seragam OSIS, Pramuka, Kejuruan, dan Olahraga',
-            ]
-        );
-
-        // 5. User Siswa
-        $userSiswa1 = User::firstOrCreate(
-            ['username' => '0071234561'],
-            [
-                'name' => 'Ahmad Rifai',
-                'email' => 'ahmad@siswa.spp.test',
-                'password' => Hash::make('password'),
-                'role' => UserRole::Siswa,
-            ]
-        );
-
-        $userSiswa2 = User::firstOrCreate(
-            ['username' => 'siswa'], // shortcut siswa login
-            [
-                'name' => 'Siti Nurhaliza',
-                'email' => 'siti@siswa.spp.test',
-                'password' => Hash::make('password'),
-                'role' => UserRole::Siswa,
-            ]
-        );
-
-        // 6. Siswa Records
-        $siswaData = [
-            [
-                'user_id' => $userSiswa1->id,
-                'kelas_id' => $kelasModels['X RPL 1']->id,
-                'spp_id' => $spp2027['10']->id,
-                'nisn' => '0071234561',
-                'nis' => '2026001',
-                'nama' => 'Ahmad Rifai',
-                'jenis_kelamin' => 'L',
-                'alamat' => 'Jl. Merdeka No. 12, Bandung',
-                'no_telp' => '081234567801',
+        // Definisi item per sheet Excel
+        $daftarTarif = [
+            '10' => [
+                ['Biaya Sekolah per bulan', 100000, 'SPP', 'bulanan'],
+                ['Tabungan per bulan', 35000, 'Tabungan', 'sekali_bayar'],
+                ['PTS Ganjil', 250000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PTS Genap', 250000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PAS Ganjil', 300000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PAS Genap', 300000, 'Biaya Ujian', 'sekali_bayar'],
+                ['Praktek', 300000, 'Biaya Praktik', 'sekali_bayar'],
+                ['Kegiatan sekolah', 300000, 'Kegiatan Siswa', 'sekali_bayar'],
+                ['Kalender', 30000, 'Lain-lain', 'sekali_bayar'],
+                ['Kaos Olah Raga', 175000, 'Uang Seragam', 'sekali_bayar'],
+                ['Katelpak / Almamater', 150000, 'Uang Seragam', 'sekali_bayar'],
+                ['Map Rapot', 150000, 'Administrasi', 'sekali_bayar'],
+                ['Study Banding', 300000, 'Kegiatan Siswa', 'sekali_bayar'],
             ],
-            [
-                'user_id' => $userSiswa2->id,
-                'kelas_id' => $kelasModels['X RPL 1']->id,
-                'spp_id' => $spp2027['10']->id,
-                'nisn' => '0071234562',
-                'nis' => '2026002',
-                'nama' => 'Siti Nurhaliza',
-                'jenis_kelamin' => 'P',
-                'alamat' => 'Jl. Asia Afrika No. 45, Bandung',
-                'no_telp' => '081234567802',
+            '11' => [
+                ['Biaya Sekolah per bulan', 100000, 'SPP', 'bulanan'],
+                ['Tabungan per bulan', 35000, 'Tabungan', 'sekali_bayar'],
+                ['PTS Ganjil', 250000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PTS Genap', 250000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PAS Ganjil', 300000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PAS Genap', 300000, 'Biaya Ujian', 'sekali_bayar'],
+                ['Praktek', 300000, 'Biaya Praktik', 'sekali_bayar'],
+                ['Kegiatan sekolah', 400000, 'Kegiatan Siswa', 'sekali_bayar'],
+                ['ANBK Gelombang 1', 100000, 'Biaya Ujian', 'sekali_bayar'],
+                ['Kalender', 30000, 'Lain-lain', 'sekali_bayar'],
+                ['Prakerin', 550000, 'Biaya Praktik', 'sekali_bayar'],
+                ['ANBK Gelombang 2', 100000, 'Biaya Ujian', 'sekali_bayar'],
             ],
-            [
-                'user_id' => null,
-                'kelas_id' => $kelasModels['X RPL 2']->id,
-                'spp_id' => $spp2027['10']->id,
-                'nisn' => '0071234563',
-                'nis' => '2026003',
-                'nama' => 'Bayu Pratama',
-                'jenis_kelamin' => 'L',
-                'alamat' => 'Jl. Riau No. 88, Bandung',
-                'no_telp' => '081234567803',
-            ],
-            [
-                'user_id' => null,
-                'kelas_id' => $kelasModels['XI RPL 1']->id,
-                'spp_id' => $spp2027['11']->id,
-                'nisn' => '0061234564',
-                'nis' => '2025010',
-                'nama' => 'Dewi Lestari',
-                'jenis_kelamin' => 'P',
-                'alamat' => 'Jl. Dago No. 102, Bandung',
-                'no_telp' => '081234567804',
-            ],
-            [
-                'user_id' => null,
-                'kelas_id' => $kelasModels['XII RPL 1']->id,
-                'spp_id' => $spp2027['12']->id,
-                'nisn' => '0051234565',
-                'nis' => '2024015',
-                'nama' => 'Fajar Nugraha',
-                'jenis_kelamin' => 'L',
-                'alamat' => 'Jl. Buah Batu No. 19, Bandung',
-                'no_telp' => '081234567805',
-            ],
-            [
-                'user_id' => null,
-                'kelas_id' => $kelasModels['X TKJ 1']->id,
-                'spp_id' => $spp2027['10']->id,
-                'nisn' => '0071234566',
-                'nis' => '2026020',
-                'nama' => 'Gita Gutawa',
-                'jenis_kelamin' => 'P',
-                'alamat' => 'Jl. Setiabudi No. 50, Bandung',
-                'no_telp' => '081234567806',
+            '12' => [
+                ['Biaya Sekolah per bulan', 100000, 'SPP', 'bulanan'],
+                ['Tabungan per bulan', 35000, 'Tabungan', 'sekali_bayar'],
+                ['PTS Ganjil', 250000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PTS Genap', 250000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PAS Ganjil', 300000, 'Biaya Ujian', 'sekali_bayar'],
+                ['PAS Genap', 300000, 'Biaya Ujian', 'sekali_bayar'],
+                ['Praktek', 300000, 'Biaya Praktik', 'sekali_bayar'],
+                ['Kegiatan sekolah', 400000, 'Kegiatan Siswa', 'sekali_bayar'],
+                ['Cicilan 1', 400000, 'Uang Gedung', 'sekali_bayar'],
+                ['Cicilan 2', 400000, 'Uang Gedung', 'sekali_bayar'],
+                ['Cicilan 3', 400000, 'Uang Gedung', 'sekali_bayar'],
+                ['Foto Ijazah', 50000, 'Kelulusan', 'sekali_bayar'],
+                ['Bimker', 150000, 'Bimbingan Karier', 'sekali_bayar'],
+                ['Tasyakuran Pelulusan', 100000, 'Kelulusan', 'sekali_bayar'],
+                ['Kalender', 30000, 'Lain-lain', 'sekali_bayar'],
             ],
         ];
 
-        $createdSiswas = [];
-        foreach ($siswaData as $data) {
-            $createdSiswas[] = Siswa::firstOrCreate(['nisn' => $data['nisn']], $data);
-        }
+        $models = [];
 
-        foreach ($createdSiswas as $siswa) {
-            $tarif = Spp::untukKelas($siswa->kelas);
+        foreach ($daftarTarif as $tingkat => $items) {
+            $models[$tingkat] = [];
+            foreach ($items as $item) {
+                [$nama, $nominal, $kategori, $tipe] = $item;
+                $spp = Spp::create([
+                    'kategori' => $kategori,
+                    'tipe' => $tipe,
+                    'nama' => $nama,
+                    'tahun' => $tahun,
+                    'tahun_ajaran' => $ta,
+                    'tingkat' => $tingkat,
+                    'nominal' => $nominal,
+                    'keterangan' => "Tarif {$nama} Tingkat {$tingkat} TA {$ta}",
+                ]);
 
-            if ($tarif) {
-                $siswa->update(['spp_id' => $tarif->id]);
+                if ($kategori === 'SPP') {
+                    $models[$tingkat]['SPP'] = $spp;
+                } else {
+                    $models[$tingkat][$nama] = $spp;
+                }
             }
         }
 
-        // 7. Seed Sample Payments
-        $bulanSamples = ['Juli', 'Agustus', 'September', 'Oktober'];
-        $counter = 1;
+        return $models;
+    }
 
-        foreach ($createdSiswas as $index => $siswa) {
-            // pay up to index+1 months
-            $monthsToPay = array_slice($bulanSamples, 0, min($index + 2, count($bulanSamples)));
-            foreach ($monthsToPay as $bulan) {
-                Pembayaran::firstOrCreate(
+    /**
+     * Membuat sekelompok siswa dengan data realistis.
+     *
+     * @return array<int, Siswa>
+     */
+    private function buatDaftarSiswa(
+        int $jumlah,
+        string $tingkat,
+        Kelas $kelas,
+        Spp $sppBulanan,
+        int $startNisn,
+        int $startNis,
+        int $tahunMasuk,
+        TahunAjaran $ta,
+        bool $buatAkunPortal = false
+    ): array {
+        $firstNamesL = ['Aditya', 'Bagas', 'Dimas', 'Fajar', 'Gilang', 'Hafiz', 'Irfan', 'Jaka', 'Kevin', 'Lukman', 'Maulana', 'Naufal', 'Pratama', 'Raditya', 'Rizky', 'Satria', 'Taufik', 'Wahyu', 'Yusuf', 'Zaki', 'Arif', 'Bayu', 'Candra', 'Danang', 'Eko', 'Farhan', 'Galih', 'Hendro', 'Iqbal', 'Kurniawan'];
+        $firstNamesP = ['Annisa', 'Bella', 'Cantika', 'Dian', 'Eka', 'Fitri', 'Gita', 'Hesti', 'Indah', 'Jasmine', 'Kartika', 'Lestari', 'Maya', 'Nadia', 'Putri', 'Rani', 'Siti', 'Tiara', 'Ulfa', 'Wulan', 'Yulia', 'Zahra', 'Aulia', 'Citra', 'Dewi', 'Erna', 'Febri', 'Halimah', 'Intan', 'Kusuma'];
+        $lastNames = ['Saputra', 'Pratama', 'Wibowo', 'Kusuma', 'Hidayat', 'Nugraha', 'Santoso', 'Wijaya', 'Permana', 'Setiawan', 'Utomo', 'Kurniawan', 'Ramadhan', 'Siregar', 'Nasution', 'Firmansyah', 'Gunawan', 'Mahendra', 'Purnama', 'Subagja'];
+
+        $siswas = [];
+
+        for ($i = 0; $i < $jumlah; $i++) {
+            $isMale = ($i % 2 === 0);
+            $jk = $isMale ? 'L' : 'P';
+            $fn = $isMale ? $firstNamesL[$i % count($firstNamesL)] : $firstNamesP[$i % count($firstNamesP)];
+            $ln = $lastNames[($i * 3 + (int) $tingkat) % count($lastNames)];
+            $nama = "{$fn} {$ln}";
+
+            $nisn = (string) ($startNisn + $i);
+            $nis = (string) ($startNis + $i);
+
+            $userId = null;
+            if ($buatAkunPortal && $i === 0) {
+                $userSiswa = User::firstOrCreate(
+                    ['username' => 'siswa'],
                     [
-                        'siswa_id' => $siswa->id,
-                        'bulan_dibayar' => $bulan,
-                        'tahun_dibayar' => 2026,
-                    ],
-                    [
-                        'kode_transaksi' => 'SPP-20261102-'.str_pad((string) $counter++, 4, '0', STR_PAD_LEFT),
-                        'user_id' => $petugas->id,
-                        'spp_id' => $siswa->spp_id,
-                        'tgl_bayar' => Carbon::now()->subDays(rand(1, 30))->format('Y-m-d'),
-                        'jumlah_bayar' => $siswa->spp->nominal,
-                        'metode_pembayaran' => $counter % 2 === 0 ? 'Tunai' : 'Transfer Bank',
-                        'catatan' => 'Pembayaran SPP Bulan '.$bulan.' 2026',
+                        'name' => $nama,
+                        'email' => 'siswa@spp.test',
+                        'password' => Hash::make('password'),
+                        'role' => UserRole::Siswa,
                     ]
                 );
+                $userId = $userSiswa->id;
+            }
+
+            $siswa = Siswa::create([
+                'user_id' => $userId,
+                'kelas_id' => $kelas->id,
+                'spp_id' => $sppBulanan->id,
+                'nisn' => $nisn,
+                'nis' => $nis,
+                'nama' => $nama,
+                'jenis_kelamin' => $jk,
+                'alamat' => "Jl. Pemuda Mandiri No. ".($i + 1).", RT 0".(($i % 5) + 1)."/RW 0".(($i % 3) + 1).", Bandung",
+                'no_telp' => "0812{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                'tahun_masuk' => $tahunMasuk,
+                'status' => 'aktif',
+                'is_archived' => false,
+            ]);
+
+            Wali::create([
+                'siswa_id' => $siswa->id,
+                'nama_ayah' => "Bapak {$fn}",
+                'nama_ibu' => "Ibu {$fn}",
+                'hp_wali' => "0813{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+            ]);
+
+            RiwayatKelas::create([
+                'siswa_id' => $siswa->id,
+                'kelas_id' => $kelas->id,
+                'tahun_ajaran_id' => $ta->id,
+                'spp_id' => $sppBulanan->id,
+                'status' => 'aktif',
+            ]);
+
+            $siswas[] = $siswa;
+        }
+
+        return $siswas;
+    }
+
+    /**
+     * Menanamkan transaksi pembayaran riil untuk demo.
+     */
+    private function seedPembayaranDemo(
+        User $petugas,
+        array $sppModels,
+        array $siswasXRPL,
+        array $siswasXTKJ,
+        array $siswasXIRPL,
+        array $siswasXITKJ,
+        array $siswasXIIRPL,
+        array $siswasXIITKJ
+    ): void {
+        $monthsTA = ['Juli', 'Agustus', 'September', 'Oktober', 'November'];
+        $all12Months = ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
+        $kodeUrutan = 1;
+
+        // 1. Kelas XII: 12 siswa pertama dibuat 100% LUNAS (SPP 12 bulan + seluruh biaya Non-SPP)
+        // Agar halaman Kelulusan Siswa dapat mendemonstrasikan siswa yang Memenuhi Syarat vs Siswa Menunggak!
+        foreach (array_slice($siswasXIIRPL, 0, 12) as $siswa) {
+            foreach ($all12Months as $bulan) {
+                $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2026 : 2027;
+                $kode = 'SPP-2026110'.str_pad((string) $kodeUrutan++, 4, '0', STR_PAD_LEFT);
+                Pembayaran::create([
+                    'kode_transaksi' => $kode,
+                    'user_id' => $petugas->id,
+                    'siswa_id' => $siswa->id,
+                    'spp_id' => $sppModels['12']['SPP']->id,
+                    'tgl_bayar' => '2026-10-15',
+                    'bulan_dibayar' => $bulan,
+                    'tahun_dibayar' => $thn,
+                    'jumlah_bayar' => 100000,
+                    'metode_pembayaran' => 'Tunai',
+                    'catatan' => "Pembayaran SPP Bulan {$bulan} {$thn}",
+                ]);
+            }
+
+            // Bayar seluruh pos Non-SPP tingkat 12
+            foreach ($sppModels['12'] as $key => $tarif) {
+                if ($key === 'SPP') {
+                    continue;
+                }
+                $kode = 'NSP-2026110'.str_pad((string) $kodeUrutan++, 4, '0', STR_PAD_LEFT);
+                Pembayaran::create([
+                    'kode_transaksi' => $kode,
+                    'user_id' => $petugas->id,
+                    'siswa_id' => $siswa->id,
+                    'spp_id' => $tarif->id,
+                    'tgl_bayar' => '2026-10-20',
+                    'bulan_dibayar' => null,
+                    'tahun_dibayar' => 2026,
+                    'jumlah_bayar' => $tarif->nominal,
+                    'metode_pembayaran' => 'Tunai',
+                    'catatan' => "Pelunasan {$tarif->nama}",
+                ]);
+            }
+        }
+
+        // 2. Sisa siswa Kelas XII: variasi tunggakan
+        $sisaXII = array_merge(array_slice($siswasXIIRPL, 12), $siswasXIITKJ);
+        foreach ($sisaXII as $idx => $siswa) {
+            $paidCount = ($idx % 4) + 1;
+            for ($m = 0; $m < $paidCount; $m++) {
+                $bulan = $monthsTA[$m];
+                $kode = 'SPP-2026110'.str_pad((string) $kodeUrutan++, 4, '0', STR_PAD_LEFT);
+                Pembayaran::create([
+                    'kode_transaksi' => $kode,
+                    'user_id' => $petugas->id,
+                    'siswa_id' => $siswa->id,
+                    'spp_id' => $sppModels['12']['SPP']->id,
+                    'tgl_bayar' => '2026-09-10',
+                    'bulan_dibayar' => $bulan,
+                    'tahun_dibayar' => 2026,
+                    'jumlah_bayar' => 100000,
+                    'metode_pembayaran' => 'Tunai',
+                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
+                ]);
+            }
+        }
+
+        // 3. Siswa Kelas X: variasi pembayaran SPP dan Seragam/PTS
+        $semuaX = array_merge($siswasXRPL, $siswasXTKJ);
+        foreach ($semuaX as $idx => $siswa) {
+            $paidCount = ($idx % 5);
+            for ($m = 0; $m < $paidCount; $m++) {
+                $bulan = $monthsTA[$m];
+                $kode = 'SPP-2026110'.str_pad((string) $kodeUrutan++, 4, '0', STR_PAD_LEFT);
+                Pembayaran::create([
+                    'kode_transaksi' => $kode,
+                    'user_id' => $petugas->id,
+                    'siswa_id' => $siswa->id,
+                    'spp_id' => $sppModels['10']['SPP']->id,
+                    'tgl_bayar' => '2026-08-15',
+                    'bulan_dibayar' => $bulan,
+                    'tahun_dibayar' => 2026,
+                    'jumlah_bayar' => 100000,
+                    'metode_pembayaran' => 'Tunai',
+                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
+                ]);
+            }
+
+            if ($idx % 3 === 0 && isset($sppModels['10']['Kaos Olah Raga'])) {
+                $tarif = $sppModels['10']['Kaos Olah Raga'];
+                $kode = 'NSP-2026110'.str_pad((string) $kodeUrutan++, 4, '0', STR_PAD_LEFT);
+                Pembayaran::create([
+                    'kode_transaksi' => $kode,
+                    'user_id' => $petugas->id,
+                    'siswa_id' => $siswa->id,
+                    'spp_id' => $tarif->id,
+                    'tgl_bayar' => '2026-08-20',
+                    'bulan_dibayar' => null,
+                    'tahun_dibayar' => 2026,
+                    'jumlah_bayar' => $tarif->nominal,
+                    'metode_pembayaran' => 'Tunai',
+                    'catatan' => "Pembayaran {$tarif->nama}",
+                ]);
+            }
+        }
+
+        // 4. Siswa Kelas XI: variasi pembayaran SPP
+        $semuaXI = array_merge($siswasXIRPL, $siswasXITKJ);
+        foreach ($semuaXI as $idx => $siswa) {
+            $paidCount = (($idx + 1) % 5);
+            for ($m = 0; $m < $paidCount; $m++) {
+                $bulan = $monthsTA[$m];
+                $kode = 'SPP-2026110'.str_pad((string) $kodeUrutan++, 4, '0', STR_PAD_LEFT);
+                Pembayaran::create([
+                    'kode_transaksi' => $kode,
+                    'user_id' => $petugas->id,
+                    'siswa_id' => $siswa->id,
+                    'spp_id' => $sppModels['11']['SPP']->id,
+                    'tgl_bayar' => '2026-09-05',
+                    'bulan_dibayar' => $bulan,
+                    'tahun_dibayar' => 2026,
+                    'jumlah_bayar' => 100000,
+                    'metode_pembayaran' => 'Transfer Bank',
+                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
+                ]);
             }
         }
     }
 
     /**
-     * Create the same SPP nominal for levels X, XI, and XII.
-     *
-     * @return array<string, Spp>
+     * Menanamkan data pengeluaran operasional sekolah.
      */
-    private function buatTarifSpp(int $tahun, string $tahunAjaran, int $nominal, string $keterangan): array
+    private function seedPengeluaranDemo(User $petugas, TahunAjaran $ta): void
     {
-        $tarifs = [];
+        $pengeluarans = [
+            ['EXP-20261001-0001', '2026-10-01', 'Gaji & Honor Guru/Staf', 'Honor Guru Honorer dan Staf Kebersihan Bulan September', 4500000, 'Bendahara / Guru Honorer', 'Transfer Bank'],
+            ['EXP-20261008-0002', '2026-10-08', 'ATK & Percetakan', 'Pengadaan Kertas HVS, Tinta Printer & Penggandaan Naskah PTS', 1250000, 'CV Media Prima Grafika', 'Tunai'],
+            ['EXP-20261015-0003', '2026-10-15', 'Listrik, Air & Internet', 'Pembayaran Tagihan Listrik PLN & Internet Dedicated Fiber', 1850000, 'PT Telkom Indonesia & PLN', 'Transfer Bank'],
+            ['EXP-20261022-0004', '2026-10-22', 'Sarana & Prasarana', 'Penggantian Switch Hub Gigabit & Kabel LAN Lab Komputer RPL', 950000, 'Toko Netkom Mandiri', 'Tunai'],
+            ['EXP-20261028-0005', '2026-10-28', 'Pemeliharaan & Kebersihan', 'Service dan Cuci AC Ruang Guru dan Ruang Kasir TU', 450000, 'CV Sejuk Mandiri Teknik', 'Tunai'],
+            ['EXP-20261102-0006', '2026-11-02', 'Konsumsi Rapat/Tamu', 'Konsumsi Rapat Koordinasi Wali Kelas & Sosialisasi Ujian', 350000, 'Catering Barokah', 'Tunai'],
+        ];
 
-        foreach (Spp::TINGKAT_LIST as $tingkat => $label) {
-            $tarifs[$tingkat] = Spp::firstOrCreate(
-                [
-                    'kategori' => Spp::KATEGORI_SPP,
-                    'tahun' => $tahun,
-                    'tahun_ajaran' => $tahunAjaran,
-                    'tingkat' => $tingkat,
-                ],
-                [
-                    'tipe' => Spp::TIPE_BULANAN,
-                    'nominal' => $nominal,
-                    'keterangan' => $keterangan,
-                ]
-            );
+        foreach ($pengeluarans as $p) {
+            PengeluaranSekolah::create([
+                'nomor_transaksi' => $p[0],
+                'tanggal' => $p[1],
+                'kategori' => $p[2],
+                'keperluan' => $p[3],
+                'nominal' => $p[4],
+                'penerima' => $p[5],
+                'metode_pembayaran' => $p[6],
+                'user_id' => $petugas->id,
+                'tahun_ajaran_id' => $ta->id,
+            ]);
         }
-
-        return $tarifs;
     }
 }
