@@ -74,7 +74,7 @@ class SiswaController extends Controller
             'spp_id' => ['required', 'exists:spps,id'],
             'jenis_kelamin' => ['required', 'in:L,P'],
             'alamat' => ['nullable', 'string'],
-            'no_telp' => ['nullable', 'string', 'max:20'],
+            'no_telp' => ['nullable', 'string', 'max:20', 'regex:/^(?:\+?62|0)?8\d{7,12}$/'],
             'create_user_account' => ['nullable', 'boolean'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
@@ -84,7 +84,12 @@ class SiswaController extends Controller
             'nama.required' => 'Nama siswa wajib diisi.',
             'kelas_id.required' => 'Kelas wajib dipilih.',
             'spp_id.required' => 'Tarif SPP wajib dipilih.',
+            'no_telp.regex' => 'Format nomor HP/WhatsApp tidak valid (gunakan awalan 08 atau 628, 10–15 digit).',
         ]);
+
+        if (! empty($validated['no_telp'])) {
+            $validated['no_telp'] = \App\Support\ImporSiswa\PembacaNilai::normalisasiHp($validated['no_telp']) ?? $validated['no_telp'];
+        }
 
         $userId = null;
         $kataSandiAwal = null;
@@ -206,7 +211,7 @@ class SiswaController extends Controller
             'spp_id' => ['required', 'exists:spps,id'],
             'jenis_kelamin' => ['required', 'in:L,P'],
             'alamat' => ['nullable', 'string'],
-            'no_telp' => ['nullable', 'string', 'max:20'],
+            'no_telp' => ['nullable', 'string', 'max:20', 'regex:/^(?:\+?62|0)?8\d{7,12}$/'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
             'nisn.unique' => 'NISN sudah terdaftar.',
@@ -215,7 +220,12 @@ class SiswaController extends Controller
             'nama.required' => 'Nama siswa wajib diisi.',
             'kelas_id.required' => 'Kelas wajib dipilih.',
             'spp_id.required' => 'Tarif SPP wajib dipilih.',
+            'no_telp.regex' => 'Format nomor HP/WhatsApp tidak valid (gunakan awalan 08 atau 628, 10–15 digit).',
         ]);
+
+        if (! empty($validated['no_telp'])) {
+            $validated['no_telp'] = \App\Support\ImporSiswa\PembacaNilai::normalisasiHp($validated['no_telp']) ?? $validated['no_telp'];
+        }
 
         $kelas = Kelas::with('tahunAjaran')->find($validated['kelas_id']);
         $validated['spp_id'] = Spp::untukKelas($kelas)?->id ?? $validated['spp_id'];

@@ -142,7 +142,16 @@ class SiswaForm
                         TextInput::make('no_telp')
                             ->label('Nomor Telepon / WhatsApp Siswa')
                             ->tel()
-                            ->maxLength(20),
+                            ->placeholder('08xxxxxxxxxx atau 628xxxxxxxxxx')
+                            ->maxLength(20)
+                            ->regex('/^(?:\+?62|0)?8\d{7,12}$/')
+                            ->validationMessages([
+                                'regex' => 'Format nomor HP/WhatsApp siswa tidak valid (gunakan awalan 08 atau 628, 10–15 digit).',
+                            ])
+                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state)
+                                ? (\App\Support\ImporSiswa\PembacaNilai::normalisasiHp($state) ?? trim($state))
+                                : null)
+                            ->helperText('Otomatis dinormalisasi ke format 628xxxxxxxxxx untuk pengiriman notifikasi WhatsApp.'),
 
                         Textarea::make('alamat')
                             ->label('Alamat Domisili Siswa')
@@ -166,7 +175,16 @@ class SiswaForm
                         TextInput::make('hp_wali')
                             ->label('No. HP / WhatsApp Orang Tua / Wali')
                             ->tel()
-                            ->maxLength(20),
+                            ->placeholder('08xxxxxxxxxx atau 628xxxxxxxxxx')
+                            ->maxLength(20)
+                            ->regex('/^(?:\+?62|0)?8\d{7,12}$/')
+                            ->validationMessages([
+                                'regex' => 'Format nomor HP/WhatsApp wali murid tidak valid (gunakan awalan 08 atau 628, 10–15 digit).',
+                            ])
+                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state)
+                                ? (\App\Support\ImporSiswa\PembacaNilai::normalisasiHp($state) ?? trim($state))
+                                : null)
+                            ->helperText('Digunakan untuk pengiriman notifikasi tagihan & kuitansi ke orang tua/wali.'),
                     ]),
             ]);
     }

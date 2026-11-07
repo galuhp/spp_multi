@@ -23,6 +23,7 @@ class PembayaransTable
                 TextColumn::make('kode_transaksi')
                     ->label('No. Kuitansi')
                     ->fontFamily('mono')
+                    ->size('xs')
                     ->searchable()
                     ->sortable()
                     ->copyable()
@@ -31,22 +32,28 @@ class PembayaransTable
                 TextColumn::make('tgl_bayar')
                     ->label('Tgl. Bayar')
                     ->date('d/m/Y')
+                    ->size('xs')
                     ->sortable(),
 
                 TextColumn::make('siswa.nama')
-                    ->label('Nama Siswa')
+                    ->label('Siswa')
+                    ->description(fn (Pembayaran $record): string => $record->siswa?->kelas?->nama_kelas ?? '-')
+                    ->wrap()
                     ->searchable()
                     ->sortable()
                     ->weight('semibold'),
 
                 TextColumn::make('siswa.kelas.nama_kelas')
                     ->label('Kelas')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('pos_pembayaran')
                     ->label('Pos Pembayaran')
                     ->getStateUsing(fn (Pembayaran $record): string => $record->namaPos())
                     ->badge()
+                    ->size('sm')
+                    ->wrap()
                     ->color(fn (Pembayaran $record): string => match ($record->spp?->kategori) {
                         'SPP' => 'info',
                         'Uang Gedung' => 'warning',
@@ -55,14 +62,17 @@ class PembayaransTable
                     }),
 
                 TextColumn::make('jumlah_bayar')
-                    ->label('Jumlah Bayar')
+                    ->label('Nominal')
                     ->formatStateUsing(fn ($state): string => 'Rp '.number_format($state, 0, ',', '.'))
+                    ->size('xs')
                     ->weight('bold')
                     ->sortable(),
 
                 TextColumn::make('metode_pembayaran')
                     ->label('Metode')
-                    ->badge(),
+                    ->badge()
+                    ->size('sm')
+                    ->toggleable(),
 
                 TextColumn::make('user.name')
                     ->label('Petugas')
@@ -72,8 +82,10 @@ class PembayaransTable
                 TextColumn::make('void_at')
                     ->label('Status')
                     ->badge()
+                    ->size('sm')
                     ->formatStateUsing(fn ($state): string => $state ? 'Void' : 'Valid')
-                    ->color(fn ($state): string => $state ? 'danger' : 'success'),
+                    ->color(fn ($state): string => $state ? 'danger' : 'success')
+                    ->toggleable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -94,11 +106,12 @@ class PembayaransTable
             ])
             ->recordActions([
                 Action::make('cetak_kuitansi')
-                    ->label('Cetak Kuitansi')
+                    ->label('Cetak')
+                    ->tooltip('Cetak Kuitansi')
                     ->icon('heroicon-o-printer')
                     ->color('gray')
                     ->outlined()
-                    ->size('sm')
+                    ->size('xs')
                     ->button()
                     ->url(fn (Pembayaran $record): string => route('pembayaran.cetak', $record->id))
                     ->openUrlInNewTab(),
@@ -108,6 +121,8 @@ class PembayaransTable
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->outlined()
+                    ->size('xs')
+                    ->button()
                     ->visible(fn (Pembayaran $record): bool => $record->void_at === null
                         && $record->gabungan_id === null
                         && (auth()->user()?->isAdmin() ?? false))

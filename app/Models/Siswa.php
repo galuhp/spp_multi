@@ -41,6 +41,12 @@ class Siswa extends Model
      */
     protected static function booted(): void
     {
+        static::saving(function (Siswa $siswa): void {
+            if (filled($siswa->no_telp)) {
+                $siswa->no_telp = \App\Support\ImporSiswa\PembacaNilai::normalisasiHp((string) $siswa->no_telp) ?? trim((string) $siswa->no_telp);
+            }
+        });
+
         static::creating(function (Siswa $siswa): void {
             if (blank($siswa->tahun_masuk)) {
                 if ($siswa->tanggal_masuk) {

@@ -14,6 +14,15 @@ class Wali extends Model
 
     protected $table = 'wali';
 
+    protected static function booted(): void
+    {
+        static::saving(function (Wali $wali): void {
+            if (filled($wali->hp_wali)) {
+                $wali->hp_wali = \App\Support\ImporSiswa\PembacaNilai::normalisasiHp((string) $wali->hp_wali) ?? trim((string) $wali->hp_wali);
+            }
+        });
+    }
+
     /**
      * Student that owns this guardian record.
      */

@@ -10,3 +10,26 @@
 .dark [data-group-label="Transaksi SPP"] .fi-sidebar-group-items > .fi-sidebar-item:nth-child(5) {
     border-bottom-color: var(--gray-700, #3f3f46);
 }
+
+/* Rapatkan jarak kolom tabel Filament agar tidak perlu scroll kanan-kiri */
+.fi-ta-table .fi-ta-header-cell,
+.fi-ta-table .fi-ta-cell {
+    padding-inline: 0.5rem !important;
+    padding-block: 0.5rem !important;
+}
+
+.fi-ta-table .fi-ta-header-cell:first-of-type,
+.fi-ta-table .fi-ta-cell:first-of-type {
+    padding-inline-start: 0.875rem !important;
+}
+
+.fi-ta-table .fi-ta-header-cell:last-of-type,
+.fi-ta-table .fi-ta-cell:last-of-type {
+    padding-inline-end: 0.875rem !important;
+}
+
+.fi-ta-text:not(.fi-inline) {
+    padding-inline: 0.25rem !important;
+    padding-block: 0.25rem !important;
+}
+
