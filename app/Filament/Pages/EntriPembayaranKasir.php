@@ -30,7 +30,7 @@ class EntriPembayaranKasir extends Page
 
     protected static ?string $slug = 'entry-pembayaran-2';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 0;
 
     protected string $view = 'filament.pages.entri-pembayaran-kasir';
 

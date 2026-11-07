@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
 use App\Models\RolePermission;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -11,6 +10,8 @@ use UnitEnum;
 
 class EntriPembayaran extends Page
 {
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPlusCircle;
 
     protected static UnitEnum|string|null $navigationGroup = 'Transaksi SPP';
@@ -30,21 +31,8 @@ class EntriPembayaran extends Page
         return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
-    /**
-     * Highlight this menu on both the redirect page and the create page.
-     *
-     * @return array<int, string>
-     */
-    public static function getNavigationItemActiveRoutePattern(): string|array
-    {
-        return [
-            static::getRouteName(),
-            CreatePembayaran::getRouteName(),
-        ];
-    }
-
     public function mount(): void
     {
-        $this->redirect(CreatePembayaran::getUrl());
+        $this->redirect(EntriPembayaranKasir::getUrl());
     }
 }

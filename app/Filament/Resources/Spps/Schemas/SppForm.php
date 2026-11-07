@@ -26,6 +26,7 @@ class SppForm
                         'Uang Seragam' => 'Uang Seragam',
                         'Biaya Praktik' => 'Biaya Praktik',
                         'Biaya Ujian' => 'Biaya Ujian',
+                        'Lain-lain' => 'Lain-lain',
                     ])
                     ->searchable()
                     ->createOptionUsing(fn (string $custom): string => trim($custom))

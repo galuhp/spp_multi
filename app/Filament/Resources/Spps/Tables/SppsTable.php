@@ -69,6 +69,7 @@ class SppsTable
                         'Uang Seragam' => 'Uang Seragam',
                         'Biaya Praktik' => 'Biaya Praktik',
                         'Biaya Ujian' => 'Biaya Ujian',
+                        'Lain-lain' => 'Lain-lain',
                     ]),
                 SelectFilter::make('tipe')
                     ->options([

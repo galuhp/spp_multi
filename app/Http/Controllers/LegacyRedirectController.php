@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Filament\Pages\EntriPembayaranKasir;
 use App\Filament\Pages\LaporanPembayaran;
 use App\Filament\Pages\ProfilSekolahSettings;
 use App\Filament\Pages\RiwayatPembayaranSiswa;
@@ -9,7 +10,6 @@ use App\Filament\Pages\TagihanSiswa;
 use App\Filament\Resources\Jurusans\JurusanResource;
 use App\Filament\Resources\Kelas\KelasResource;
 use App\Filament\Resources\LogAktivitas\LogAktivitasResource;
-use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
 use App\Filament\Resources\Pembayarans\PembayaranResource;
 use App\Filament\Resources\Siswas\SiswaResource;
 use App\Filament\Resources\Spps\SppResource;
@@ -68,7 +68,7 @@ class LegacyRedirectController extends Controller
 
     public function pembayaranCreate(Request $request): RedirectResponse
     {
-        $url = CreatePembayaran::getUrl();
+        $url = EntriPembayaranKasir::getUrl();
         $query = $request->getQueryString();
 
         return redirect($query ? $url.'?'.$query : $url);

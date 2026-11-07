@@ -141,7 +141,7 @@ class AdminPanelProvider extends PanelProvider
                     ->key('transaksi-pengeluaran-operasional-sekolah')
                     ->group('Transaksi SPP')
                     ->icon(Heroicon::OutlinedBanknotes)
-                    ->sort(3)
+                    ->sort(4)
                     ->url(fn (): string => PengeluaranSekolahResource::getUrl('index'))
                     ->visible(fn (): bool => PengeluaranSekolahResource::canViewAny())
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.pengeluaran-sekolahs.*')),

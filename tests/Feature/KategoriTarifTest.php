@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
-use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
+use App\Filament\Pages\EntriPembayaranKasir;
 use App\Filament\Resources\Spps\SppResource;
 use App\Models\Jurusan;
 use App\Models\Kelas;
@@ -147,20 +147,15 @@ class KategoriTarifTest extends TestCase
     {
         $this->actingAs($this->petugas)
             ->get(route('pembayaran.create', ['siswa_id' => $this->siswa->id]))
-            ->assertRedirect(CreatePembayaran::getUrl().'?siswa_id='.$this->siswa->id);
+            ->assertRedirect(EntriPembayaranKasir::getUrl().'?siswa_id='.$this->siswa->id);
 
-        Livewire::test(CreatePembayaran::class)
-            ->fillForm([
-                'cara_pilih' => 'cari',
-                'siswa_id' => $this->siswa->id,
-                'bayar_spp' => [],
-                'bayar_non_spp' => ['non_spp'],
-            ])
-            ->assertSee('Biaya Lainnya (Uang Gedung, Seragam, Praktik, dll.)')
-            ->assertSeeHtml('Uang Gedung &amp; Pengembangan')
-            ->assertSee('Rp 2.000.000')
-            ->assertSee('Paket Seragam 4 Stel')
-            ->assertSee('Rp 750.000');
+        $component = Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id);
+
+        $nonSpp = collect($component->instance()->kasirData['non_spp']);
+
+        $this->assertTrue($nonSpp->contains(fn (array $item): bool => str_contains($item['nama'], 'Uang Gedung & Pengembangan') && $item['sisa'] === 2000000));
+        $this->assertTrue($nonSpp->contains(fn (array $item): bool => str_contains($item['nama'], 'Paket Seragam 4 Stel') && $item['sisa'] === 750000));
     }
 
     public function test_staff_can_pay_non_spp_fees_like_uang_gedung_and_uang_seragam(): void

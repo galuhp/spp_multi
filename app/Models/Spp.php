@@ -24,12 +24,15 @@ class Spp extends Model
 
     public const KATEGORI_BIAYA_UJIAN = 'Biaya Ujian';
 
+    public const KATEGORI_LAINNYA = 'Lain-lain';
+
     public const DEFAULT_KATEGORI_LIST = [
         self::KATEGORI_SPP,
         self::KATEGORI_UANG_GEDUNG,
         self::KATEGORI_UANG_SERAGAM,
         self::KATEGORI_BIAYA_PRAKTIK,
         self::KATEGORI_BIAYA_UJIAN,
+        self::KATEGORI_LAINNYA,
     ];
 
     public const TIPE_BULANAN = 'bulanan';

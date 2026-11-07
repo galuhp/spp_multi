@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Siswas\Tables;
 
-use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
+use App\Filament\Pages\EntriPembayaranKasir;
 use App\Models\Siswa;
 use App\Support\KenaikanKelas\ProsesKelasService;
 use Filament\Actions\Action;
@@ -123,7 +123,7 @@ class SiswasTable
                     ->label('Bayar')
                     ->icon('heroicon-o-credit-card')
                     ->color('success')
-                    ->url(fn ($record): string => CreatePembayaran::getUrl(['siswa_id' => $record->id])),
+                    ->url(fn ($record): string => EntriPembayaranKasir::getUrl(['siswa_id' => $record->id])),
                 EditAction::make(),
             ]);
     }

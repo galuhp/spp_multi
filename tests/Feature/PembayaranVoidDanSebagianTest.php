@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\EntriPembayaranKasir;
 use App\Filament\Pages\TagihanSiswa;
-use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
 use App\Filament\Resources\Siswas\SiswaResource;
 use App\Models\Jurusan;
 use App\Models\Kelas;
@@ -126,17 +126,10 @@ class PembayaranVoidDanSebagianTest extends TestCase
             'Koreksi bulan.',
         );
 
-        Livewire::test(CreatePembayaran::class)
-            ->fillForm([
-                'cara_pilih' => 'cari',
-                'siswa_id' => $this->siswa->id,
-                'bayar_spp' => ['spp'],
-                'bulan_dibayar' => ['Juli'],
-                'tgl_bayar' => '2026-11-05',
-                'metode_pembayaran' => 'Tunai',
-            ])
-            ->call('create')
-            ->assertHasNoFormErrors();
+        Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id)
+            ->call('simpan', ["spp:{$this->spp->id}:Juli:2026"], [], 'Tunai', '2026-11-05')
+            ->assertRedirectContains('/pembayaran/');
 
         $this->assertSame(1, Pembayaran::query()
             ->where('siswa_id', $this->siswa->id)
@@ -156,17 +149,10 @@ class PembayaranVoidDanSebagianTest extends TestCase
         $this->assertSame(100000, $tagihan['dibayar']);
         $this->assertSame(150000, $tagihan['sisa']);
 
-        Livewire::test(CreatePembayaran::class)
-            ->fillForm([
-                'cara_pilih' => 'cari',
-                'siswa_id' => $this->siswa->id,
-                'bayar_spp' => ['spp'],
-                'bulan_dibayar' => ['Juli'],
-                'tgl_bayar' => '2026-11-05',
-                'metode_pembayaran' => 'Tunai',
-            ])
-            ->call('create')
-            ->assertHasNoFormErrors();
+        Livewire::test(EntriPembayaranKasir::class)
+            ->call('pilihSiswa', $this->siswa->id)
+            ->call('simpan', ["spp:{$this->spp->id}:Juli:2026"], [], 'Tunai', '2026-11-05')
+            ->assertRedirectContains('/pembayaran/');
 
         $this->assertDatabaseHas('pembayarans', [
             'siswa_id' => $this->siswa->id,

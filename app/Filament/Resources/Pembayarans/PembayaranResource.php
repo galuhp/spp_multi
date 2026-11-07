@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Pembayarans;
 
-use App\Filament\Resources\Pembayarans\Pages\CreatePembayaran;
 use App\Filament\Resources\Pembayarans\Pages\ListPembayarans;
 use App\Filament\Resources\Pembayarans\Schemas\PembayaranForm;
 use App\Filament\Resources\Pembayarans\Tables\PembayaransTable;
@@ -31,7 +30,7 @@ class PembayaranResource extends Resource
 
     protected static ?string $pluralModelLabel = 'History Pembayaran';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     public static function canViewAny(): bool
     {
@@ -42,9 +41,7 @@ class PembayaranResource extends Resource
 
     public static function canCreate(): bool
     {
-        $user = auth()->user();
-
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+        return false;
     }
 
     public static function canDelete(Model $record): bool
@@ -58,7 +55,7 @@ class PembayaranResource extends Resource
     }
 
     /**
-     * Keep the history menu inactive while the create form is open.
+     * Keep the history menu inactive while other pages are open.
      *
      * @return array<int, string>
      */
@@ -101,7 +98,6 @@ class PembayaranResource extends Resource
     {
         return [
             'index' => ListPembayarans::route('/'),
-            'create' => CreatePembayaran::route('/create'),
         ];
     }
 }
