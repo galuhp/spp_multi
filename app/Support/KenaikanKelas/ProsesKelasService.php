@@ -730,6 +730,12 @@ class ProsesKelasService
             ->groupBy(fn (Pembayaran $p): string => $p->spp_id.'|'.$p->bulan_dibayar)
             ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
+        $dibayarSppPerBulanTahun = $pembayarans
+            ->whereNotNull('bulan_dibayar')
+            ->whereNotNull('tahun_dibayar')
+            ->groupBy(fn (Pembayaran $p): string => $p->bulan_dibayar.'|'.$p->tahun_dibayar)
+            ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
+
         $dibayarNonSpp = $pembayarans
             ->whereNull('bulan_dibayar')
             ->groupBy('spp_id')
@@ -749,6 +755,9 @@ class ProsesKelasService
             $spp = Spp::untukTingkat($tingkat);
             $nonSppList = Spp::nonSppUntukTingkat($tingkat);
 
+            $selisih = max(0, (int) $tingkatSekarang - (int) $tingkat);
+            $tahunMulaiLvl = 2026 - $selisih;
+
             // SPP calculation
             if ($spp && $spp->isBulanan()) {
                 $nominal = (int) $spp->nominal;
@@ -760,10 +769,13 @@ class ProsesKelasService
                     if ($idx > $maxIndex) {
                         continue;
                     }
-                    if ($tanggunganService->isSppDitanggung($siswa, $spp, $bln, 0)) {
+
+                    $thnLvl = in_array($bln, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? $tahunMulaiLvl : ($tahunMulaiLvl + 1);
+
+                    if ($tanggunganService->isSppDitanggung($siswa, $spp, $bln, $thnLvl)) {
                         continue;
                     }
-                    $dibayar = (int) ($dibayarSppPerBulan->get($spp->id.'|'.$bln) ?? 0);
+                    $dibayar = (int) ($dibayarSppPerBulanTahun->get($bln.'|'.$thnLvl) ?? ($dibayarSppPerBulan->get($spp->id.'|'.$bln) ?? 0));
                     $sisa = max(0, $nominal - $dibayar);
                     if ($sisa > 0) {
                         $label = "{$bln} (Kelas ".Spp::labelTingkat($tingkat).")";

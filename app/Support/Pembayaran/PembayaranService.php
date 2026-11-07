@@ -45,91 +45,86 @@ class PembayaranService
         }
 
         // Collect all distinct tariffs assigned to the student along their study timeline
-        $daftarTarif = collect();
+        $dibayarPerBulan = Pembayaran::query()
+            ->where('siswa_id', $siswa->id)
+            ->whereNull('void_at')
+            ->whereNotNull('bulan_dibayar')
+            ->whereNotNull('tahun_dibayar')
+            ->get(['bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
+            ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar)
+            ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
+
+        // 1. SPP Bulanan across all timeline levels
         foreach ($tingkatList as $t) {
-            $sppLvl = Spp::untukTingkat($t);
-            if ($sppLvl) {
-                $daftarTarif->push($sppLvl);
+            $sppLvl = Spp::untukTingkat($t) ?? $siswa->spp;
+            if (! $sppLvl || ! $sppLvl->isBulanan()) {
+                continue;
             }
-        }
-        foreach ($siswa->riwayatKelas as $riwayat) {
-            if ($riwayat->spp) {
-                $daftarTarif->push($riwayat->spp);
-            }
-        }
-        if ($siswa->spp) {
-            $daftarTarif->push($siswa->spp);
-        }
 
-        $daftarTarif = $daftarTarif->unique('id')
-            ->sortBy(fn (Spp $t): int => Pembayaran::tahunMulaiTarif($t))
-            ->values();
+            $selisih = max(0, (int) $tingkatSekarang - (int) $t);
+            $tahunMulai = 2026 - $selisih;
+            $nominal = (int) $sppLvl->nominal;
+            $isPriorYear = ($t !== $tingkatSekarang);
 
-        foreach ($daftarTarif as $tarif) {
-            if ($tarif->isBulanan()) {
-                $tahunMulai = Pembayaran::tahunMulaiTarif($tarif);
+            foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+                $bulan = $periode['bulan'];
+                $tahun = $periode['tahun'];
 
-                $dibayarPerBulan = Pembayaran::query()
-                    ->where('siswa_id', $siswa->id)
-                    ->where('spp_id', $tarif->id)
-                    ->whereNull('void_at')
-                    ->whereNotNull('bulan_dibayar')
-                    ->get(['bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar'])
-                    ->groupBy(fn (Pembayaran $pembayaran): string => $pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar)
-                    ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
-
-                $nominal = (int) $tarif->nominal;
-                $isPriorYear = $siswa->spp && (int) $tarif->id !== (int) $siswa->spp->id;
-
-                foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
-                    $bulan = $periode['bulan'];
-                    $tahun = $periode['tahun'];
-
-                    if ($this->tanggunganPemerintah->isSppDitanggung($siswa, $tarif, $bulan, $tahun)) {
-                        continue;
-                    }
-
-                    $dibayar = (int) ($dibayarPerBulan->get($bulan.'|'.$tahun) ?? 0);
-                    $sisa = max(0, $nominal - $dibayar);
-
-                    if ($sisa <= 0) {
-                        continue;
-                    }
-
-                    $label = $isPriorYear && $tarif->tahun_ajaran
-                        ? "SPP {$bulan} {$tahun} ({$tarif->tahun_ajaran})"
-                        : "SPP {$bulan} {$tahun}";
-
-                    $items[] = [
-                        'key' => "spp:{$tarif->id}:{$bulan}:{$tahun}",
-                        'spp_id' => $tarif->id,
-                        'bulan' => $bulan,
-                        'tahun' => $tahun,
-                        'nominal' => $nominal,
-                        'dibayar' => min($dibayar, $nominal),
-                        'sisa' => $sisa,
-                        'label' => $label,
-                        'tipe' => 'spp',
-                    ];
+                if ($this->tanggunganPemerintah->isSppDitanggung($siswa, $sppLvl, $bulan, $tahun)) {
+                    continue;
                 }
-            } else {
-                $dibayar = $this->totalDibayar($siswa, $tarif);
-                $nominal = (int) $tarif->nominal;
+
+                $dibayar = (int) ($dibayarPerBulan->get($bulan.'|'.$tahun) ?? 0);
                 $sisa = max(0, $nominal - $dibayar);
 
-                if ($sisa > 0) {
-                    $items[] = [
-                        'key' => "spp:{$tarif->id}",
-                        'spp_id' => $tarif->id,
-                        'bulan' => null,
-                        'tahun' => (int) $tarif->tahun,
-                        'nominal' => $nominal,
-                        'dibayar' => min($dibayar, $nominal),
-                        'sisa' => $sisa,
-                        'label' => $tarif->namaLengkap(),
-                        'tipe' => 'non_spp',
-                    ];
+                if ($sisa <= 0) {
+                    continue;
                 }
+
+                $label = $isPriorYear
+                    ? "SPP {$bulan} {$tahun} (Kelas ".Spp::labelTingkat($t).")"
+                    : "SPP {$bulan} {$tahun}";
+
+                $items[] = [
+                    'key' => "spp:{$sppLvl->id}:{$bulan}:{$tahun}",
+                    'spp_id' => $sppLvl->id,
+                    'bulan' => $bulan,
+                    'tahun' => $tahun,
+                    'nominal' => $nominal,
+                    'dibayar' => min($dibayar, $nominal),
+                    'sisa' => $sisa,
+                    'label' => $label,
+                    'tipe' => 'spp',
+                ];
+            }
+        }
+
+        // 2. Non-SPP across all timeline levels
+        $nonSppList = collect();
+        foreach ($tingkatList as $t) {
+            foreach (Spp::nonSppUntukTingkat($t) as $tarifNon) {
+                $nonSppList->push($tarifNon);
+            }
+        }
+
+        foreach ($nonSppList->unique('id') as $tarif) {
+            $dibayar = $this->totalDibayar($siswa, $tarif);
+            $nominal = (int) $tarif->nominal;
+            $sisa = max(0, $nominal - $dibayar);
+
+            if ($sisa > 0) {
+                $labelTingkat = $tarif->tingkat ? " (Kelas ".Spp::labelTingkat($tarif->tingkat).")" : "";
+                $items[] = [
+                    'key' => "spp:{$tarif->id}",
+                    'spp_id' => $tarif->id,
+                    'bulan' => null,
+                    'tahun' => (int) $tarif->tahun,
+                    'nominal' => $nominal,
+                    'dibayar' => min($dibayar, $nominal),
+                    'sisa' => $sisa,
+                    'label' => ($tarif->nama ?: $tarif->kategori).$labelTingkat,
+                    'tipe' => 'non_spp',
+                ];
             }
         }
 

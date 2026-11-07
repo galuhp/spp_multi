@@ -586,10 +586,10 @@ def seed():
         'Kelas XII': '12'
     }
 
-    spp_tarifs = {} # (tingkat, is_spp) -> id
+    spp_tarifs = {} # tingkat -> id
     all_tarifs = [] # list of (id, tingkat, kategori, tipe, nama, nominal)
+    global_spp_id = None
 
-    tarif_id_seq = 1
     for sheet_name, tingkat in sheet_to_tingkat.items():
         ws = wb[sheet_name]
         anbk_counter = 1
@@ -610,6 +610,25 @@ def seed():
 
             kategori, tipe = tentukan_kategori(jenis_str)
 
+            if kategori == 'SPP':
+                if global_spp_id is None:
+                    cursor.execute("""
+                    INSERT INTO spps (kategori, tipe, nama, tahun, tahun_ajaran, tingkat, nominal, keterangan, created_at, updated_at)
+                    VALUES (?, ?, ?, 2026, '2026/2027', NULL, ?, 'Tarif Biaya Sekolah per bulan (Berlaku untuk semua tingkat) TA 2026/2027', ?, ?)
+                    """, (kategori, tipe, nama_label, nominal_int, now_str, now_str))
+                    global_spp_id = cursor.lastrowid
+                current_id = global_spp_id
+                spp_tarifs[tingkat] = global_spp_id
+                all_tarifs.append({
+                    'id': current_id,
+                    'tingkat': None,
+                    'kategori': kategori,
+                    'tipe': tipe,
+                    'nama': nama_label,
+                    'nominal': nominal_int
+                })
+                continue
+
             cursor.execute("""
             INSERT INTO spps (kategori, tipe, nama, tahun, tahun_ajaran, tingkat, nominal, keterangan, created_at, updated_at)
             VALUES (?, ?, ?, 2026, '2026/2027', ?, ?, ?, ?, ?)
@@ -624,9 +643,6 @@ def seed():
                 'nama': nama_label,
                 'nominal': nominal_int
             })
-
-            if kategori == 'SPP':
-                spp_tarifs[tingkat] = current_id
 
     # 8. Seed Siswas & Walis
     # Generate realistic names

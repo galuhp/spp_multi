@@ -291,16 +291,22 @@ class TagihanSiswa extends Page
 
         foreach ($priorLevels as $pLvl) {
             $tarifPrior = Spp::untukTingkat($pLvl);
-            if ($tarifPrior && $tarifPrior->isBulanan() && (int) $tarifPrior->id !== (int) ($siswa->spp?->id ?? 0)) {
+            if ($tarifPrior && $tarifPrior->isBulanan()) {
                 $nominalPrior = (int) $tarifPrior->nominal;
-                foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bPrior) {
-                    if ($tanggunganPemerintah->isSppDitanggung($siswa, $tarifPrior, $bPrior, 0)) {
+                $selisih = max(1, (int) $tingkatSekarang - (int) $pLvl);
+                $tahunMulaiPrior = 2026 - $selisih;
+
+                foreach (Pembayaran::bulanTahunAjaran($tahunMulaiPrior) as $periode) {
+                    $bPrior = $periode['bulan'];
+                    $thnPrior = $periode['tahun'];
+
+                    if ($tanggunganPemerintah->isSppDitanggung($siswa, $tarifPrior, $bPrior, $thnPrior)) {
                         continue;
                     }
 
                     $dibayarPrior = (int) $riwayatPembayaran
-                        ->where('spp_id', $tarifPrior->id)
                         ->where('bulan_dibayar', $bPrior)
+                        ->where('tahun_dibayar', $thnPrior)
                         ->sum('jumlah_bayar');
 
                     $sisaPrior = max(0, $nominalPrior - $dibayarPrior);
@@ -308,7 +314,7 @@ class TagihanSiswa extends Page
                         $totalTunggakanPrior += $sisaPrior;
                         $tunggakanPrior[] = [
                             'tahun_ajaran' => 'Kelas '.Spp::labelTingkat($pLvl),
-                            'bulan' => 'SPP '.$bPrior,
+                            'bulan' => "SPP {$bPrior} {$thnPrior}",
                             'tipe' => 'SPP',
                             'nominal' => $nominalPrior,
                             'dibayar' => $dibayarPrior,

@@ -305,11 +305,30 @@ class DatabaseSeeder extends Seeder
         ];
 
         $models = [];
+        $globalSpp = null;
 
         foreach ($daftarTarif as $tingkat => $items) {
             $models[$tingkat] = [];
             foreach ($items as $item) {
                 [$nama, $nominal, $kategori, $tipe] = $item;
+
+                if ($kategori === 'SPP') {
+                    if (! $globalSpp) {
+                        $globalSpp = Spp::create([
+                            'kategori' => $kategori,
+                            'tipe' => $tipe,
+                            'nama' => $nama,
+                            'tahun' => $tahun,
+                            'tahun_ajaran' => $ta,
+                            'tingkat' => null,
+                            'nominal' => $nominal,
+                            'keterangan' => "Tarif {$nama} (Berlaku untuk semua tingkat) TA {$ta}",
+                        ]);
+                    }
+                    $models[$tingkat]['SPP'] = $globalSpp;
+                    continue;
+                }
+
                 $spp = Spp::create([
                     'kategori' => $kategori,
                     'tipe' => $tipe,
@@ -321,11 +340,7 @@ class DatabaseSeeder extends Seeder
                     'keterangan' => "Tarif {$nama} Tingkat {$tingkat} TA {$ta}",
                 ]);
 
-                if ($kategori === 'SPP') {
-                    $models[$tingkat]['SPP'] = $spp;
-                } else {
-                    $models[$tingkat][$nama] = $spp;
-                }
+                $models[$tingkat][$nama] = $spp;
             }
         }
 

@@ -18,10 +18,6 @@ class SppsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->where(function (Builder $query): void {
-                $query->where('kategori', '!=', Spp::KATEGORI_SPP)
-                    ->orWhereNotNull('tingkat');
-            }))
             ->defaultSort('tahun_ajaran', 'desc')
             ->columns([
                 TextColumn::make('kategori')
@@ -52,8 +48,9 @@ class SppsTable
                 TextColumn::make('tingkat')
                     ->label('Tingkat')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => filled($state) ? Spp::labelTingkat($state) : '-')
-                    ->placeholder('-'),
+                    ->formatStateUsing(fn (?string $state): string => filled($state) ? Spp::labelTingkat($state) : 'Semua Tingkat')
+                    ->color(fn (?string $state): string => filled($state) ? 'primary' : 'success')
+                    ->placeholder('Semua Tingkat'),
                 TextColumn::make('nominal')
                     ->label('Nominal Tarif')
                     ->formatStateUsing(fn ($state): string => 'Rp '.number_format($state, 0, ',', '.'))

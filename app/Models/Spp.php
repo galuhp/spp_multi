@@ -118,12 +118,36 @@ class Spp extends Model
             return $byTingkat;
         }
 
-        return self::query()
+        $byGlobalYear = self::query()
             ->where('kategori', self::KATEGORI_SPP)
             ->where('tipe', self::TIPE_BULANAN)
             ->when($tahunAjaran, fn (Builder $query): Builder => $query->where('tahun_ajaran', $tahunAjaran))
-            ->whereNull('tingkat')
+            ->where(function (Builder $query): void {
+                $query->whereNull('tingkat')->orWhere('tingkat', '');
+            })
             ->orderByDesc('tahun_ajaran')
+            ->first();
+
+        if ($byGlobalYear) {
+            return $byGlobalYear;
+        }
+
+        $byGlobal = self::query()
+            ->where('kategori', self::KATEGORI_SPP)
+            ->where('tipe', self::TIPE_BULANAN)
+            ->where(function (Builder $query): void {
+                $query->whereNull('tingkat')->orWhere('tingkat', '');
+            })
+            ->orderByDesc('tahun_ajaran')
+            ->first();
+
+        if ($byGlobal) {
+            return $byGlobal;
+        }
+
+        return self::query()
+            ->where('kategori', self::KATEGORI_SPP)
+            ->where('tipe', self::TIPE_BULANAN)
             ->first();
     }
 

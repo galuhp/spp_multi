@@ -690,14 +690,20 @@ class LaporanSppService
                     ];
                     $sppPrior = $lvlTarifs['spp'];
 
+                    $selisih = max(1, (int) $tingkat - (int) $pLvl);
+                    $taCurYear = $tahunAjaran ? (int) substr($tahunAjaran->nama, 0, 4) : 2026;
+                    $taPriorYear = $taCurYear - $selisih;
+
                     if ($sppPrior && $sppPrior->isBulanan()) {
                         $nomPrior = (int) $sppPrior->nominal;
                         foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bln) {
-                            if ($tanggunganService->isSppDitanggung($siswa, $sppPrior, $bln, 0)) {
+                            $thnPrior = in_array($bln, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? $taPriorYear : ($taPriorYear + 1);
+
+                            if ($tanggunganService->isSppDitanggung($siswa, $sppPrior, $bln, $thnPrior)) {
                                 continue;
                             }
                             $tagihanSppPrior += $nomPrior;
-                            $bayar = (int) ($sppBayarMap[$siswa->id.'|'.$sppPrior->id.'|'.$bln] ?? 0);
+                            $bayar = (int) ($sppBayarMap[$siswa->id.'|'.$bln.'|'.$thnPrior] ?? 0);
                             $dibayarSppPrior += min($bayar, $nomPrior);
                             $sisa = max(0, $nomPrior - $bayar);
                             $tunggakanSppPrior += $sisa;

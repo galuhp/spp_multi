@@ -67,8 +67,10 @@ class SppForm
 
                 Select::make('tingkat')
                     ->label('Tingkat Berlaku')
+                    ->placeholder('Semua Tingkat (Berlaku untuk seluruh tingkat)')
                     ->options(fn (): array => ProfilSekolah::tingkatSppOptions())
-                    ->required(fn (Get $get): bool => $get('kategori') === Spp::KATEGORI_SPP)
+                    ->nullable()
+                    ->helperText('Kosongkan jika tarif ini berlaku untuk semua tingkat siswa.')
                     ->unique(
                         ignoreRecord: true,
                         modifyRuleUsing: function (Unique $rule, Get $get): Unique {
