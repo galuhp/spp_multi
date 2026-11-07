@@ -58,7 +58,7 @@ class AdminPanelProvider extends PanelProvider
         $meuiPlugin = MeUiPlugin::make()
             ->density(fn (): string => GlobalThemePreferenceStore::option('density', 'comfortable'))
             ->palette(fn (): string => GlobalThemePreferenceStore::option('palette', 'slate'))
-            ->accent(fn (): string => GlobalThemePreferenceStore::option('accent', 'panel'))
+            ->accent(fn (): string => GlobalThemePreferenceStore::option('accent', 'blue'))
             ->radius(fn (): string => GlobalThemePreferenceStore::option('radius', 'rounded'))
             ->surface(fn (): string => GlobalThemePreferenceStore::option('surface', 'elevated'))
             ->sidebarStyle(fn (): string => GlobalThemePreferenceStore::option('sidebar', 'soft'))
@@ -99,7 +99,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(fn (): ?string => ProfilSekolah::current()->logoUrl())
             ->font('DM Sans')
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => Color::Blue,
                 'gray' => Color::Slate,
             ])
             ->profile()

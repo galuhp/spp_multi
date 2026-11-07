@@ -1,3 +1,4 @@
+@import './theme.css';
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
@@ -5,9 +6,8 @@
 @source '../views/components/ui';
 @source '../../app/Enums/StatusBarisImpor.php';
 
-/* Satu aksen biru tua, tanpa gradien. */
 .impor-siswa {
-    --color-primary: oklch(38% 0.12 260);
+    --color-primary: var(--primary-600, var(--color-sky-600));
 }
 
 .impor-siswa .table th {

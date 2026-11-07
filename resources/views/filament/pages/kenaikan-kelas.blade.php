@@ -13,22 +13,22 @@
 
     <div class="space-y-5">
         @if ($galat)
-            <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300">
                 {{ $galat }}
             </div>
         @endif
 
-        <div class="rounded-xl border border-zinc-200 bg-white p-5">
-            <h3 class="text-base font-semibold text-zinc-900">Pilih Tahun Ajaran & Kelas Asal</h3>
-            <p class="mt-0.5 text-xs text-zinc-500">
+        <div class="fi-section rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-gray-900">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Pilih Tahun Ajaran & Kelas Asal</h3>
+            <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                 Tahun ajaran tujuan harus berbeda dari tahun ajaran asal dan sudah memiliki rombel. Siswa yang tidak naik tetap dipilihkan kelas di tingkat yang sama.
             </p>
 
             <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-zinc-600">Tahun Ajaran Asal</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-gray-300">Tahun Ajaran Asal</label>
                     <select wire:model.live="tahun_ajaran_asal_id"
-                        class="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
+                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                         <option value="">Pilih tahun ajaran</option>
                         @foreach ($this->tahunAjaranOptions as $id => $nama)
                             <option value="{{ $id }}">{{ $nama }}</option>
@@ -37,9 +37,9 @@
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-zinc-600">Tahun Ajaran Tujuan</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-gray-300">Tahun Ajaran Tujuan</label>
                     <select wire:model.live="tahun_ajaran_tujuan_id"
-                        class="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
+                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                         <option value="">Pilih tahun ajaran</option>
                         @foreach ($this->tahunAjaranTujuanOptions as $id => $nama)
                             <option value="{{ $id }}">{{ $nama }}</option>
@@ -48,9 +48,9 @@
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-zinc-600">Kelas Asal</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-gray-300">Kelas Asal</label>
                     <select wire:model.live="kelas_asal_id"
-                        class="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
+                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                         <option value="">Pilih kelas</option>
                         @foreach ($this->kelasAsalOptions as $id => $label)
                             <option value="{{ $id }}">{{ $label }}</option>
@@ -61,23 +61,23 @@
         </div>
 
         @if ($siswaList->isNotEmpty())
-            <div class="rounded-xl border border-zinc-200 bg-white p-5">
+            <div class="fi-section rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-gray-900">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h3 class="text-base font-semibold text-zinc-900">Daftar Siswa</h3>
-                        <p class="mt-0.5 text-xs text-zinc-500">
+                        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Daftar Siswa</h3>
+                        <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                             Semua siswa aktif tercentang naik. Ubah status menjadi "Tinggal" bila siswa tidak naik kelas.
                         </p>
                     </div>
-                    <div class="flex flex-wrap gap-2 text-xs">
-                        <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700">Naik: {{ $jumlahNaik }}</span>
-                        <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700">Tinggal: {{ $jumlahTinggal }}</span>
+                    <div class="flex flex-wrap gap-2 text-xs tabular-nums">
+                        <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Naik: {{ $jumlahNaik }}</span>
+                        <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">Tinggal: {{ $jumlahTinggal }}</span>
                     </div>
                 </div>
 
                 <div class="mt-4 overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="bg-zinc-50 text-xs uppercase text-zinc-600">
+                        <thead class="bg-slate-50 text-xs uppercase text-slate-600 dark:bg-gray-800/60 dark:text-gray-400">
                             <tr>
                                 <th class="px-3 py-2">NISN</th>
                                 <th class="px-3 py-2">Nama</th>
@@ -86,22 +86,22 @@
                                 <th class="px-3 py-2">Catatan</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-100">
+                        <tbody class="divide-y divide-slate-100 dark:divide-gray-800">
                             @foreach ($siswaList as $baris)
                                 @php $siswa = $baris['siswa']; @endphp
                                 <tr wire:key="siswa-{{ $siswa->id }}">
-                                    <td class="px-3 py-2 font-mono text-xs text-zinc-500">{{ $siswa->nisn ?: '-' }}</td>
-                                    <td class="px-3 py-2 font-medium text-zinc-900">{{ $siswa->nama }}</td>
+                                    <td class="px-3 py-2 font-mono text-xs text-slate-500 dark:text-gray-400">{{ $siswa->nisn ?: '-' }}</td>
+                                    <td class="px-3 py-2 font-medium text-slate-900 dark:text-white">{{ $siswa->nama }}</td>
                                     <td class="px-3 py-2">
                                         <select wire:model.live="keputusan.{{ $siswa->id }}.status"
-                                            class="w-32 rounded-lg border border-zinc-300 px-2 py-1.5 text-xs focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
+                                            class="w-32 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                                             <option value="naik" @disabled($baris['tingkat_akhir'])>Naik</option>
                                             <option value="tinggal">Tinggal</option>
                                         </select>
                                     </td>
                                     <td class="px-3 py-2">
                                         <select wire:model="keputusan.{{ $siswa->id }}.kelas_tujuan_id"
-                                            class="w-64 rounded-lg border border-zinc-300 px-2 py-1.5 text-xs focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-200">
+                                            class="w-64 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                                             <option value="">Pilih kelas tujuan</option>
                                             @foreach ($kelasTujuanOptions as $id => $label)
                                                 <option value="{{ $id }}">{{ $label }}</option>
@@ -110,11 +110,11 @@
                                     </td>
                                     <td class="px-3 py-2 text-xs">
                                         @if ($baris['sudah_ada'])
-                                            <span class="text-amber-700">Sudah punya riwayat di TA tujuan — akan dilewati.</span>
+                                            <span class="text-amber-700 dark:text-amber-400">Sudah punya riwayat di TA tujuan — akan dilewati.</span>
                                         @elseif ($baris['tingkat_akhir'])
-                                            <span class="text-rose-700">Tingkat akhir — gunakan Kelulusan.</span>
+                                            <span class="text-rose-700 dark:text-rose-400">Tingkat akhir — gunakan Kelulusan.</span>
                                         @else
-                                            <span class="text-zinc-400">-</span>
+                                            <span class="text-slate-400 dark:text-gray-500">-</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -136,14 +136,14 @@
                             </x-filament::button>
                         @endif
                     @else
-                        <p class="text-xs text-zinc-500">Hanya staf yang dapat menyimpan proses kenaikan kelas.</p>
+                        <p class="text-xs text-slate-500 dark:text-gray-400">Hanya staf yang dapat menyimpan proses kenaikan kelas.</p>
                     @endif
                 </div>
             </div>
         @endif
 
         @if ($hasil)
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
+            <div class="rounded-xl border border-emerald-200/80 bg-emerald-50 p-5 text-sm text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200">
                 <h3 class="font-semibold">Hasil Kenaikan Kelas</h3>
                 <p class="mt-1">{{ $hasil['diproses'] }} siswa berhasil diproses. Batch #{{ $hasil['batch_id'] ?? '-' }}.</p>
 
@@ -167,12 +167,12 @@
             </div>
         @endif
 
-        <div class="rounded-xl border border-zinc-200 bg-white p-5">
-            <h3 class="text-base font-semibold text-zinc-900">Riwayat Batch Kenaikan Kelas</h3>
+        <div class="fi-section rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-gray-900">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Riwayat Batch Kenaikan Kelas</h3>
 
             <div class="mt-3 overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-zinc-50 text-xs uppercase text-zinc-600">
+                    <thead class="bg-slate-50 text-xs uppercase text-slate-600 dark:bg-gray-800/60 dark:text-gray-400">
                         <tr>
                             <th class="px-3 py-2">Batch</th>
                             <th class="px-3 py-2">Asal → Tujuan</th>
@@ -182,20 +182,20 @@
                             <th class="px-3 py-2">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-100">
+                    <tbody class="divide-y divide-slate-100 dark:divide-gray-800">
                         @forelse ($this->batch as $batch)
                             <tr>
-                                <td class="px-3 py-2 font-mono text-xs">#{{ $batch->id }}</td>
-                                <td class="px-3 py-2 text-xs">
+                                <td class="px-3 py-2 font-mono text-xs text-slate-900 dark:text-white">#{{ $batch->id }}</td>
+                                <td class="px-3 py-2 text-xs text-slate-700 dark:text-gray-300">
                                     {{ $batch->tahunAjaranAsal?->nama }} → {{ $batch->tahunAjaranTujuan?->nama }}
                                 </td>
-                                <td class="px-3 py-2 text-xs">{{ $batch->jumlah_siswa }}</td>
+                                <td class="px-3 py-2 text-xs text-slate-700 dark:text-gray-300 tabular-nums">{{ $batch->jumlah_siswa }}</td>
                                 <td class="px-3 py-2">
-                                    <span class="rounded-md border px-2 py-0.5 text-xs font-semibold {{ $batch->status === 'selesai' ? 'border-emerald-200/80 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700' }}">
+                                    <span class="rounded-md border px-2 py-0.5 text-xs font-semibold {{ $batch->status === 'selesai' ? 'border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300' }}">
                                         {{ $batch->status }}
                                     </span>
                                 </td>
-                                <td class="px-3 py-2 text-xs text-zinc-500">{{ $batch->created_at?->format('d/m/Y H:i') }}</td>
+                                <td class="px-3 py-2 text-xs text-slate-500 dark:text-gray-400 tabular-nums">{{ $batch->created_at?->format('d/m/Y H:i') }}</td>
                                 <td class="px-3 py-2">
                                     @if (auth()->user()?->isStaff() && $service->bisaDibatalkan($batch))
                                         <x-filament::button type="button" color="danger" size="sm" outlined
@@ -204,13 +204,13 @@
                                             Batalkan
                                         </x-filament::button>
                                     @else
-                                        <span class="text-xs text-zinc-400">-</span>
+                                        <span class="text-xs text-slate-400 dark:text-gray-500">-</span>
                                     @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-3 py-6 text-center text-xs text-zinc-500">Belum ada batch kenaikan kelas.</td>
+                                <td colspan="6" class="px-3 py-6 text-center text-xs text-slate-500 dark:text-gray-400">Belum ada batch kenaikan kelas.</td>
                             </tr>
                         @endforelse
                     </tbody>
