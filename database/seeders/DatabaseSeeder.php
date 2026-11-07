@@ -138,18 +138,20 @@ class DatabaseSeeder extends Seeder
         // 9. Tanggungan Pemerintah / Beasiswa (Demo)
         SiswaTanggunganPemerintah::create([
             'siswa_id' => $siswasXRPL[5]->id,
-            'spp_id' => $sppModels['10']['SPP']->id,
-            'cakupan' => 'spp',
-            'tanggal_mulai' => '2026-07-01',
-            'keterangan' => 'Beasiswa Prestasi Kurang Mampu (Disdik Jabar)',
+            'spp_id' => null,
+            'cakupan' => SiswaTanggunganPemerintah::CAKUPAN_SPP,
+            'mulai' => '2026-07-01',
+            'alasan' => 'Beasiswa Prestasi Kurang Mampu (Disdik Jabar)',
+            'created_by' => $petugas->id,
         ]);
 
         SiswaTanggunganPemerintah::create([
             'siswa_id' => $siswasXIRPL[10]->id,
-            'spp_id' => $sppModels['11']['SPP']->id,
-            'cakupan' => 'semua',
-            'tanggal_mulai' => '2026-07-01',
-            'keterangan' => 'Bantuan Penuh Program Indonesia Pintar (PIP)',
+            'spp_id' => null,
+            'cakupan' => SiswaTanggunganPemerintah::CAKUPAN_SPP,
+            'mulai' => '2026-07-01',
+            'alasan' => 'Bantuan Penuh Program Indonesia Pintar (PIP)',
+            'created_by' => $petugas->id,
         ]);
 
         // 10. Transaksi Pembayaran Demo (SPP Bulanan & Pos Non-SPP)
