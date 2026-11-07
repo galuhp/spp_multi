@@ -43,7 +43,7 @@
             <!-- Header Bar -->
             <header class="no-print relative z-30 bg-white border-b border-zinc-200 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-xs">
                 <div class="flex items-center gap-3 min-w-0">
-                    <button type="button" data-sidebar-open class="md:hidden p-2 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100 transition cursor-pointer" aria-label="Buka menu navigasi">
+                    <button type="button" data-sidebar-open class="hidden p-2 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100 transition cursor-pointer" aria-label="Buka menu navigasi">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <h2 class="text-base sm:text-lg font-bold text-zinc-900 truncate">

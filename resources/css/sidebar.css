@@ -34,16 +34,21 @@
 }
 
 /* Nonaktifkan buka-tutup sidebar di semua halaman: sembunyikan semua tombol toggle dan pastikan sidebar selalu terbuka penuh di desktop */
+.meui-sidebar-toggle,
+.meui-sidebar-mobile-close,
+.fi-topbar-collapse-sidebar-btn-ctn,
+.fi-topbar-open-sidebar-btn,
+.fi-topbar-close-sidebar-btn,
+.fi-sidebar-open-collapse-sidebar-btn,
+.fi-sidebar-close-collapse-sidebar-btn,
+.fi-layout-sidebar-toggle-btn-ctn,
+.fi-layout-sidebar-toggle-btn,
+[data-sidebar-open],
+[data-sidebar-close] {
+    display: none !important;
+}
+
 @media (min-width: 1024px) {
-    .meui-sidebar-toggle,
-    .fi-topbar-collapse-sidebar-btn-ctn,
-    .fi-topbar > .fi-topbar-open-sidebar-btn,
-    .fi-topbar > .fi-topbar-close-sidebar-btn,
-    .fi-sidebar-header > .fi-sidebar-open-collapse-sidebar-btn,
-    .fi-sidebar-header > .fi-sidebar-close-collapse-sidebar-btn,
-    .fi-layout-sidebar-toggle-btn-ctn {
-        display: none !important;
-    }
 
     .fi-body:has(> .meui-root) {
         --meui-rail-width: var(--sidebar-width, 17.5rem) !important;

@@ -14,7 +14,7 @@
             <p class="text-xs text-zinc-500 truncate">Sistem Manajemen Pembayaran</p>
         </div>
     </div>
-    @if($mobile ?? false)
+    @if(false && ($mobile ?? false))
         <button type="button" data-sidebar-close class="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 cursor-pointer" aria-label="Tutup navigasi">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
