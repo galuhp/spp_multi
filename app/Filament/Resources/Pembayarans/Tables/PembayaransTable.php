@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Pembayarans\Tables;
 
 use App\Models\Pembayaran;
 use App\Support\Pembayaran\PembayaranService;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
@@ -91,13 +92,30 @@ class PembayaransTable
             ->filters([
                 Filter::make('tgl_bayar')
                     ->form([
-                        DatePicker::make('tgl_dari')->label('Tanggal Dari'),
-                        DatePicker::make('tgl_sampai')->label('Tanggal Sampai'),
+                        DatePicker::make('tgl_dari')
+                            ->label('Tanggal Dari')
+                            ->default(now()->startOfMonth()),
+                        DatePicker::make('tgl_sampai')
+                            ->label('Tanggal Sampai')
+                            ->default(now()->endOfMonth()),
                     ])
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if ($data['tgl_dari'] ?? null) {
+                            $indicators['tgl_dari'] = 'Dari: '.Carbon::parse($data['tgl_dari'])->format('d/m/Y');
+                        }
+
+                        if ($data['tgl_sampai'] ?? null) {
+                            $indicators['tgl_sampai'] = 'Sampai: '.Carbon::parse($data['tgl_sampai'])->format('d/m/Y');
+                        }
+
+                        return $indicators;
+                    })
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->when($data['tgl_dari'], fn ($q, $date) => $q->whereDate('tgl_bayar', '>=', $date))
-                            ->when($data['tgl_sampai'], fn ($q, $date) => $q->whereDate('tgl_bayar', '<=', $date));
+                            ->when($data['tgl_dari'] ?? null, fn ($q, $date) => $q->whereDate('tgl_bayar', '>=', $date))
+                            ->when($data['tgl_sampai'] ?? null, fn ($q, $date) => $q->whereDate('tgl_bayar', '<=', $date));
                     }),
 
                 SelectFilter::make('kelas_id')

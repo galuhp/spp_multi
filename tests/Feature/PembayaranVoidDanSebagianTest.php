@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Filament\Pages\EntriPembayaranKasir;
 use App\Filament\Pages\TagihanSiswa;
+use App\Filament\Resources\Pembayarans\Pages\ListPembayarans;
 use App\Filament\Resources\Siswas\SiswaResource;
 use App\Models\Jurusan;
 use App\Models\Kelas;
@@ -186,6 +187,26 @@ class PembayaranVoidDanSebagianTest extends TestCase
             'is_archived' => true,
         ]);
         $this->assertDatabaseHas('pembayarans', ['id' => $pembayaran->id]);
+    }
+
+    public function test_list_pembayaran_memfilter_rentang_tanggal_ke_bulan_aktif_secara_default(): void
+    {
+        $pembayaranBulanAktif = $this->bayar('November', 250000);
+        $pembayaranBulanLalu = Pembayaran::query()->create([
+            'kode_transaksi' => 'TRX'.uniqid(),
+            'user_id' => $this->admin->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => '2026-08-15',
+            'bulan_dibayar' => 'Agustus',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 250000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        Livewire::test(ListPembayarans::class)
+            ->assertCanSeeTableRecords([$pembayaranBulanAktif])
+            ->assertCanNotSeeTableRecords([$pembayaranBulanLalu]);
     }
 
     private function bayar(string $bulan, int $jumlah): Pembayaran
