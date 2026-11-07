@@ -255,28 +255,32 @@ class EntriPembayaranKasir extends Page
             ];
         }
 
-        $nonSppItems = collect($items)->where('tipe', 'non_spp');
+        $nonSppItems = collect($items)
+            ->where('tipe', 'non_spp')
+            ->filter(fn (array $item): bool => blank($item['bulan'] ?? null));
         $tarifNonSpp = Spp::query()
             ->whereIn('id', $nonSppItems->pluck('spp_id')->unique()->all())
             ->get()
             ->keyBy('id');
 
         $nonSpp = $nonSppItems
+            ->filter(function (array $item) use ($tarifNonSpp): bool {
+                $tarif = $tarifNonSpp->get($item['spp_id']);
+
+                return ($tarif?->tipe ?? Spp::TIPE_SEKALI_BAYAR) !== Spp::TIPE_BULANAN;
+            })
             ->map(function (array $item) use ($tarifNonSpp): array {
                 $tarif = $tarifNonSpp->get($item['spp_id']);
                 $labelTingkat = $tarif?->tingkat ? ' (Kelas '.Spp::labelTingkat($tarif->tingkat).')' : '';
-                $labelBulan = filled($item['bulan'] ?? null) ? " — {$item['bulan']} {$item['tahun']}" : '';
-                $bulanan = ($tarif?->tipe ?? Spp::TIPE_SEKALI_BAYAR) === Spp::TIPE_BULANAN;
 
                 return [
                     'key' => $item['key'],
-                    'nama' => ($tarif?->nama ?: ($tarif?->kategori ?: 'Biaya Lainnya')).$labelBulan.$labelTingkat,
+                    'nama' => ($tarif?->nama ?: ($tarif?->kategori ?: 'Biaya Lainnya')).$labelTingkat,
                     'deskripsi' => $tarif?->kategori ?: 'Sisa tagihan',
                     'sisa' => (int) $item['sisa'],
-                    'grup' => $bulanan ? 'bulanan' : 'sekali_bayar',
+                    'grup' => 'sekali_bayar',
                 ];
             })
-            ->sortBy(fn (array $item): int => $item['grup'] === 'bulanan' ? 0 : 1)
             ->values()
             ->all();
 

@@ -104,7 +104,7 @@
                 <section class="overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
                     <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
                         <h1 class="text-base font-semibold text-gray-950 dark:text-white">Detail Tagihan</h1>
-                        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Pilih bulan SPP dan biaya lain yang dibayar hari ini.</p>
+                        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Pilih biaya bulanan dan biaya sekali bayar yang dibayar hari ini.</p>
                     </div>
 
                     <div class="p-5">
@@ -113,13 +113,13 @@
                             <button type="button" @click="tab = 'spp'"
                                 :class="tab === 'spp' ? 'bg-white shadow-sm font-medium text-gray-900 dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
                                 class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-                                Iuran SPP Bulanan
+                                Biaya Bulanan
                                 <span :class="selected.length ? '' : 'hidden'" x-cloak class="rounded-full bg-primary-600 px-1.5 text-xs text-white" x-text="selected.length"></span>
                             </button>
                             <button type="button" @click="tab = 'lain'"
                                 :class="tab === 'lain' ? 'bg-white shadow-sm font-medium text-gray-900 dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
                                 class="flex items-center gap-2 rounded-md px-4 py-2 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
-                                Biaya Lainnya
+                                Biaya Sekali Bayar
                                 <span :class="selectedLain.length ? '' : 'hidden'" x-cloak class="rounded-full bg-primary-600 px-1.5 text-xs text-white" x-text="selectedLain.length"></span>
                             </button>
                         </div>
@@ -171,47 +171,36 @@
                             </p>
                         </div>
 
-                        {{-- Non-SPP --}}
+                        {{-- Biaya Sekali Bayar --}}
                         <div :class="tab === 'lain' ? '' : 'hidden'" x-cloak class="mt-5">
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">Pos biaya non-SPP</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">Pos biaya sekali bayar</p>
 
                             <p :class="nonSpp.length === 0 ? '' : 'hidden'" class="mt-3 rounded-lg border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                Tidak ada biaya lain yang belum dibayar.
+                                Tidak ada biaya sekali bayar yang belum lunas.
                             </p>
 
-                            <div class="mt-3 space-y-4">
-                                <template x-for="grup in nonSppGroups" :key="grup.key">
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <h4 class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" x-text="grup.label"></h4>
-                                            <span class="rounded-full bg-gray-100 px-1.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300" x-text="grup.items.length"></span>
+                            <ul :class="nonSpp.length === 0 ? 'hidden' : ''" class="mt-3 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+                                <template x-for="x in nonSpp" :key="x.key">
+                                    <li class="flex items-center justify-between gap-3 px-4 py-3 transition"
+                                        :class="hasLain(x.key) ? 'bg-primary-50 dark:bg-primary-950/40' : ''">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="x.nama"></p>
+                                            <p class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="x.deskripsi"></p>
                                         </div>
-
-                                        <ul class="mt-2 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-                                            <template x-for="x in grup.items" :key="x.key">
-                                                <li class="flex items-center justify-between gap-3 px-4 py-3 transition"
-                                                    :class="hasLain(x.key) ? 'bg-primary-50 dark:bg-primary-950/40' : ''">
-                                                    <div class="min-w-0">
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="x.nama"></p>
-                                                        <p class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="x.deskripsi"></p>
-                                                    </div>
-                                                    <div class="flex shrink-0 items-center gap-3">
-                                                        <span class="text-sm text-gray-800 dark:text-gray-200" x-text="rp(x.sisa)"></span>
-                                                        <x-filament::button type="button" color="gray" size="sm" outlined
-                                                            class="w-28 whitespace-nowrap" x-show="! hasLain(x.key)" @click="toggleLain(x.key)">
-                                                            Tambah
-                                                        </x-filament::button>
-                                                        <x-filament::button type="button" size="sm"
-                                                            class="w-28 whitespace-nowrap" x-show="hasLain(x.key)" x-cloak @click="toggleLain(x.key)">
-                                                            Ditambahkan
-                                                        </x-filament::button>
-                                                    </div>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </div>
+                                        <div class="flex shrink-0 items-center gap-3">
+                                            <span class="text-sm text-gray-800 dark:text-gray-200" x-text="rp(x.sisa)"></span>
+                                            <x-filament::button type="button" color="gray" size="sm" outlined
+                                                class="w-28 whitespace-nowrap" x-show="! hasLain(x.key)" @click="toggleLain(x.key)">
+                                                Tambah
+                                            </x-filament::button>
+                                            <x-filament::button type="button" size="sm"
+                                                class="w-28 whitespace-nowrap" x-show="hasLain(x.key)" x-cloak @click="toggleLain(x.key)">
+                                                Ditambahkan
+                                            </x-filament::button>
+                                        </div>
+                                    </li>
                                 </template>
-                            </div>
+                            </ul>
                         </div>
                     </div>
                 </section>
@@ -225,15 +214,17 @@
                             Belum ada tagihan dipilih.
                         </p>
 
-                        <div :class="selected.length ? '' : 'hidden'" x-cloak class="flex justify-between gap-3">
-                            <div>
-                                <p class="font-medium text-gray-900 dark:text-white">Iuran SPP</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    <span x-text="rangeSpp"></span> &bull; <span x-text="selected.length"></span> bulan
-                                </p>
+                        <template x-for="ringkasan in selectedMonthlySummary" :key="ringkasan.id">
+                            <div class="flex justify-between gap-3">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white" x-text="ringkasan.nama"></p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        <span x-text="ringkasan.range"></span> &bull; <span x-text="ringkasan.count"></span> bulan
+                                    </p>
+                                </div>
+                                <p class="text-gray-900 dark:text-white" x-text="rp(ringkasan.total)"></p>
                             </div>
-                            <p class="text-gray-900 dark:text-white" x-text="rp(totalSpp)"></p>
-                        </div>
+                        </template>
 
                         <template x-for="x in selectedLainItems" :key="x.key">
                             <div class="flex justify-between gap-3">
@@ -273,7 +264,7 @@
                                     <span class="text-lg font-bold text-gray-950 dark:text-white" x-text="rp(total)"></span>
                                 </div>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    <span x-text="selected.length"></span> bulan SPP &bull; <span x-text="selectedLain.length"></span> biaya lain
+                                    <span x-text="selected.length"></span> tagihan bulanan &bull; <span x-text="selectedLain.length"></span> biaya sekali bayar
                                 </p>
                             </div>
 
@@ -354,21 +345,7 @@
                 },
 
                 hasMonthly(key) {
-                    return this.selected.includes(key) || this.selectedLain.includes(key);
-                },
-
-                get nonSppGroups() {
-                    const grup = [
-                        { key: 'bulanan', label: 'Tarif Bulanan', items: [] },
-                        { key: 'sekali_bayar', label: 'Sekali Bayar', items: [] },
-                    ];
-
-                    this.nonSpp.forEach((x) => {
-                        const target = grup.find((g) => g.key === x.grup) ?? grup[1];
-                        target.items.push(x);
-                    });
-
-                    return grup.filter((g) => g.items.length > 0);
+                    return this.selected.includes(key);
                 },
 
                 unpaidUpTo(index) {
@@ -393,20 +370,18 @@
                     }
 
                     const groupKeys = grp.months.map((x) => x.key);
-                    const targetList = grp.tipe === 'spp' ? 'selected' : 'selectedLain';
-                    const current = this[targetList];
-                    const otherKeys = current.filter((k) => !groupKeys.includes(k));
+                    const otherKeys = this.selected.filter((k) => !groupKeys.includes(k));
 
-                    if (current.includes(m.key)) {
+                    if (this.selected.includes(m.key)) {
                         const kept = grp.months
-                            .filter((x, i) => i < index && current.includes(x.key))
+                            .filter((x, i) => i < index && this.selected.includes(x.key))
                             .map((x) => x.key);
-                        this[targetList] = [...otherKeys, ...kept];
+                        this.selected = [...otherKeys, ...kept];
                     } else {
                         const added = grp.months
                             .filter((x, i) => i <= index && x.status !== 'lunas' && x.status !== 'ditanggung')
                             .map((x) => x.key);
-                        this[targetList] = [...otherKeys, ...added];
+                        this.selected = [...otherKeys, ...added];
                     }
                 },
 
@@ -421,14 +396,13 @@
                     }
 
                     const groupKeys = grp.months.map((x) => x.key);
-                    const targetList = grp.tipe === 'spp' ? 'selected' : 'selectedLain';
-                    const otherKeys = this[targetList].filter((k) => !groupKeys.includes(k));
+                    const otherKeys = this.selected.filter((k) => !groupKeys.includes(k));
 
                     if (mode === 'tunggakan') {
                         const added = grp.months
                             .filter((m) => m.status === 'tunggakan')
                             .map((m) => m.key);
-                        this[targetList] = [...otherKeys, ...added];
+                        this.selected = [...otherKeys, ...added];
 
                         return;
                     }
@@ -440,12 +414,12 @@
                                 .filter((m, i) => i <= index && m.status !== 'lunas' && m.status !== 'ditanggung')
                                 .map((m) => m.key)
                             : [];
-                        this[targetList] = [...otherKeys, ...added];
+                        this.selected = [...otherKeys, ...added];
 
                         return;
                     }
 
-                    this[targetList] = otherKeys;
+                    this.selected = otherKeys;
                 },
 
                 toggleLain(key) {
@@ -458,10 +432,31 @@
                     return this.nonSpp.filter((x) => this.selectedLain.includes(x.key));
                 },
 
+                get selectedMonthlySummary() {
+                    const format = (m) => m.bulan.slice(0, 3) + ' ' + m.tahun;
+
+                    return this.monthlyGroups
+                        .map((grp) => {
+                            const items = grp.months.filter((m) => this.selected.includes(m.key));
+                            if (items.length === 0) {
+                                return null;
+                            }
+
+                            return {
+                                id: grp.id,
+                                nama: grp.nama,
+                                count: items.length,
+                                range: items.length > 1
+                                    ? format(items[0]) + ' – ' + format(items[items.length - 1])
+                                    : format(items[0]),
+                                total: items.reduce((sum, m) => sum + Number(m.nominal || 0), 0),
+                            };
+                        })
+                        .filter(Boolean);
+                },
+
                 get totalSpp() {
-                    return this.months
-                        .filter((m) => this.selected.includes(m.key))
-                        .reduce((sum, m) => sum + Number(m.nominal || 0), 0);
+                    return this.selectedMonthlySummary.reduce((sum, g) => sum + g.total, 0);
                 },
 
                 get total() {

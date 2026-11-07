@@ -380,10 +380,10 @@
                         </div>
                     @endforeach
 
-                    {{-- Tarif / Pos Biaya Lain (Non-SPP) --}}
+                    {{-- Tarif / Pos Biaya Sekali Bayar --}}
                     <div class="space-y-2.5 border-t border-gray-100 pt-4 dark:border-gray-800">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Tarif / Biaya Lainnya (Non-SPP)</span>
+                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Biaya Sekali Bayar</span>
                             @if ($nonSppList->isNotEmpty())
                                 <div class="flex flex-wrap items-center gap-2">
                                     <x-filament::button type="button" color="gray" size="xs" outlined wire:click="pilihSemuaNonSpp">
@@ -417,7 +417,7 @@
                             </div>
                         @else
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Tidak ada pos biaya lain (Non-SPP) untuk tingkat dan tahun ajaran kelas ini.
+                                Tidak ada pos biaya sekali bayar untuk tingkat dan tahun ajaran kelas ini.
                             </p>
                         @endif
                     </div>
