@@ -102,14 +102,12 @@ class DatabaseSeeder extends Seeder
             $jurusanModels[$item['kode']] = Jurusan::firstOrCreate(['kode' => $item['kode']], $item);
         }
 
-        // 6. Rombel Kelas (Sesuai jumlah siswa di Excel: X 53 siswa, XI 56 siswa, XII 52 siswa)
+        // 6. Rombel Kelas (2 Kelas Utama X RPL 1 & X TKJ 1, serta 2 Kelas Tujuan Promosi XI RPL 1 & XI TKJ 1)
         $kelasList = [
             ['nama_kelas' => 'X RPL 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['RPL']->id, 'wali_kelas_id' => $walikelas->id],
             ['nama_kelas' => 'X TKJ 1', 'tingkat' => '10', 'jurusan_id' => $jurusanModels['TKJ']->id, 'wali_kelas_id' => null],
             ['nama_kelas' => 'XI RPL 1', 'tingkat' => '11', 'jurusan_id' => $jurusanModels['RPL']->id, 'wali_kelas_id' => null],
             ['nama_kelas' => 'XI TKJ 1', 'tingkat' => '11', 'jurusan_id' => $jurusanModels['TKJ']->id, 'wali_kelas_id' => null],
-            ['nama_kelas' => 'XII RPL 1', 'tingkat' => '12', 'jurusan_id' => $jurusanModels['RPL']->id, 'wali_kelas_id' => null],
-            ['nama_kelas' => 'XII TKJ 1', 'tingkat' => '12', 'jurusan_id' => $jurusanModels['TKJ']->id, 'wali_kelas_id' => null],
         ];
 
         $kelasModels = [];
@@ -122,35 +120,43 @@ class DatabaseSeeder extends Seeder
         // 7. Tarif Biaya Sekolah Resmi (Sesuai Lampiran Excel tarif_biaya_sekolah.xlsx)
         $sppModels = $this->seedTarifExcel();
 
-        // 8. Siswa & Profil Orang Tua (161 Siswa Realistis)
-        // Kelas X: 53 siswa (27 X RPL 1, 26 X TKJ 1)
-        // Kelas XI: 56 siswa (28 XI RPL 1, 28 XI TKJ 1)
-        // Kelas XII: 52 siswa (26 XII RPL 1, 26 XII TKJ 1)
-        $siswasXRPL = $this->buatDaftarSiswa(27, '10', $kelasModels['X RPL 1'], $sppModels['10']['SPP'], 10001001, 26001, 2026, $taModels, $kelasModels, $sppModels, true);
-        $siswasXTKJ = $this->buatDaftarSiswa(26, '10', $kelasModels['X TKJ 1'], $sppModels['10']['SPP'], 10002001, 26028, 2026, $taModels, $kelasModels, $sppModels, false);
+        // 8. Siswa & Profil Orang Tua (2 Kelas: X RPL 1 & X TKJ 1, 10 Siswa per Kelas, Seluruh Nama Unik 100%)
+        $siswaDataXRPL = [
+            ['Aditya Pratama', 'L', 10001001, 26001, true], // Akun portal siswa: username 'siswa', password 'password'
+            ['Annisa Larasati', 'P', 10001002, 26002, false],
+            ['Bagas Wicaksono', 'L', 10001003, 26003, false],
+            ['Bella Permata', 'P', 10001004, 26004, false],
+            ['Candra Gunawan', 'L', 10001005, 26005, false],
+            ['Cantika Maharani', 'P', 10001006, 26006, false], // Beasiswa
+            ['Dimas Setiawan', 'L', 10001007, 26007, false],
+            ['Dian Anggraini', 'P', 10001008, 26008, false],
+            ['Eko Prasetyo', 'L', 10001009, 26009, false],
+            ['Eka Rahmawati', 'P', 10001010, 26010, false],
+        ];
 
-        $siswasXIRPL = $this->buatDaftarSiswa(28, '11', $kelasModels['XI RPL 1'], $sppModels['11']['SPP'], 11001001, 25001, 2025, $taModels, $kelasModels, $sppModels, false);
-        $siswasXITKJ = $this->buatDaftarSiswa(28, '11', $kelasModels['XI TKJ 1'], $sppModels['11']['SPP'], 11002001, 25029, 2025, $taModels, $kelasModels, $sppModels, false);
+        $siswaDataXTKJ = [
+            ['Farhan Hidayat', 'L', 10002001, 26021, false],
+            ['Fitri Handayani', 'P', 10002002, 26022, false],
+            ['Gilang Ramadhan', 'L', 10002003, 26023, false],
+            ['Gita Nirmala', 'P', 10002004, 26024, false],
+            ['Hafiz Nugroho', 'L', 10002005, 26025, false],
+            ['Hesti Wulandari', 'P', 10002006, 26026, false],
+            ['Irfan Kurniawan', 'L', 10002007, 26027, false],
+            ['Indah Puspitasari', 'P', 10002008, 26028, false],
+            ['Jaka Santoso', 'L', 10002009, 26029, false],
+            ['Jasmine Zahra', 'P', 10002010, 26030, false],
+        ];
 
-        $siswasXIIRPL = $this->buatDaftarSiswa(26, '12', $kelasModels['XII RPL 1'], $sppModels['12']['SPP'], 12001001, 24001, 2024, $taModels, $kelasModels, $sppModels, false);
-        $siswasXIITKJ = $this->buatDaftarSiswa(26, '12', $kelasModels['XII TKJ 1'], $sppModels['12']['SPP'], 12002001, 24027, 2024, $taModels, $kelasModels, $sppModels, false);
+        $siswasXRPL = $this->buatDaftarSiswa($siswaDataXRPL, '10', $kelasModels['X RPL 1'], $sppModels['10']['SPP'], 2026, $taModels);
+        $siswasXTKJ = $this->buatDaftarSiswa($siswaDataXTKJ, '10', $kelasModels['X TKJ 1'], $sppModels['10']['SPP'], 2026, $taModels);
 
         // 9. Tanggungan Pemerintah / Beasiswa (Demo)
         SiswaTanggunganPemerintah::create([
-            'siswa_id' => $siswasXRPL[5]->id,
+            'siswa_id' => $siswasXRPL[5]->id, // Cantika Maharani
             'spp_id' => null,
             'cakupan' => SiswaTanggunganPemerintah::CAKUPAN_SPP,
             'mulai' => '2026-07-01',
             'alasan' => 'Beasiswa Prestasi Kurang Mampu (Disdik Jabar)',
-            'created_by' => $petugas->id,
-        ]);
-
-        SiswaTanggunganPemerintah::create([
-            'siswa_id' => $siswasXIRPL[10]->id,
-            'spp_id' => null,
-            'cakupan' => SiswaTanggunganPemerintah::CAKUPAN_SPP,
-            'mulai' => '2026-07-01',
-            'alasan' => 'Bantuan Penuh Program Indonesia Pintar (PIP)',
             'created_by' => $petugas->id,
         ]);
 
@@ -159,11 +165,7 @@ class DatabaseSeeder extends Seeder
             $petugas,
             $sppModels,
             $siswasXRPL,
-            $siswasXTKJ,
-            $siswasXIRPL,
-            $siswasXITKJ,
-            $siswasXIIRPL,
-            $siswasXIITKJ
+            $siswasXTKJ
         );
 
         // 11. Pengeluaran Operasional Sekolah Demo
@@ -369,41 +371,25 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Membuat sekelompok siswa dengan data realistis.
+     * Membuat sekelompok siswa dengan data eksplisit dan nama 100% unik.
      *
      * @return array<int, Siswa>
      */
     private function buatDaftarSiswa(
-        int $jumlah,
+        array $daftarSiswaData,
         string $tingkat,
         Kelas $kelas,
         Spp $sppBulanan,
-        int $startNisn,
-        int $startNis,
         int $tahunMasuk,
-        array $taModels,
-        array $kelasModels,
-        array $sppModels,
-        bool $buatAkunPortal = false
+        array $taModels
     ): array {
-        $firstNamesL = ['Aditya', 'Bagas', 'Dimas', 'Fajar', 'Gilang', 'Hafiz', 'Irfan', 'Jaka', 'Kevin', 'Lukman', 'Maulana', 'Naufal', 'Pratama', 'Raditya', 'Rizky', 'Satria', 'Taufik', 'Wahyu', 'Yusuf', 'Zaki', 'Arif', 'Bayu', 'Candra', 'Danang', 'Eko', 'Farhan', 'Galih', 'Hendro', 'Iqbal', 'Kurniawan'];
-        $firstNamesP = ['Annisa', 'Bella', 'Cantika', 'Dian', 'Eka', 'Fitri', 'Gita', 'Hesti', 'Indah', 'Jasmine', 'Kartika', 'Lestari', 'Maya', 'Nadia', 'Putri', 'Rani', 'Siti', 'Tiara', 'Ulfa', 'Wulan', 'Yulia', 'Zahra', 'Aulia', 'Citra', 'Dewi', 'Erna', 'Febri', 'Halimah', 'Intan', 'Kusuma'];
-        $lastNames = ['Saputra', 'Pratama', 'Wibowo', 'Kusuma', 'Hidayat', 'Nugraha', 'Santoso', 'Wijaya', 'Permana', 'Setiawan', 'Utomo', 'Kurniawan', 'Ramadhan', 'Siregar', 'Nasution', 'Firmansyah', 'Gunawan', 'Mahendra', 'Purnama', 'Subagja'];
-
         $siswas = [];
 
-        for ($i = 0; $i < $jumlah; $i++) {
-            $isMale = ($i % 2 === 0);
-            $jk = $isMale ? 'L' : 'P';
-            $fn = $isMale ? $firstNamesL[$i % count($firstNamesL)] : $firstNamesP[$i % count($firstNamesP)];
-            $ln = $lastNames[($i * 3 + (int) $tingkat) % count($lastNames)];
-            $nama = "{$fn} {$ln}";
-
-            $nisn = (string) ($startNisn + $i);
-            $nis = (string) ($startNis + $i);
+        foreach ($daftarSiswaData as $item) {
+            [$nama, $jk, $nisn, $nis, $buatAkunPortal] = $item;
 
             $userId = null;
-            if ($buatAkunPortal && $i === 0) {
+            if ($buatAkunPortal) {
                 $userSiswa = User::firstOrCreate(
                     ['username' => 'siswa'],
                     [
@@ -417,18 +403,18 @@ class DatabaseSeeder extends Seeder
             }
 
             $siswa = Siswa::withoutEvents(function () use (
-                $userId, $kelas, $sppBulanan, $nisn, $nis, $nama, $jk, $i, $tingkat, $tahunMasuk
+                $userId, $kelas, $sppBulanan, $nisn, $nis, $nama, $jk, $tingkat, $tahunMasuk
             ) {
                 return Siswa::create([
                     'user_id' => $userId,
                     'kelas_id' => $kelas->id,
                     'spp_id' => $sppBulanan->id,
-                    'nisn' => $nisn,
-                    'nis' => $nis,
+                    'nisn' => (string) $nisn,
+                    'nis' => (string) $nis,
                     'nama' => $nama,
                     'jenis_kelamin' => $jk,
-                    'alamat' => "Jl. Pemuda Mandiri No. ".($i + 1).", RT 0".(($i % 5) + 1)."/RW 0".(($i % 3) + 1).", Bandung",
-                    'no_telp' => "0812{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                    'alamat' => "Jl. Pemuda Mandiri No. " . substr((string) $nis, -2) . ", Bandung",
+                    'no_telp' => "0812{$tingkat}" . substr((string) $nisn, -4),
                     'tahun_masuk' => $tahunMasuk,
                     'status' => 'aktif',
                     'is_archived' => false,
@@ -438,86 +424,23 @@ class DatabaseSeeder extends Seeder
             Wali::updateOrCreate(
                 ['siswa_id' => $siswa->id],
                 [
-                    'nama_ayah' => "Bapak {$fn}",
-                    'nama_ibu' => "Ibu {$fn}",
-                    'hp_wali' => "0813{$tingkat}".str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                    'nama_ayah' => "Bapak " . explode(' ', $nama)[0],
+                    'nama_ibu' => "Ibu " . explode(' ', $nama)[0],
+                    'hp_wali' => "0813{$tingkat}" . substr((string) $nisn, -4),
                 ]
             );
 
-            // Riwayat Kelas berdasarkan timeline multi-tahun
-            if ($tingkat === '10') {
-                RiwayatKelas::updateOrCreate(
-                    [
-                        'siswa_id' => $siswa->id,
-                        'tahun_ajaran_id' => $taModels['2026/2027']->id,
-                    ],
-                    [
-                        'kelas_id' => $kelas->id,
-                        'spp_id' => $sppBulanan->id,
-                        'status' => 'aktif',
-                    ]
-                );
-            } elseif ($tingkat === '11') {
-                $prevX = str_contains($kelas->nama_kelas, 'RPL') ? $kelasModels['X RPL 1'] : $kelasModels['X TKJ 1'];
-                RiwayatKelas::updateOrCreate(
-                    [
-                        'siswa_id' => $siswa->id,
-                        'tahun_ajaran_id' => $taModels['2025/2026']->id,
-                    ],
-                    [
-                        'kelas_id' => $prevX->id,
-                        'spp_id' => $sppModels['10']['SPP']->id,
-                        'status' => 'naik',
-                    ]
-                );
-                RiwayatKelas::updateOrCreate(
-                    [
-                        'siswa_id' => $siswa->id,
-                        'tahun_ajaran_id' => $taModels['2026/2027']->id,
-                    ],
-                    [
-                        'kelas_id' => $kelas->id,
-                        'spp_id' => $sppBulanan->id,
-                        'status' => 'aktif',
-                    ]
-                );
-            } elseif ($tingkat === '12') {
-                $prevX = str_contains($kelas->nama_kelas, 'RPL') ? $kelasModels['X RPL 1'] : $kelasModels['X TKJ 1'];
-                $prevXI = str_contains($kelas->nama_kelas, 'RPL') ? $kelasModels['XI RPL 1'] : $kelasModels['XI TKJ 1'];
-                RiwayatKelas::updateOrCreate(
-                    [
-                        'siswa_id' => $siswa->id,
-                        'tahun_ajaran_id' => $taModels['2024/2025']->id,
-                    ],
-                    [
-                        'kelas_id' => $prevX->id,
-                        'spp_id' => $sppModels['10']['SPP']->id,
-                        'status' => 'naik',
-                    ]
-                );
-                RiwayatKelas::updateOrCreate(
-                    [
-                        'siswa_id' => $siswa->id,
-                        'tahun_ajaran_id' => $taModels['2025/2026']->id,
-                    ],
-                    [
-                        'kelas_id' => $prevXI->id,
-                        'spp_id' => $sppModels['11']['SPP']->id,
-                        'status' => 'naik',
-                    ]
-                );
-                RiwayatKelas::updateOrCreate(
-                    [
-                        'siswa_id' => $siswa->id,
-                        'tahun_ajaran_id' => $taModels['2026/2027']->id,
-                    ],
-                    [
-                        'kelas_id' => $kelas->id,
-                        'spp_id' => $sppBulanan->id,
-                        'status' => 'aktif',
-                    ]
-                );
-            }
+            RiwayatKelas::updateOrCreate(
+                [
+                    'siswa_id' => $siswa->id,
+                    'tahun_ajaran_id' => $taModels['2026/2027']->id,
+                ],
+                [
+                    'kelas_id' => $kelas->id,
+                    'spp_id' => $sppBulanan->id,
+                    'status' => 'aktif',
+                ]
+            );
 
             $siswas[] = $siswa;
         }
@@ -526,322 +449,124 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Menanamkan transaksi pembayaran riil untuk demo.
+     * Menanamkan transaksi pembayaran riil untuk demo (SPP dan Pos Non-SPP).
      */
     private function seedPembayaranDemo(
         User $petugas,
         array $sppModels,
         array $siswasXRPL,
-        array $siswasXTKJ,
-        array $siswasXIRPL,
-        array $siswasXITKJ,
-        array $siswasXIIRPL,
-        array $siswasXIITKJ
+        array $siswasXTKJ
     ): void {
         $monthsTA = ['Juli', 'Agustus', 'September', 'Oktober', 'November'];
-        $all12Months = ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'];
         $kodeUrutan = 1;
+        $semuaSiswa = array_merge($siswasXRPL, $siswasXTKJ);
+        $nonSppX = $sppModels['10'] ?? [];
 
-        // 1. Kelas XII: 12 siswa pertama dibuat 100% LUNAS sepanjang timeline 3 tahun
-        // (Kelas X lunas, Kelas XI lunas, Kelas XII lunas)
-        foreach (array_slice($siswasXIIRPL, 0, 12) as $siswa) {
-            // Kelas X (2024/2025)
-            foreach ($all12Months as $bulan) {
-                $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2024 : 2025;
-                $kode = 'SPP-2024'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $sppModels['10']['SPP']->id,
-                    'tgl_bayar' => '2024-11-10',
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $thn,
-                    'jumlah_bayar' => 100000,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan} {$thn}",
-                ]);
-            }
-            foreach ($sppModels['10'] as $key => $tarif) {
-                if ($key === 'SPP') continue;
-                $kode = 'NSP-2024'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $tarif->id,
-                    'tgl_bayar' => '2024-09-15',
-                    'bulan_dibayar' => null,
-                    'tahun_dibayar' => 2024,
-                    'jumlah_bayar' => $tarif->nominal,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pelunasan {$tarif->nama}",
-                ]);
-            }
+        foreach ($semuaSiswa as $idx => $siswa) {
+            $mod = $idx % 10;
 
-            // Kelas XI (2025/2026)
-            foreach ($all12Months as $bulan) {
-                $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2025 : 2026;
-                $kode = 'SPP-2025'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $sppModels['11']['SPP']->id,
-                    'tgl_bayar' => '2025-11-10',
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $thn,
-                    'jumlah_bayar' => 100000,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan} {$thn}",
-                ]);
-            }
-            foreach ($sppModels['11'] as $key => $tarif) {
-                if ($key === 'SPP') continue;
-                $kode = 'NSP-2025'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $tarif->id,
-                    'tgl_bayar' => '2025-09-15',
-                    'bulan_dibayar' => null,
-                    'tahun_dibayar' => 2025,
-                    'jumlah_bayar' => $tarif->nominal,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pelunasan {$tarif->nama}",
-                ]);
-            }
-
-            // Kelas XII (2026/2027)
-            foreach ($all12Months as $bulan) {
-                $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2026 : 2027;
-                $kode = 'SPP-2026'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $sppModels['12']['SPP']->id,
-                    'tgl_bayar' => '2026-10-15',
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $thn,
-                    'jumlah_bayar' => 100000,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan} {$thn}",
-                ]);
-            }
-            foreach ($sppModels['12'] as $key => $tarif) {
-                if ($key === 'SPP') continue;
-                $kode = 'NSP-2026'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $tarif->id,
-                    'tgl_bayar' => '2026-10-20',
-                    'bulan_dibayar' => null,
-                    'tahun_dibayar' => 2026,
-                    'jumlah_bayar' => $tarif->nominal,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pelunasan {$tarif->nama}",
-                ]);
-            }
-        }
-
-        // 2. Sisa siswa Kelas XII: variasi tunggakan multi-tahun
-        $sisaXII = array_merge(array_slice($siswasXIIRPL, 12), $siswasXIITKJ);
-        foreach ($sisaXII as $idx => $siswa) {
-            // Grade 10: paid 10-12 months
-            $paidX = 10 + ($idx % 3);
-            for ($m = 0; $m < $paidX; $m++) {
-                $bulan = $all12Months[$m];
-                $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2024 : 2025;
-                $kode = 'SPP-2024'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $sppModels['10']['SPP']->id,
-                    'tgl_bayar' => '2024-11-10',
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $thn,
-                    'jumlah_bayar' => 100000,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
-                ]);
-            }
-            foreach ($sppModels['10'] as $key => $tarif) {
-                if ($key === 'SPP' || ($idx % 2 === 1 && $key === 'Study Banding')) continue;
-                $kode = 'NSP-2024'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $tarif->id,
-                    'tgl_bayar' => '2024-09-15',
-                    'bulan_dibayar' => null,
-                    'tahun_dibayar' => 2024,
-                    'jumlah_bayar' => $tarif->nominal,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pelunasan {$tarif->nama}",
-                ]);
-            }
-
-            // Grade 11: paid 9-11 months
-            $paidXI = 9 + ($idx % 3);
-            for ($m = 0; $m < $paidXI; $m++) {
-                $bulan = $all12Months[$m];
-                $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2025 : 2026;
-                $kode = 'SPP-2025'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $sppModels['11']['SPP']->id,
-                    'tgl_bayar' => '2025-11-10',
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $thn,
-                    'jumlah_bayar' => 100000,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
-                ]);
-            }
-
-            // Grade 12 (running): paid 1-4 months
-            $paidCount = ($idx % 4) + 1;
-            for ($m = 0; $m < $paidCount; $m++) {
-                $bulan = $monthsTA[$m];
-                $kode = 'SPP-2026'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $sppModels['12']['SPP']->id,
-                    'tgl_bayar' => '2026-09-10',
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => 2026,
-                    'jumlah_bayar' => 100000,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
-                ]);
-            }
-        }
-
-        // 3. Siswa Kelas XI: Grade 10 completed + Grade 11 running
-        $semuaXI = array_merge($siswasXIRPL, $siswasXITKJ);
-        foreach ($semuaXI as $idx => $siswa) {
-            if ($idx % 2 === 0) {
-                // Grade 10 lunas
-                foreach ($all12Months as $bulan) {
-                    $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2025 : 2026;
-                    $kode = 'SPP-2025'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
+            if ($mod === 0 || $mod === 1) {
+                // Pola 1: Lunas 100% SPP (Juli - November) + Lunas seluruh pos Non-SPP
+                foreach ($monthsTA as $bulan) {
+                    $kode = 'SPP-2026' . str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
                     Pembayaran::create([
                         'kode_transaksi' => $kode,
                         'user_id' => $petugas->id,
                         'siswa_id' => $siswa->id,
                         'spp_id' => $sppModels['10']['SPP']->id,
-                        'tgl_bayar' => '2025-10-15',
+                        'tgl_bayar' => '2026-10-15',
                         'bulan_dibayar' => $bulan,
-                        'tahun_dibayar' => $thn,
+                        'tahun_dibayar' => 2026,
                         'jumlah_bayar' => 100000,
                         'metode_pembayaran' => 'Tunai',
                         'catatan' => "Pembayaran SPP Bulan {$bulan}",
                     ]);
                 }
-                foreach ($sppModels['10'] as $key => $tarif) {
+                foreach ($nonSppX as $key => $tarif) {
                     if ($key === 'SPP') continue;
-                    $kode = 'NSP-2025'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
+                    $kode = 'NSP-2026' . str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
                     Pembayaran::create([
                         'kode_transaksi' => $kode,
                         'user_id' => $petugas->id,
                         'siswa_id' => $siswa->id,
                         'spp_id' => $tarif->id,
-                        'tgl_bayar' => '2025-08-20',
+                        'tgl_bayar' => '2026-09-10',
                         'bulan_dibayar' => null,
-                        'tahun_dibayar' => 2025,
+                        'tahun_dibayar' => 2026,
                         'jumlah_bayar' => $tarif->nominal,
                         'metode_pembayaran' => 'Tunai',
                         'catatan' => "Pelunasan {$tarif->nama}",
                     ]);
                 }
-            } else {
-                // Grade 10 sebagian
-                for ($m = 0; $m < 10; $m++) {
-                    $bulan = $all12Months[$m];
-                    $thn = in_array($bulan, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? 2025 : 2026;
-                    $kode = 'SPP-2025'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
+            } elseif ($mod === 2 || $mod === 3) {
+                // Pola 2: Bayar SPP 3 bulan (Juli, Agustus, September) + Sebagian Non-SPP
+                foreach (array_slice($monthsTA, 0, 3) as $bulan) {
+                    $kode = 'SPP-2026' . str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
                     Pembayaran::create([
                         'kode_transaksi' => $kode,
                         'user_id' => $petugas->id,
                         'siswa_id' => $siswa->id,
                         'spp_id' => $sppModels['10']['SPP']->id,
-                        'tgl_bayar' => '2025-10-15',
+                        'tgl_bayar' => '2026-09-15',
                         'bulan_dibayar' => $bulan,
-                        'tahun_dibayar' => $thn,
+                        'tahun_dibayar' => 2026,
                         'jumlah_bayar' => 100000,
                         'metode_pembayaran' => 'Tunai',
                         'catatan' => "Pembayaran SPP Bulan {$bulan}",
                     ]);
                 }
-            }
-
-            // Grade 11 running
-            $paidCount = (($idx + 1) % 5);
-            for ($m = 0; $m < $paidCount; $m++) {
-                $bulan = $monthsTA[$m];
-                $kode = 'SPP-2026'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $sppModels['11']['SPP']->id,
-                    'tgl_bayar' => '2026-09-05',
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => 2026,
-                    'jumlah_bayar' => 100000,
-                    'metode_pembayaran' => 'Transfer Bank',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
-                ]);
-            }
-        }
-
-        // 4. Siswa Kelas X: Grade 10 running year
-        $semuaX = array_merge($siswasXRPL, $siswasXTKJ);
-        foreach ($semuaX as $idx => $siswa) {
-            $paidCount = ($idx % 5);
-            for ($m = 0; $m < $paidCount; $m++) {
-                $bulan = $monthsTA[$m];
-                $kode = 'SPP-2026'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
+                foreach (['Kaos Olah Raga', 'Katelpak / Almamater', 'Map Rapot'] as $namaTarif) {
+                    if (isset($nonSppX[$namaTarif])) {
+                        $tarif = $nonSppX[$namaTarif];
+                        $kode = 'NSP-2026' . str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
+                        Pembayaran::create([
+                            'kode_transaksi' => $kode,
+                            'user_id' => $petugas->id,
+                            'siswa_id' => $siswa->id,
+                            'spp_id' => $tarif->id,
+                            'tgl_bayar' => '2026-08-20',
+                            'bulan_dibayar' => null,
+                            'tahun_dibayar' => 2026,
+                            'jumlah_bayar' => $tarif->nominal,
+                            'metode_pembayaran' => 'Tunai',
+                            'catatan' => "Pembayaran {$tarif->nama}",
+                        ]);
+                    }
+                }
+            } elseif ($mod === 4) {
+                // Pola 3: Bayar SPP 1 bulan (Juli)
+                $kode = 'SPP-2026' . str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
                 Pembayaran::create([
                     'kode_transaksi' => $kode,
                     'user_id' => $petugas->id,
                     'siswa_id' => $siswa->id,
                     'spp_id' => $sppModels['10']['SPP']->id,
-                    'tgl_bayar' => '2026-08-15',
-                    'bulan_dibayar' => $bulan,
+                    'tgl_bayar' => '2026-07-20',
+                    'bulan_dibayar' => 'Juli',
                     'tahun_dibayar' => 2026,
                     'jumlah_bayar' => 100000,
                     'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran SPP Bulan {$bulan}",
+                    'catatan' => 'Pembayaran SPP Bulan Juli',
                 ]);
+            } elseif ($mod === 6 || $mod === 7) {
+                // Pola 4: Bayar SPP 2 bulan (Juli, Agustus) via Transfer Bank
+                foreach (array_slice($monthsTA, 0, 2) as $bulan) {
+                    $kode = 'SPP-2026' . str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
+                    Pembayaran::create([
+                        'kode_transaksi' => $kode,
+                        'user_id' => $petugas->id,
+                        'siswa_id' => $siswa->id,
+                        'spp_id' => $sppModels['10']['SPP']->id,
+                        'tgl_bayar' => '2026-08-15',
+                        'bulan_dibayar' => $bulan,
+                        'tahun_dibayar' => 2026,
+                        'jumlah_bayar' => 100000,
+                        'metode_pembayaran' => 'Transfer Bank',
+                        'catatan' => "Pembayaran SPP Bulan {$bulan}",
+                    ]);
+                }
             }
-
-            if ($idx % 3 === 0 && isset($sppModels['10']['Kaos Olah Raga'])) {
-                $tarif = $sppModels['10']['Kaos Olah Raga'];
-                $kode = 'NSP-2026'.str_pad((string) $kodeUrutan++, 5, '0', STR_PAD_LEFT);
-                Pembayaran::create([
-                    'kode_transaksi' => $kode,
-                    'user_id' => $petugas->id,
-                    'siswa_id' => $siswa->id,
-                    'spp_id' => $tarif->id,
-                    'tgl_bayar' => '2026-08-20',
-                    'bulan_dibayar' => null,
-                    'tahun_dibayar' => 2026,
-                    'jumlah_bayar' => $tarif->nominal,
-                    'metode_pembayaran' => 'Tunai',
-                    'catatan' => "Pembayaran {$tarif->nama}",
-                ]);
-            }
+            // Mod 5 (Cantika, beasiswa) & Mod 8, 9 (belum bayar) tetap tanpa pembayaran untuk demo tunggakan
         }
     }
 
