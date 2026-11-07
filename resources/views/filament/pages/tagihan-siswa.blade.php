@@ -49,7 +49,7 @@
                                         <div class="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400">Siswa terpilih</div>
                                         <div class="mt-1 font-semibold text-slate-900 dark:text-white">{{ $this->siswa->nama }}</div>
                                         <div class="text-xs text-slate-500 dark:text-gray-400">
-                                            NISN {{ $this->siswa->nisn ?: '-' }} &bull; {{ $this->siswa->kelas?->nama_kelas }}
+                                            NISN {{ $this->siswa->nisn ?: '-' }} &bull; {{ $this->siswa->kelas?->nama_kelas }} &bull; Masuk: {{ $this->siswa->tanggal_masuk ? $this->siswa->tanggal_masuk->translatedFormat('d M Y') : ($this->siswa->tahun_masuk ? 'Tahun ' . $this->siswa->tahun_masuk : '-') }}
                                         </div>
                                     </div>
                                 @endif
@@ -105,7 +105,7 @@
         @if($siswa)
             <!-- Identitas Siswa -->
             <x-ui.card class="!max-w-none !p-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div>
                         <span class="text-xs font-medium text-slate-500 dark:text-gray-400">Nama Siswa</span>
                         <div class="flex flex-wrap items-center gap-2">
@@ -120,6 +120,13 @@
                         <span class="text-xs font-medium text-slate-500 dark:text-gray-400">Kelas & Jurusan</span>
                         <div class="text-base font-bold text-slate-900 dark:text-white">{{ $siswa->kelas?->nama_kelas }}</div>
                         <div class="text-xs text-slate-500 dark:text-gray-400">{{ $siswa->kelas?->jurusan?->nama }}</div>
+                    </div>
+                    <div>
+                        <span class="text-xs font-medium text-slate-500 dark:text-gray-400">Tanggal Masuk</span>
+                        <div class="text-base font-bold text-slate-900 dark:text-white">
+                            {{ $siswa->tanggal_masuk ? $siswa->tanggal_masuk->translatedFormat('d F Y') : ($siswa->tahun_masuk ? 'Tahun ' . $siswa->tahun_masuk : '-') }}
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-gray-400">Tahun Masuk: {{ $siswa->tahunMasuk() }}</div>
                     </div>
                     <div>
                         <span class="text-xs font-medium text-slate-500 dark:text-gray-400">Tarif SPP Bulanan</span>
