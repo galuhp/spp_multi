@@ -89,7 +89,7 @@ class DaftarReferensiSheet implements FromArray, WithColumnWidths, WithStyles, W
                 $kelas->nama_kelas,
                 $kelas->jurusan?->nama ?? '-',
                 (string) $kelas->tingkat,
-                $kelas->tahunAjaran?->nama ?? '-',
+                $kelas->tahunAjaran?->nama ?? 'Lintas Tahun (Master)',
             ];
         }
 

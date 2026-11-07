@@ -25,8 +25,8 @@ class PetunjukImporSheet implements FromArray, WithColumnWidths, WithStyles, Wit
             ['5. NIK wajib tepat 16 digit angka bila diisi.'],
             ['6. NIS wajib diisi dan tidak boleh sama dengan siswa lain.'],
             ['7. Jenis kelamin hanya boleh L atau P.'],
-            ['8. Tanggal ditulis dengan format YYYY-MM-DD (contoh 2010-07-15) atau DD/MM/YYYY.'],
-            ['9. Kode kompetensi dan nama kelas harus sesuai sheet "Daftar Referensi" dan berlaku pada tahun ajaran tujuan.'],
+            ['8. Tanggal ditulis dengan format YYYY-MM-DD (contoh 2026-07-15) atau DD/MM/YYYY. Tahun Masuk (Angkatan) diambil otomatis dari tahun Tanggal Masuk.'],
+            ['9. Kode kompetensi dan nama kelas harus sesuai sheet "Daftar Referensi" (termasuk Master Kelas Lintas Tahun).'],
             ['10. Minimal satu dari Nama Ayah, Nama Ibu, atau Nama Wali wajib diisi.'],
             ['11. HP wali dinormalisasi menjadi 62xxxxxxxxxx. Nomor yang tidak valid dikosongkan dan baris tetap dapat disimpan.'],
             ['12. Batas berkas: .xlsx, maksimal 5 MB dan 2.000 baris data.'],
@@ -34,7 +34,7 @@ class PetunjukImporSheet implements FromArray, WithColumnWidths, WithStyles, Wit
             ['14. Jika NISN/NIK/NIS sudah terdaftar, baris dilewati kecuali opsi "Perbarui data siswa yang sudah ada" dipilih.'],
             [''],
             ['RENTANG UMUR YANG DIANGGAP WAJAR'],
-            ['Tingkat X: 13-17 tahun. Tingkat XI: 14-18 tahun. Tingkat XII: 15-19 tahun.'],
+            ['SD (Kelas 1–6): 6–12 tahun. SMP (Kelas 7–9): 12–15 tahun. SMA/SMK (Kelas X–XII): 15–18 tahun (±2 tahun).'],
             ['Umur di luar rentang tersebut hanya menjadi peringatan, bukan error.'],
         ];
     }

@@ -508,6 +508,10 @@ class ImporSiswaService
         $spp = Spp::untukTingkat($kelas->tingkat, $namaTahunAjaran);
         $sppId = $spp?->id ?? $baris->spp_id;
 
+        $tahunMasuk = filled($baris->tanggal_masuk) && preg_match('/^(\d{4})/', (string) $baris->tanggal_masuk, $m)
+            ? (int) $m[1]
+            : null;
+
         $data = [
             'kelas_id' => $kelas->id,
             'spp_id' => $sppId,
@@ -521,6 +525,7 @@ class ImporSiswaService
             'agama' => $baris->agama,
             'alamat' => $baris->alamat,
             'tanggal_masuk' => $baris->tanggal_masuk,
+            'tahun_masuk' => $tahunMasuk,
             'no_telp' => $hp,
         ];
 
@@ -650,13 +655,9 @@ class ImporSiswaService
 
     private function tingkatAngka(?string $tingkat): ?int
     {
-        $tingkat = mb_strtoupper(trim((string) $tingkat));
+        $normal = Spp::normalisasiTingkat($tingkat);
 
-        return match ($tingkat) {
-            'X', '10' => 10,
-            'XI', '11' => 11,
-            'XII', '12' => 12,
-            default => is_numeric($tingkat) ? (int) $tingkat : null,
-        };
+        return $normal !== null && is_numeric($normal) ? (int) $normal : null;
     }
 }
+
