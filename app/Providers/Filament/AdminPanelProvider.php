@@ -94,12 +94,8 @@ class AdminPanelProvider extends PanelProvider
                 fn (): View => view('filament.partials.pembayaran-form-scripts'),
             )
             ->renderHook(
-                PanelsRenderHook::TOPBAR_LOGO_AFTER,
-                fn (): View => view('filament.partials.sidebar-toggle-button'),
-            )
-            ->renderHook(
-                PanelsRenderHook::SIDEBAR_LOGO_AFTER,
-                fn (): View => view('filament.partials.sidebar-toggle-button'),
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): View => view('filament.partials.sidebar-scripts'),
             )
             ->brandName(fn (): string => ProfilSekolah::current()->appName())
             ->brandLogo(fn (): View => view('filament.partials.brand'))
@@ -133,7 +129,8 @@ class AdminPanelProvider extends PanelProvider
                     ->visible(fn (): bool => PembayaranGabunganResource::canCreate())
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.pembayaran-gabungans.create')),
             ])
-            ->sidebarFullyCollapsibleOnDesktop()
+            ->sidebarCollapsibleOnDesktop(false)
+            ->sidebarFullyCollapsibleOnDesktop(false)
             ->maxContentWidth('full')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
