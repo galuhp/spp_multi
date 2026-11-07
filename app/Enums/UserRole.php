@@ -26,9 +26,9 @@ enum UserRole: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Admin => 'bg-purple-100 text-purple-800 border border-purple-200',
-            self::Petugas => 'bg-blue-100 text-blue-800 border border-blue-200',
-            self::Siswa => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+            self::Admin => 'bg-purple-50 text-purple-700 border border-purple-200/80',
+            self::Petugas => 'bg-blue-50 text-blue-700 border border-blue-200/80',
+            self::Siswa => 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
         };
     }
 }

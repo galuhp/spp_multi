@@ -271,10 +271,10 @@
                                 default => 'Belum Jatuh Tempo',
                             };
                             $statusClass = match ($baris['status']) {
-                                'menunggak' => 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300',
-                                'lunas' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-                                'tanpa_tarif' => 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
-                                default => 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+                                'menunggak' => 'border border-rose-200/80 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/50 dark:text-rose-300',
+                                'lunas' => 'border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/50 dark:text-emerald-300',
+                                'tanpa_tarif' => 'border border-amber-200/80 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-300',
+                                default => 'border border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
                             };
                         @endphp
                         <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
@@ -312,7 +312,7 @@
                                     <span class="text-gray-400">-</span>
                                 @else
                                     {{ implode(', ', $baris['bulan_tertunggak']) }}
-                                    <span class="ml-1 inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+                                    <span class="ml-1 inline-flex items-center rounded-md border border-rose-200/80 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/50 dark:text-rose-300">
                                         {{ $baris['jumlah_bulan_tertunggak'] }} bulan
                                     </span>
                                 @endif
@@ -322,13 +322,13 @@
                                     <span class="text-gray-400">-</span>
                                 @else
                                     {{ implode(', ', $baris['pos_non_spp_tertunggak']) }}
-                                    <span class="ml-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                                    <span class="ml-1 inline-flex items-center rounded-md border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-300">
                                         {{ $baris['jumlah_pos_non_spp_tertunggak'] }} pos
                                     </span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium {{ $statusClass }}">
+                                <span class="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold {{ $statusClass }}">
                                     {{ $statusLabel }}
                                 </span>
                             </td>

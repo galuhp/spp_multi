@@ -155,9 +155,9 @@
 
                                         <span :class="has(m.key) ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
                                         <span :class="m.status === 'lunas' ? '' : 'hidden'" class="absolute right-2 top-2 text-xs">&check;</span>
-                                        <span :class="m.status === 'ditanggung' ? '' : 'hidden'" class="absolute right-2 top-2 rounded bg-sky-100 px-1.5 text-[10px] font-medium text-sky-800">Pemerintah</span>
-                                        <span :class="(m.status === 'tunggakan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800">Tunggakan</span>
-                                        <span :class="(m.status === 'berjalan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded bg-gray-200 px-1.5 text-[10px] font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">Bulan ini</span>
+                                        <span :class="m.status === 'ditanggung' ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-sky-200/80 bg-sky-50 px-1.5 text-[10px] font-medium text-sky-700">Pemerintah</span>
+                                        <span :class="(m.status === 'tunggakan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-amber-200/80 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700">Tunggakan</span>
+                                        <span :class="(m.status === 'berjalan' && ! has(m.key)) ? '' : 'hidden'" class="absolute right-2 top-2 rounded border border-slate-200 bg-slate-100 px-1.5 text-[10px] font-medium text-slate-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">Bulan ini</span>
                                     </button>
                                 </template>
                             </div>
@@ -413,11 +413,11 @@
 
                 monthClass(m) {
                     if (m.status === 'lunas') {
-                        return 'cursor-not-allowed border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300';
+                        return 'cursor-not-allowed border-emerald-200/80 bg-emerald-50/45 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300';
                     }
 
                     if (m.status === 'ditanggung') {
-                        return 'cursor-not-allowed border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300';
+                        return 'cursor-not-allowed border-sky-200/80 bg-sky-50/45 text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300';
                     }
 
                     if (this.has(m.key)) {
@@ -425,10 +425,10 @@
                     }
 
                     if (m.status === 'tunggakan') {
-                        return 'border-amber-500 bg-white hover:border-indigo-500 dark:bg-gray-900';
+                        return 'border-amber-300 bg-amber-50/25 hover:border-indigo-500 dark:bg-gray-900';
                     }
 
-                    return 'border-gray-300 bg-white hover:border-indigo-500 dark:border-gray-700 dark:bg-gray-900';
+                    return 'border-gray-200 bg-white hover:border-indigo-500 dark:border-gray-700 dark:bg-gray-900';
                 },
 
                 submit() {

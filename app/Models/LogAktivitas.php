@@ -56,9 +56,9 @@ class LogAktivitas extends Model
     {
         return match (true) {
             str_ends_with($this->aksi, '.dihapus'),
-            str_ends_with($this->aksi, '.void') => 'bg-rose-100 text-rose-800 border border-rose-200',
-            str_ends_with($this->aksi, '.diubah') => 'bg-amber-100 text-amber-800 border border-amber-200',
-            default => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+            str_ends_with($this->aksi, '.void') => 'bg-rose-50 text-rose-700 border border-rose-200/80',
+            str_ends_with($this->aksi, '.diubah') => 'bg-amber-50 text-amber-700 border border-amber-200/80',
+            default => 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
         };
     }
 }

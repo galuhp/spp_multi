@@ -70,8 +70,8 @@
                         </p>
                     </div>
                     <div class="flex flex-wrap gap-2 text-xs">
-                        <span class="rounded-full bg-zinc-100 px-2.5 py-1 font-medium text-zinc-700">Naik: {{ $jumlahNaik }}</span>
-                        <span class="rounded-full bg-amber-100 px-2.5 py-1 font-medium text-amber-800">Tinggal: {{ $jumlahTinggal }}</span>
+                        <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700">Naik: {{ $jumlahNaik }}</span>
+                        <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700">Tinggal: {{ $jumlahTinggal }}</span>
                     </div>
                 </div>
 
@@ -101,7 +101,7 @@
                                     </td>
                                     <td class="px-3 py-2">
                                         <select wire:model="keputusan.{{ $siswa->id }}.kelas_tujuan_id"
-                                            class="w-64 rounded-lg border border-zinc-300 px-2 py-1.5 text-xs focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
+                                            class="w-64 rounded-lg border border-zinc-300 px-2 py-1.5 text-xs focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-200">
                                             <option value="">Pilih kelas tujuan</option>
                                             @foreach ($kelasTujuanOptions as $id => $label)
                                                 <option value="{{ $id }}">{{ $label }}</option>
@@ -191,7 +191,7 @@
                                 </td>
                                 <td class="px-3 py-2 text-xs">{{ $batch->jumlah_siswa }}</td>
                                 <td class="px-3 py-2">
-                                    <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $batch->status === 'selesai' ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-200 text-zinc-700' }}">
+                                    <span class="rounded-md border px-2 py-0.5 text-xs font-semibold {{ $batch->status === 'selesai' ? 'border-emerald-200/80 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700' }}">
                                         {{ $batch->status }}
                                     </span>
                                 </td>

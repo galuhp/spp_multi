@@ -137,11 +137,11 @@
                                 </div>
                                 <div class="text-right shrink-0">
                                     @if($lunasSemua)
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Lunas 12 bulan</span>
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">Lunas 12 bulan</span>
                                     @elseif($punyaTunggakan)
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">{{ $s->jumlah_tunggakan }} bln menunggak</span>
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">{{ $s->jumlah_tunggakan }} bln menunggak</span>
                                     @else
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-700">Sampai bulan ini lunas</span>
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200/80">Sampai bulan ini lunas</span>
                                     @endif
                                     <div class="text-[10px] text-zinc-400 mt-0.5">{{ $s->jumlah_dibayar }}/12 dibayar</div>
                                 </div>
@@ -370,11 +370,11 @@
 
                                             <div class="text-right shrink-0">
                                                 @if($isLunas)
-                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                                        LUNAS
+                                                    <span class="px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                                        Lunas
                                                     </span>
                                                 @else
-                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                                                    <span class="px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
                                                         Sisa Rp {{ number_format($item['sisa'], 0, ',', '.') }}
                                                     </span>
                                                 @endif

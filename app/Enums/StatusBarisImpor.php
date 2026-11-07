@@ -20,9 +20,9 @@ enum StatusBarisImpor: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Valid => 'inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700',
-            self::Peringatan => 'inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700',
-            self::Error => 'inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700',
+            self::Valid => 'inline-flex items-center rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700',
+            self::Peringatan => 'inline-flex items-center rounded-md border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700',
+            self::Error => 'inline-flex items-center rounded-md border border-rose-200/80 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700',
         };
     }
 }

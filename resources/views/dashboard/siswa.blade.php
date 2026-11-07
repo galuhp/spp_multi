@@ -51,15 +51,15 @@
 
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 @foreach($statusBulan as $item)
-                    <div class="p-3.5 rounded-xl border {{ $item['lunas'] ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/50 border-rose-200' }} flex flex-col justify-between">
+                    <div class="p-3.5 rounded-xl border {{ $item['lunas'] ? 'bg-emerald-50/35 border-emerald-200/80' : 'bg-white border-slate-200' }} flex flex-col justify-between">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-bold text-zinc-800">{{ $item['bulan'] }}</span>
                             @if($item['lunas'])
-                                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
+                                <span class="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center justify-center text-[10px] font-bold">
                                     ✓
                                 </span>
                             @else
-                                <span class="w-5 h-5 rounded-full bg-rose-400 text-white flex items-center justify-center text-[10px] font-bold">
+                                <span class="w-5 h-5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 flex items-center justify-center text-[10px] font-bold">
                                     !
                                 </span>
                             @endif
@@ -67,20 +67,20 @@
 
                         <div class="mt-2">
                             @if($item['lunas'])
-                                <span class="inline-block text-[11px] font-bold text-emerald-700">
-                                    LUNAS
+                                <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                    Lunas
                                 </span>
-                                <div class="text-[10px] text-zinc-500 mt-0.5">
+                                <div class="text-[10px] text-zinc-500 mt-1">
                                     {{ $item['pembayaran']->tgl_bayar->format('d/m/Y') }}
                                 </div>
                                 <a href="{{ route('portal.kuitansi', $item['pembayaran']->id) }}" target="_blank" class="mt-2 inline-block text-[10px] font-semibold text-zinc-900 hover:text-zinc-900">
                                     Cetak Bukti &rarr;
                                 </a>
                             @else
-                                <span class="inline-block text-[11px] font-bold text-rose-600">
-                                    BELUM BAYAR
+                                <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
+                                    Belum Lunas
                                 </span>
-                                <div class="text-[10px] text-zinc-400 mt-0.5">
+                                <div class="text-[10px] text-zinc-400 mt-1">
                                     {{ $siswa->spp?->formattedNominal() }}
                                 </div>
                             @endif

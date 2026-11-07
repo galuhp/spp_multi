@@ -199,15 +199,15 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     @if($entry['tipe'] === 'pembayaran')
-                                        <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                        <span class="inline-flex items-center rounded-md border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/50 dark:text-emerald-300">
                                             Valid
                                         </span>
                                     @elseif($entry['status'] === 'jatuh_tempo')
-                                        <span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+                                        <span class="inline-flex items-center rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/50 dark:text-rose-300">
                                             Jatuh Tempo
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                        <span class="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                                             Belum Jatuh Tempo
                                         </span>
                                     @endif

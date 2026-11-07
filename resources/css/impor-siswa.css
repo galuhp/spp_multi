@@ -2,6 +2,8 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 @source '../views/filament/pages/impor-siswa.blade.php';
+@source '../views/components/ui';
+@source '../../app/Enums/StatusBarisImpor.php';
 
 /* Satu aksen biru tua, tanpa gradien. */
 .impor-siswa {

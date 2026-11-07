@@ -63,8 +63,8 @@
                         <p class="mt-0.5 text-xs text-zinc-500">Semua siswa tercentang secara default. Hilangkan centang untuk siswa yang belum lulus.</p>
                     </div>
                     <div class="flex flex-wrap gap-2 text-xs">
-                        <span class="rounded-full bg-zinc-100 px-2.5 py-1 font-medium text-zinc-700">Dipilih: {{ $jumlahPilih }}</span>
-                        <span class="rounded-full bg-amber-100 px-2.5 py-1 font-medium text-amber-800">Tunggakan: Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</span>
+                        <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700">Dipilih: {{ $jumlahPilih }}</span>
+                        <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700">Tunggakan: Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</span>
                     </div>
                 </div>
 
@@ -94,11 +94,11 @@
                                     <td class="px-3 py-2 font-medium text-zinc-900">{{ $siswa->nama }}</td>
                                     <td class="px-3 py-2 text-xs">
                                         @if ($tunggakan['jumlah_bulan'] > 0)
-                                            <span class="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800">
+                                            <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2 py-0.5 font-medium text-amber-700">
                                                 {{ $tunggakan['jumlah_bulan'] }} bulan — Rp {{ number_format($tunggakan['nominal'], 0, ',', '.') }}
                                             </span>
                                         @else
-                                            <span class="text-emerald-700">Lunas</span>
+                                            <span class="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">Lunas</span>
                                         @endif
                                     </td>
                                     <td class="px-3 py-2 text-xs text-zinc-500">

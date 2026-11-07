@@ -17,9 +17,9 @@
                     <p class="mt-1 text-xs text-zinc-500">Daftar seluruh kuitansi pembayaran SPP yang tercatat atas nama Anda.</p>
                 </div>
 
-                <div class="rounded-box border border-emerald-200 bg-emerald-50 px-4 py-3 sm:text-right">
+                <div class="rounded-xl border border-emerald-200/80 bg-emerald-50/40 px-4 py-3 sm:text-right">
                     <div class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Total Pembayaran Berhasil</div>
-                    <div class="mt-1 text-xl font-bold text-emerald-700">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</div>
+                    <div class="mt-1 text-xl font-bold text-emerald-700 tabular-nums">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</div>
                 </div>
             </div>
 
