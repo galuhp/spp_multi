@@ -173,6 +173,14 @@ class DatabaseSeeder extends Seeder
      */
     private function bersihkanDataLama(): void
     {
+        try {
+            Schema::table('spps', function (\Illuminate\Database\Schema\Blueprint $table) {
+                $table->dropUnique('spps_kategori_tahun_tingkat_unique');
+            });
+        } catch (\Throwable) {
+            // Index might already be dropped or not exist
+        }
+
         Schema::disableForeignKeyConstraints();
 
         PembayaranGabunganBaris::query()->truncate();
