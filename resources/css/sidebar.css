@@ -33,3 +33,25 @@
     padding-block: 0.25rem !important;
 }
 
+/* Pindahkan tombol buka/tutup sidebar dari pojok kiri ke sebelah kanan sidebar */
+@media (min-width: 1024px) {
+    .fi-topbar-collapse-sidebar-btn-ctn,
+    .fi-topbar > .fi-topbar-open-sidebar-btn,
+    .fi-topbar > .fi-topbar-close-sidebar-btn,
+    .fi-sidebar-header > .fi-sidebar-open-collapse-sidebar-btn,
+    .fi-sidebar-header > .fi-sidebar-close-collapse-sidebar-btn {
+        display: none !important;
+    }
+
+    .fi-topbar-start {
+        min-width: calc(var(--sidebar-width, 16rem) - 1rem);
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .fi-topbar-start .fi-logo {
+        margin-inline-start: 0 !important;
+    }
+}
+
+

@@ -93,6 +93,14 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::SCRIPTS_AFTER,
                 fn (): View => view('filament.partials.pembayaran-form-scripts'),
             )
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_LOGO_AFTER,
+                fn (): View => view('filament.partials.sidebar-toggle-button'),
+            )
+            ->renderHook(
+                PanelsRenderHook::SIDEBAR_LOGO_AFTER,
+                fn (): View => view('filament.partials.sidebar-toggle-button'),
+            )
             ->brandName(fn (): string => ProfilSekolah::current()->appName())
             ->brandLogo(fn (): View => view('filament.partials.brand'))
             ->brandLogoHeight('2.5rem')
