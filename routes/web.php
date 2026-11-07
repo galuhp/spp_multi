@@ -36,6 +36,11 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/impor-siswa/template', [ImporSiswaController::class, 'template'])->name('impor-siswa.template');
     Route::get('/impor-siswa/{batchId}/error', [ImporSiswaController::class, 'laporanError'])->name('impor-siswa.error');
+
+    // Unduhan template impor data master (admin).
+    Route::get('/impor-master/template/jurusan', [\App\Http\Controllers\ImporMasterController::class, 'templateJurusan'])->name('impor.template.jurusan');
+    Route::get('/impor-master/template/kelas', [\App\Http\Controllers\ImporMasterController::class, 'templateKelas'])->name('impor.template.kelas');
+    Route::get('/impor-master/template/tarif', [\App\Http\Controllers\ImporMasterController::class, 'templateTarif'])->name('impor.template.tarif');
 });
 
 // Protected Routes

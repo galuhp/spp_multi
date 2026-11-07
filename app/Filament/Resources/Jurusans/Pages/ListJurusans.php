@@ -3,8 +3,13 @@
 namespace App\Filament\Resources\Jurusans\Pages;
 
 use App\Filament\Resources\Jurusans\JurusanResource;
+use App\Support\ImporMaster\ImporMasterService;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\HtmlString;
 
 class ListJurusans extends ListRecords
 {
@@ -14,6 +19,67 @@ class ListJurusans extends ListRecords
     {
         return [
             CreateAction::make(),
+            Action::make('imporJurusan')
+                ->label('Impor Jurusan')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('success')
+                ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
+                ->modalHeading('Impor Data Jurusan (Excel / CSV)')
+                ->modalDescription(new HtmlString('Unggah file .xlsx, .xls, atau .csv berisi data jurusan/kompetensi keahlian. Belum punya format? <a href="' . route('impor.template.jurusan') . '" target="_blank" class="text-primary-600 font-semibold underline">Unduh Template Excel</a>'))
+                ->modalSubmitActionLabel('Mulai Impor')
+                ->form([
+                    FileUpload::make('berkas')
+                        ->label('Berkas Spreadsheet')
+                        ->helperText('Format yang didukung: .xlsx, .xls, .csv (Maksimal 5 MB)')
+                        ->acceptedFileTypes([
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'application/vnd.ms-excel',
+                            'text/csv',
+                            'text/plain',
+                        ])
+                        ->maxSize(5120)
+                        ->required(),
+                ])
+                ->action(function (array $data) {
+                    try {
+                        $path = ImporMasterService::resolveUploadedFilePath($data['berkas']);
+                        $service = app(ImporMasterService::class);
+                        $hasil = $service->imporJurusan($path);
+
+                        if ($hasil['berhasil'] > 0) {
+                            $pesan = "Berhasil memproses {$hasil['berhasil']} jurusan ({$hasil['baru']} baru, {$hasil['diperbarui']} diperbarui).";
+                            if ($hasil['gagal'] > 0) {
+                                $pesan .= " {$hasil['gagal']} baris dilewati.";
+                            }
+
+                            Notification::make()
+                                ->title('Impor Jurusan Berhasil')
+                                ->body($pesan)
+                                ->success()
+                                ->send();
+                        } else {
+                            $detailError = implode("\n", array_slice($hasil['errors'], 0, 5));
+                            Notification::make()
+                                ->title('Impor Jurusan Gagal')
+                                ->body($detailError ?: 'Tidak ada data valid yang dapat diimpor.')
+                                ->danger()
+                                ->send();
+                        }
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Terjadi Kesalahan Saat Mengimpor')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+            Action::make('unduhTemplateJurusan')
+                ->label('Unduh Template')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('gray')
+                ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
+                ->url(fn (): string => route('impor.template.jurusan'))
+                ->openUrlInNewTab(),
         ];
     }
 }
