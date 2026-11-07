@@ -10,6 +10,8 @@ class ListPengeluaranSekolahs extends ListRecords
 {
     protected static string $resource = PengeluaranSekolahResource::class;
 
+    protected static ?string $title = 'Transaksi Pengeluaran Operasional Sekolah';
+
     protected function getHeaderActions(): array
     {
         return [

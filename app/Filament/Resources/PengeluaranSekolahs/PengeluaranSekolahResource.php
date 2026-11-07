@@ -26,40 +26,74 @@ class PengeluaranSekolahResource extends Resource
 
     protected static UnitEnum|string|null $navigationGroup = 'Transaksi SPP';
 
-    protected static ?string $navigationLabel = 'Pengeluaran Operasional';
+    protected static ?string $navigationLabel = 'Transaksi Pengeluaran Operasional Sekolah';
 
-    protected static ?string $modelLabel = 'Pengeluaran Operasional';
+    protected static ?string $modelLabel = 'Pengeluaran Operasional Sekolah';
 
-    protected static ?string $pluralModelLabel = 'Pengeluaran Operasional';
+    protected static ?string $pluralModelLabel = 'Transaksi Pengeluaran Operasional Sekolah';
 
-    protected static ?int $navigationSort = 4;
+    protected static bool $shouldRegisterNavigation = false;
+
+    protected static ?int $navigationSort = 3;
 
     public static function canViewAny(): bool
     {
         $user = auth()->user();
 
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+        if (! $user?->isStaff()) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
     public static function canCreate(): bool
     {
         $user = auth()->user();
 
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+        if (! $user?->isStaff()) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
     public static function canEdit(Model $record): bool
     {
         $user = auth()->user();
 
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+        if (! $user?->isStaff()) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
     public static function canDelete(Model $record): bool
     {
         $user = auth()->user();
 
-        return $user?->isStaff() && RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
+        if (! $user?->isStaff()) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return RolePermission::allowed($user->role, RolePermission::TRANSAKSI_SPP);
     }
 
     public static function getEloquentQuery(): Builder

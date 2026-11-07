@@ -9,6 +9,8 @@ class CreatePengeluaranSekolah extends CreateRecord
 {
     protected static string $resource = PengeluaranSekolahResource::class;
 
+    protected static ?string $title = 'Catat Transaksi Pengeluaran Sekolah';
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

@@ -10,6 +10,8 @@ class EditPengeluaranSekolah extends EditRecord
 {
     protected static string $resource = PengeluaranSekolahResource::class;
 
+    protected static ?string $title = 'Ubah Transaksi Pengeluaran Sekolah';
+
     protected function getHeaderActions(): array
     {
         return [

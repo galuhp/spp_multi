@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
+use App\Filament\Resources\PengeluaranSekolahs\PengeluaranSekolahResource;
 use App\Filament\Widgets\LatestPembayaranWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
 use App\Models\ProfilSekolah;
@@ -128,10 +129,21 @@ class AdminPanelProvider extends PanelProvider
                     ->url(fn (): string => PembayaranGabunganResource::getUrl('create'))
                     ->visible(fn (): bool => PembayaranGabunganResource::canCreate())
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.pembayaran-gabungans.create')),
+                NavigationItem::make('Transaksi Pengeluaran Operasional Sekolah')
+                    ->key('transaksi-pengeluaran-operasional-sekolah')
+                    ->group('Transaksi SPP')
+                    ->icon(Heroicon::OutlinedBanknotes)
+                    ->sort(3)
+                    ->url(fn (): string => PengeluaranSekolahResource::getUrl('index'))
+                    ->visible(fn (): bool => PengeluaranSekolahResource::canViewAny())
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.pengeluaran-sekolahs.*')),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('full')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->resources([
+                PengeluaranSekolahResource::class,
+            ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
