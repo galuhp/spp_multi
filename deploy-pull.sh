@@ -56,13 +56,6 @@ if ! command -v "$COMPOSER_BIN" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Jangan menimpa perubahan lokal yang belum di-commit.
-if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-    echo "Ada perubahan lokal yang belum di-commit. Deploy dibatalkan." >&2
-    git status --short >&2
-    exit 1
-fi
-
 echo "==> Aplikasi: $APP_ROOT"
 echo "==> Branch  : $BRANCH"
 echo "==> PHP     : $("$PHP_BIN" -r 'echo PHP_VERSION;')"
