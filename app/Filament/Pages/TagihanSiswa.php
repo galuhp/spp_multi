@@ -193,6 +193,10 @@ class TagihanSiswa extends Page
             $bulan = $periode['bulan'];
             $tahun = $periode['tahun'];
 
+            if (! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+                continue;
+            }
+
             $bayarList = $riwayatPembayaran
                 ->where('spp_id', $siswa->spp_id)
                 ->where('bulan_dibayar', $bulan);
@@ -280,25 +284,38 @@ class TagihanSiswa extends Page
         $priorLevels = [];
         if ($tingkatSekarang !== null) {
             $num = (int) $tingkatSekarang;
-            if ($num >= 10 && $num <= 13) {
+            if ($num > 10 && $num <= 13) {
                 $priorLevels = array_map('strval', range(10, $num - 1));
-            } elseif ($num >= 7 && $num <= 9) {
+            } elseif ($num > 7 && $num <= 9) {
                 $priorLevels = array_map('strval', range(7, $num - 1));
-            } elseif ($num >= 1 && $num <= 6) {
+            } elseif ($num > 1 && $num <= 6) {
                 $priorLevels = array_map('strval', range(1, $num - 1));
             }
         }
 
+        $taCurYear = $siswa->kelas?->tahunAjaran ? (int) substr($siswa->kelas->tahunAjaran->nama, 0, 4) : (int) now()->year;
+        $tahunMasukSiswa = $siswa->tahunMasuk();
+
         foreach ($priorLevels as $pLvl) {
             $tarifPrior = Spp::untukTingkat($pLvl);
+            $selisih = max(1, (int) $tingkatSekarang - (int) $pLvl);
+            $tahunMulaiPrior = $taCurYear - $selisih;
+
+            // Tunggakan hanya dihitung sejak siswa masuk ke sekolah
+            if ($tahunMulaiPrior < $tahunMasukSiswa) {
+                continue;
+            }
+
             if ($tarifPrior && $tarifPrior->isBulanan()) {
                 $nominalPrior = (int) $tarifPrior->nominal;
-                $selisih = max(1, (int) $tingkatSekarang - (int) $pLvl);
-                $tahunMulaiPrior = 2026 - $selisih;
 
                 foreach (Pembayaran::bulanTahunAjaran($tahunMulaiPrior) as $periode) {
                     $bPrior = $periode['bulan'];
                     $thnPrior = $periode['tahun'];
+
+                    if (! $siswa->sudahMasukPadaPeriode($bPrior, $thnPrior)) {
+                        continue;
+                    }
 
                     if ($tanggunganPemerintah->isSppDitanggung($siswa, $tarifPrior, $bPrior, $thnPrior)) {
                         continue;

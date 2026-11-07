@@ -646,6 +646,10 @@ class LaporanSppService
                 $bulanTertunggak = [];
 
                 foreach ($bulan as $periode) {
+                    if (! $siswa->sudahMasukPadaPeriode($periode['bulan'], $periode['tahun'])) {
+                        continue;
+                    }
+
                     $tagihanSppCur += $nominal;
 
                     $kunci = $siswa->id.'|'.$periode['bulan'].'|'.$periode['tahun'];
@@ -694,10 +698,19 @@ class LaporanSppService
                     $taCurYear = $tahunAjaran ? (int) substr($tahunAjaran->nama, 0, 4) : 2026;
                     $taPriorYear = $taCurYear - $selisih;
 
+                    // Lewati tahun ajaran sebelum siswa masuk ke sekolah
+                    if ($taPriorYear < $siswa->tahunMasuk()) {
+                        continue;
+                    }
+
                     if ($sppPrior && $sppPrior->isBulanan()) {
                         $nomPrior = (int) $sppPrior->nominal;
                         foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bln) {
                             $thnPrior = in_array($bln, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? $taPriorYear : ($taPriorYear + 1);
+
+                            if (! $siswa->sudahMasukPadaPeriode($bln, $thnPrior)) {
+                                continue;
+                            }
 
                             if ($tanggunganService->isSppDitanggung($siswa, $sppPrior, $bln, $thnPrior)) {
                                 continue;
@@ -1034,15 +1047,15 @@ class LaporanSppService
 
         $num = (int) $normal;
 
-        if ($num >= 10 && $num <= 13) {
+        if ($num > 10 && $num <= 13) {
             return array_map('strval', range(10, $num - 1));
         }
 
-        if ($num >= 7 && $num <= 9) {
+        if ($num > 7 && $num <= 9) {
             return array_map('strval', range(7, $num - 1));
         }
 
-        if ($num >= 1 && $num <= 6) {
+        if ($num > 1 && $num <= 6) {
             return array_map('strval', range(1, $num - 1));
         }
 

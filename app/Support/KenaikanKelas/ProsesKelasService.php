@@ -710,17 +710,28 @@ class ProsesKelasService
 
         $tingkatSekarang = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
         $tingkatList = [];
+        $taCurYear = $siswa->kelas?->tahunAjaran ? (int) substr($siswa->kelas->tahunAjaran->nama, 0, 4) : 2026;
+        $tahunMasuk = $siswa->tahunMasuk();
 
         if ($tingkatSekarang !== null) {
             $num = (int) $tingkatSekarang;
-            if ($num >= 10 && $num <= 13) {
-                $tingkatList = array_map('strval', range(10, $num));
-            } elseif ($num >= 7 && $num <= 9) {
-                $tingkatList = array_map('strval', range(7, $num));
+            $minNum = 10;
+            if ($num >= 7 && $num <= 9) {
+                $minNum = 7;
             } elseif ($num >= 1 && $num <= 6) {
-                $tingkatList = array_map('strval', range(1, $num));
-            } else {
-                $tingkatList = [$tingkatSekarang];
+                $minNum = 1;
+            }
+
+            for ($t = $minNum; $t <= $num; $t++) {
+                $selisih = $num - $t;
+                $tahunMulaiLvl = $taCurYear - $selisih;
+                if ($tahunMulaiLvl >= $tahunMasuk) {
+                    $tingkatList[] = (string) $t;
+                }
+            }
+
+            if (empty($tingkatList)) {
+                $tingkatList = [(string) $num];
             }
         }
 
@@ -756,7 +767,11 @@ class ProsesKelasService
             $nonSppList = Spp::nonSppUntukTingkat($tingkat);
 
             $selisih = max(0, (int) $tingkatSekarang - (int) $tingkat);
-            $tahunMulaiLvl = 2026 - $selisih;
+            $tahunMulaiLvl = $taCurYear - $selisih;
+
+            if ($tahunMulaiLvl < $tahunMasuk) {
+                continue;
+            }
 
             // SPP calculation
             if ($spp && $spp->isBulanan()) {
@@ -771,6 +786,10 @@ class ProsesKelasService
                     }
 
                     $thnLvl = in_array($bln, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? $tahunMulaiLvl : ($tahunMulaiLvl + 1);
+
+                    if (! $siswa->sudahMasukPadaPeriode($bln, $thnLvl)) {
+                        continue;
+                    }
 
                     if ($tanggunganService->isSppDitanggung($siswa, $spp, $bln, $thnLvl)) {
                         continue;

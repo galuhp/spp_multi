@@ -31,16 +31,28 @@ class PembayaranService
 
         $tingkatSekarang = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
         $tingkatList = [];
+        $taCurYear = $siswa->kelas?->tahunAjaran ? (int) substr($siswa->kelas->tahunAjaran->nama, 0, 4) : 2026;
+        $tahunMasuk = $siswa->tahunMasuk();
+
         if ($tingkatSekarang !== null) {
             $num = (int) $tingkatSekarang;
-            if ($num >= 10 && $num <= 13) {
-                $tingkatList = array_map('strval', range(10, $num));
-            } elseif ($num >= 7 && $num <= 9) {
-                $tingkatList = array_map('strval', range(7, $num));
+            $minNum = 10;
+            if ($num >= 7 && $num <= 9) {
+                $minNum = 7;
             } elseif ($num >= 1 && $num <= 6) {
-                $tingkatList = array_map('strval', range(1, $num));
-            } else {
-                $tingkatList = [$tingkatSekarang];
+                $minNum = 1;
+            }
+
+            for ($t = $minNum; $t <= $num; $t++) {
+                $selisih = $num - $t;
+                $tahunMulaiLvl = $taCurYear - $selisih;
+                if ($tahunMulaiLvl >= $tahunMasuk) {
+                    $tingkatList[] = (string) $t;
+                }
+            }
+
+            if (empty($tingkatList)) {
+                $tingkatList = [(string) $num];
             }
         }
 
@@ -62,13 +74,22 @@ class PembayaranService
             }
 
             $selisih = max(0, (int) $tingkatSekarang - (int) $t);
-            $tahunMulai = 2026 - $selisih;
+            $tahunMulai = $taCurYear - $selisih;
+
+            if ($tahunMulai < $tahunMasuk) {
+                continue;
+            }
+
             $nominal = (int) $sppLvl->nominal;
             $isPriorYear = ($t !== $tingkatSekarang);
 
             foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
                 $bulan = $periode['bulan'];
                 $tahun = $periode['tahun'];
+
+                if (! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+                    continue;
+                }
 
                 if ($this->tanggunganPemerintah->isSppDitanggung($siswa, $sppLvl, $bulan, $tahun)) {
                     continue;
@@ -102,6 +123,12 @@ class PembayaranService
         // 2. Non-SPP across all timeline levels
         $nonSppList = collect();
         foreach ($tingkatList as $t) {
+            $selisih = max(0, (int) $tingkatSekarang - (int) $t);
+            $tahunMulai = $taCurYear - $selisih;
+            if ($tahunMulai < $tahunMasuk) {
+                continue;
+            }
+
             foreach (Spp::nonSppUntukTingkat($t) as $tarifNon) {
                 $nonSppList->push($tarifNon);
             }

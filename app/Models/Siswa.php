@@ -243,4 +243,74 @@ class Siswa extends Model
             ->where('tahun_dibayar', $tahun)
             ->sum('jumlah_bayar') >= $nominal;
     }
+
+    /**
+     * Resolves the student's admission year (e.g. 2026).
+     */
+    public function tahunMasuk(): int
+    {
+        if (filled($this->tahun_masuk) && (int) $this->tahun_masuk > 2000) {
+            return (int) $this->tahun_masuk;
+        }
+
+        if ($this->tanggal_masuk) {
+            return (int) \Carbon\Carbon::parse($this->tanggal_masuk)->format('Y');
+        }
+
+        $taNama = $this->riwayatKelas()
+            ->with('tahunAjaran')
+            ->get()
+            ->sortBy(fn ($r) => $r->tahunAjaran?->tanggal_mulai ?? $r->tahunAjaran?->nama)
+            ->first()
+            ?->tahunAjaran?->nama;
+
+        if ($taNama && preg_match('/(\d{4})/', $taNama, $m)) {
+            return (int) $m[1];
+        }
+
+        if ($this->kelas?->tahunAjaran?->nama && preg_match('/(\d{4})/', $this->kelas->tahunAjaran->nama, $m)) {
+            return (int) $m[1];
+        }
+
+        if ($this->spp_id && ($spp = $this->spp ?? Spp::find($this->spp_id))) {
+            return Pembayaran::tahunMulaiTarif($spp);
+        }
+
+        return (int) now()->year;
+    }
+
+    /**
+     * Determine if a given billing period (month + calendar year) is during or after the student's admission.
+     */
+    public function sudahMasukPadaPeriode(string $bulan, int $tahun): bool
+    {
+        $tahunMasuk = $this->tahunMasuk();
+
+        if ($this->tanggal_masuk) {
+            $bulanMap = [
+                'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
+                'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
+                'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
+            ];
+
+            $monthNum = $bulanMap[$bulan] ?? 7;
+            $endOfBulan = \Carbon\Carbon::createFromDate($tahun, $monthNum, 1)->endOfMonth();
+            $tglMasuk = \Carbon\Carbon::parse($this->tanggal_masuk)->startOfMonth();
+
+            return ! $endOfBulan->lt($tglMasuk);
+        }
+
+        // Jika hanya ada tahun masuk (misal 2026):
+        // Periode tahun ajaran 2026/2027 mencakup Juli 2026 s.d. Juni 2027.
+        // Periode kalender sebelum Juli 2026 (yaitu tahun < 2026, atau tahun == 2026 tapi bulan Jan-Jun) adalah tahun ajaran sebelumnya.
+        if ($tahun < $tahunMasuk) {
+            return false;
+        }
+
+        if ($tahun === $tahunMasuk && in_array($bulan, ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'], true)) {
+            return false;
+        }
+
+        return true;
+    }
 }

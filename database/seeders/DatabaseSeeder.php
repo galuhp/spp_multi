@@ -415,6 +415,7 @@ class DatabaseSeeder extends Seeder
                     'jenis_kelamin' => $jk,
                     'alamat' => "Jl. Pemuda Mandiri No. " . substr((string) $nis, -2) . ", Bandung",
                     'no_telp' => "0812{$tingkat}" . substr((string) $nisn, -4),
+                    'tanggal_masuk' => "{$tahunMasuk}-07-01",
                     'tahun_masuk' => $tahunMasuk,
                     'status' => 'aktif',
                     'is_archived' => false,

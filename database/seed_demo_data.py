@@ -674,8 +674,8 @@ def seed():
                 user_id = cursor.lastrowid
 
             cursor.execute("""
-            INSERT INTO siswas (user_id, kelas_id, spp_id, nisn, nis, nama, jenis_kelamin, alamat, no_telp, tahun_masuk, status, is_archived, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 2026, 'aktif', 0, ?, ?)
+            INSERT INTO siswas (user_id, kelas_id, spp_id, nisn, nis, nama, jenis_kelamin, alamat, no_telp, tanggal_masuk, tahun_masuk, status, is_archived, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '2026-07-01', 2026, 'aktif', 0, ?, ?)
             """, (user_id, kelas_id, spp_id, str(nisn), str(nis), nama, jk, f"Jl. Pemuda Mandiri No. {str(nis)[-2:]}, Bandung", f"0812{tingkat}{str(nisn)[-4:]}", now_str, now_str))
             s_id = cursor.lastrowid
             created_ids.append(s_id)
