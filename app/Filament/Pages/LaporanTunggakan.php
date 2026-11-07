@@ -96,6 +96,17 @@ class LaporanTunggakan extends Page
         $this->urutkan = 'kelas';
     }
 
+    public function hitungUlangData(): void
+    {
+        $hasil = Siswa::sinkronkanDataMasuk(true);
+
+        Notification::make()
+            ->title('Sinkronisasi Berhasil')
+            ->body("Total {$hasil['total']} siswa diperiksa, {$hasil['diperbarui']} data berhasil diperbarui.")
+            ->success()
+            ->send();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -103,18 +114,11 @@ class LaporanTunggakan extends Page
                 ->label('Hitung Ulang & Sinkronkan Data')
                 ->icon(Heroicon::OutlinedArrowPath)
                 ->color('warning')
-                ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
+                ->visible(fn (): bool => auth()->user()?->isStaff() ?? true)
                 ->requiresConfirmation()
                 ->modalHeading('Hitung Ulang & Sinkronkan Data Siswa')
                 ->modalDescription('Tindakan ini akan menghitung ulang tanggal masuk dan tahun masuk seluruh siswa di database agar tunggakan masa lalu dihitung secara akurat.')
-                ->action(function () {
-                    $hasil = Siswa::sinkronkanDataMasuk(true);
-                    Notification::make()
-                        ->title('Sinkronisasi Berhasil')
-                        ->body("Total {$hasil['total']} siswa diperiksa, {$hasil['diperbarui']} data berhasil diperbarui.")
-                        ->success()
-                        ->send();
-                }),
+                ->action(fn () => $this->hitungUlangData()),
 
             Action::make('cetak_per_kelas')
                 ->label('Cetak Semua per Kelas')

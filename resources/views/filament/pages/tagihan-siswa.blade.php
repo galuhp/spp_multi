@@ -19,17 +19,25 @@
                             <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">Cari langsung berdasarkan nama/NISN, atau pilih kelas lalu siswa.</p>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-4 text-sm text-slate-700 dark:text-gray-300">
-                            <label class="flex cursor-pointer items-center gap-2">
-                                <input type="radio" wire:model.live="cara_pilih" value="cari"
-                                    class="size-4 accent-primary-600">
-                                <span>Cari Nama / NISN</span>
-                            </label>
-                            <label class="flex cursor-pointer items-center gap-2">
-                                <input type="radio" wire:model.live="cara_pilih" value="kelas"
-                                    class="size-4 accent-primary-600">
-                                <span>Bertingkat (Kelas)</span>
-                            </label>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button type="button" wire:click="hitungUlangData" wire:loading.attr="disabled"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-xs hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/70">
+                                <x-filament::icon icon="heroicon-o-arrow-path" class="size-4" wire:loading.class="animate-spin" />
+                                <span>Hitung Ulang &amp; Sinkronkan Data</span>
+                            </button>
+
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-slate-700 dark:text-gray-300 border-l border-slate-200 pl-3 dark:border-gray-700">
+                                <label class="flex cursor-pointer items-center gap-2">
+                                    <input type="radio" wire:model.live="cara_pilih" value="cari"
+                                        class="size-4 accent-primary-600">
+                                    <span>Cari Nama / NISN</span>
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2">
+                                    <input type="radio" wire:model.live="cara_pilih" value="kelas"
+                                        class="size-4 accent-primary-600">
+                                    <span>Bertingkat (Kelas)</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -183,9 +191,16 @@
                                 Tunggakan Tahun Pelajaran Sebelumnya (Wajib Dilunasi)
                             </h3>
                         </div>
-                        <span class="rounded-md bg-rose-600 px-2.5 py-1 text-xs font-bold text-white tabular-nums">
-                            Total: Rp {{ number_format($tagihan['totalTunggakanPrior'], 0, ',', '.') }}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="hitungUlangData" wire:loading.attr="disabled"
+                                class="inline-flex items-center gap-1 rounded-md border border-rose-300 bg-white px-2.5 py-1 text-xs font-semibold text-rose-700 shadow-2xs hover:bg-rose-50 dark:border-rose-700 dark:bg-rose-900/60 dark:text-rose-200">
+                                <x-filament::icon icon="heroicon-o-arrow-path" class="size-3.5" wire:loading.class="animate-spin" />
+                                <span>Hitung Ulang Masuk</span>
+                            </button>
+                            <span class="rounded-md bg-rose-600 px-2.5 py-1 text-xs font-bold text-white tabular-nums">
+                                Total: Rp {{ number_format($tagihan['totalTunggakanPrior'], 0, ',', '.') }}
+                            </span>
+                        </div>
                     </div>
                     <p class="mt-1 text-xs text-rose-700 dark:text-rose-300">
                         Siswa masih memiliki tanggungan iuran SPP atau non-SPP dari tingkat/tahun ajaran sebelumnya yang belum terselesaikan.
