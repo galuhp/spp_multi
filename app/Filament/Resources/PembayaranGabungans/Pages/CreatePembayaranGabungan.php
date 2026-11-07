@@ -185,6 +185,70 @@ class CreatePembayaranGabungan extends CreateRecord
     }
 
     /**
+     * Open SPP months grouped by calendar year (e.g. 2026 => ['Juli', ...], 2027 => ['Januari', ...]).
+     *
+     * @return array<int, array<int, string>>
+     */
+    public function getBulanGroupedByTahunProperty(): array
+    {
+        $tersedia = array_values($this->bulanOptions);
+
+        if ($tersedia === []) {
+            return [];
+        }
+
+        $info = $this->infoTahunAjaran;
+        $tahunMulai = $info['tahun_mulai'];
+        $grouped = [];
+
+        foreach ($tersedia as $namaBulan) {
+            $tahun = Pembayaran::tahunUntukBulan($namaBulan, $tahunMulai);
+            $grouped[$tahun][] = $namaBulan;
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Academic year metadata for the currently selected class/students.
+     *
+     * @return array{tahun_ajaran: string, tahun_mulai: int, tahun_akhir: int}
+     */
+    public function getInfoTahunAjaranProperty(): array
+    {
+        $siswaSample = $this->siswaTerpilih()->first()
+            ?? ($this->kelas_id
+                ? Siswa::query()->with(['spp', 'kelas.tahunAjaran'])->where('kelas_id', $this->kelas_id)->aktif()->first()
+                : null);
+
+        $kelas = $siswaSample?->kelas
+            ?? ($this->kelas_id ? Kelas::query()->with('tahunAjaran')->find($this->kelas_id) : null);
+
+        $tarif = $siswaSample?->spp;
+        $labelTahunAjaran = $tarif?->tahun_ajaran ?? $kelas?->tahunAjaran?->nama;
+
+        if ($tarif) {
+            $tahunMulai = Pembayaran::tahunMulaiTarif($tarif);
+        } elseif ($labelTahunAjaran && preg_match('/^\s*(\d{4})\s*[\/-]\s*(\d{4})\s*$/', (string) $labelTahunAjaran, $m)) {
+            $tahunMulai = (int) $m[1];
+        } else {
+            $tahunMulai = (int) now()->year;
+        }
+
+        $tahunAkhir = $tahunMulai + 1;
+
+        if (! filled($labelTahunAjaran)) {
+            $labelTahunAjaran = "{$tahunMulai}/{$tahunAkhir}";
+        }
+
+        return [
+            'tahun_ajaran' => (string) $labelTahunAjaran,
+            'tahun_mulai' => $tahunMulai,
+            'tahun_akhir' => $tahunAkhir,
+        ];
+    }
+
+    /**
      * Non-SPP tariffs applicable to the selected class.
      *
      * @return Collection<int, Spp>

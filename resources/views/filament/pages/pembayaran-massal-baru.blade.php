@@ -222,6 +222,8 @@
     @if ($modal)
         @php
             $bulanList = $this->bulanOptions;
+            $bulanPerTahun = $this->bulanGroupedByTahun;
+            $infoTahunAjaran = $this->infoTahunAjaran;
             $nonSppList = $this->nonSppOptions;
             $nonSppTerpilih = array_map('intval', $this->non_spp_ids);
         @endphp
@@ -240,8 +242,25 @@
                 </div>
 
                 <div class="max-h-[60vh] space-y-5 overflow-y-auto px-5 py-4">
+                    {{-- Info Tahun Ajaran --}}
+                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary-200/80 bg-primary-50/70 px-3.5 py-2.5 dark:border-primary-500/30 dark:bg-primary-950/30">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-semibold text-primary-900 dark:text-primary-200">
+                                    Tahun Ajaran {{ $infoTahunAjaran['tahun_ajaran'] }}
+                                </span>
+                                <span class="rounded-md bg-primary-100 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:bg-primary-900/60 dark:text-primary-300 tabular-nums">
+                                    Juli {{ $infoTahunAjaran['tahun_mulai'] }} – Juni {{ $infoTahunAjaran['tahun_akhir'] }}
+                                </span>
+                            </div>
+                            <p class="mt-0.5 text-[11px] text-primary-700/90 dark:text-primary-300/80">
+                                Semester Ganjil pada tahun {{ $infoTahunAjaran['tahun_mulai'] }} (Juli–Desember) &amp; Semester Genap pada tahun {{ $infoTahunAjaran['tahun_akhir'] }} (Januari–Juni).
+                            </p>
+                        </div>
+                    </div>
+
                     {{-- SPP Bulanan --}}
-                    <div class="space-y-2.5">
+                    <div class="space-y-3">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Bulan SPP</span>
                             @if ($bulanList !== [])
@@ -256,16 +275,35 @@
                             @endif
                         </div>
 
-                        @if ($bulanList !== [])
-                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                                @foreach ($bulanList as $namaBulan)
-                                    <label class="pm-month" wire:key="bulan-{{ $namaBulan }}">
-                                        <input type="checkbox"
-                                            wire:model.live="bulan"
-                                            value="{{ $namaBulan }}"
-                                            @checked(in_array($namaBulan, $this->bulan, true))>
-                                        <span class="font-medium">{{ $namaBulan }}</span>
-                                    </label>
+                        @if ($bulanPerTahun !== [])
+                            <div class="space-y-3.5">
+                                @foreach ($bulanPerTahun as $tahunKalender => $daftarBulan)
+                                    <div class="rounded-xl border border-gray-200/80 bg-gray-50/50 p-3 dark:border-gray-800 dark:bg-gray-800/30" wire:key="grup-tahun-{{ $tahunKalender }}">
+                                        <div class="mb-2 flex items-center justify-between gap-2">
+                                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-800 dark:text-gray-200 tabular-nums">
+                                                <span class="size-1.5 rounded-full bg-primary-500"></span>
+                                                Tahun {{ $tahunKalender }}
+                                                <span class="font-normal text-gray-500 dark:text-gray-400">
+                                                    ({{ (int) $tahunKalender === (int) $infoTahunAjaran['tahun_mulai'] ? 'Semester Ganjil • Jul–Des' : 'Semester Genap • Jan–Jun' }})
+                                                </span>
+                                            </span>
+                                            <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums">
+                                                {{ count($daftarBulan) }} bulan terbuka
+                                            </span>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                                            @foreach ($daftarBulan as $namaBulan)
+                                                <label class="pm-month bg-white dark:bg-gray-900" wire:key="bulan-{{ $tahunKalender }}-{{ $namaBulan }}">
+                                                    <input type="checkbox"
+                                                        wire:model.live="bulan"
+                                                        value="{{ $namaBulan }}"
+                                                        @checked(in_array($namaBulan, $this->bulan, true))>
+                                                    <span class="font-medium">{{ $namaBulan }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 @endforeach
                             </div>
                         @else

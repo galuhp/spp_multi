@@ -462,6 +462,19 @@ class PembayaranMassalTest extends TestCase
         $this->assertArrayNotHasKey('Juni', $bulanOptionsSiswaA);
         $this->assertArrayNotHasKey('Juli', $bulanOptionsSiswaA);
         $this->assertArrayHasKey('Agustus', $bulanOptionsSiswaA);
+
+        $grouped = $component->instance()->bulanGroupedByTahun;
+        $infoTahunAjaran = $component->instance()->infoTahunAjaran;
+
+        $this->assertSame('2027/2028', $infoTahunAjaran['tahun_ajaran']);
+        $this->assertSame(2027, $infoTahunAjaran['tahun_mulai']);
+        $this->assertSame(2028, $infoTahunAjaran['tahun_akhir']);
+        $this->assertArrayHasKey(2027, $grouped);
+        $this->assertArrayHasKey(2028, $grouped);
+        $this->assertContains('Agustus', $grouped[2027]);
+        $this->assertNotContains('Juli', $grouped[2027]);
+        $this->assertContains('Januari', $grouped[2028]);
+        $this->assertNotContains('Juni', $grouped[2028]);
     }
 
     public function test_tagihan_bulanan_memakai_tahun_kalender_yang_benar(): void
