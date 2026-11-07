@@ -617,16 +617,16 @@ def seed():
                     VALUES (?, ?, ?, 2026, '2026/2027', NULL, ?, 'Tarif Biaya Sekolah per bulan (Berlaku untuk semua tingkat) TA 2026/2027', ?, ?)
                     """, (kategori, tipe, nama_label, nominal_int, now_str, now_str))
                     global_spp_id = cursor.lastrowid
+                    all_tarifs.append({
+                        'id': global_spp_id,
+                        'tingkat': None,
+                        'kategori': kategori,
+                        'tipe': tipe,
+                        'nama': nama_label,
+                        'nominal': nominal_int
+                    })
                 current_id = global_spp_id
                 spp_tarifs[tingkat] = global_spp_id
-                all_tarifs.append({
-                    'id': current_id,
-                    'tingkat': None,
-                    'kategori': kategori,
-                    'tipe': tipe,
-                    'nama': nama_label,
-                    'nominal': nominal_int
-                })
                 continue
 
             cursor.execute("""

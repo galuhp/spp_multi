@@ -6,8 +6,11 @@ use App\Enums\UserRole;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\PembayaranGabungan;
+use App\Models\PembayaranGabunganBaris;
 use App\Models\PengeluaranSekolah;
 use App\Models\ProfilSekolah;
+use App\Models\ProsesKelasBatch;
 use App\Models\RiwayatKelas;
 use App\Models\RolePermission;
 use App\Models\Siswa;
@@ -20,6 +23,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
@@ -169,16 +173,23 @@ class DatabaseSeeder extends Seeder
      */
     private function bersihkanDataLama(): void
     {
-        Pembayaran::query()->delete();
-        PengeluaranSekolah::query()->delete();
-        SiswaTanggunganPemerintah::query()->delete();
-        Wali::query()->delete();
-        RiwayatKelas::query()->delete();
-        Siswa::query()->delete();
-        Spp::query()->delete();
-        Kelas::query()->delete();
-        Jurusan::query()->delete();
+        Schema::disableForeignKeyConstraints();
+
+        PembayaranGabunganBaris::query()->truncate();
+        PembayaranGabungan::query()->truncate();
+        Pembayaran::query()->truncate();
+        PengeluaranSekolah::query()->truncate();
+        SiswaTanggunganPemerintah::query()->truncate();
+        Wali::query()->truncate();
+        RiwayatKelas::query()->truncate();
+        ProsesKelasBatch::query()->truncate();
+        Siswa::query()->truncate();
+        Spp::query()->truncate();
+        Kelas::query()->truncate();
+        Jurusan::query()->truncate();
         User::where('role', UserRole::Siswa)->delete();
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
