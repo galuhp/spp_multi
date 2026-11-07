@@ -412,6 +412,58 @@ class PembayaranMassalTest extends TestCase
         $this->assertSame(1, Pembayaran::query()->where('gabungan_id', $gabungan->id)->count());
     }
 
+    public function test_modal_menyembunyikan_bulan_yang_sudah_lunas_untuk_semua_siswa_terpilih(): void
+    {
+        $siswaKedua = $this->buatSiswa(['nama' => 'Siti Aminah', 'nisn' => '0098765432', 'nis' => '00987654']);
+
+        // Kedua siswa sudah lunas bulan Juni (2028), hanya siswa pertama lunas bulan Juli (2027)
+        foreach ([$this->siswa, $siswaKedua] as $idx => $murid) {
+            Pembayaran::query()->create([
+                'kode_transaksi' => 'SPP-JUNI-'.($idx + 1),
+                'user_id' => $this->admin->id,
+                'siswa_id' => $murid->id,
+                'spp_id' => $this->spp->id,
+                'tgl_bayar' => now()->format('Y-m-d'),
+                'bulan_dibayar' => 'Juni',
+                'tahun_dibayar' => 2028,
+                'jumlah_bayar' => 250000,
+                'metode_pembayaran' => 'Tunai',
+            ]);
+        }
+
+        Pembayaran::query()->create([
+            'kode_transaksi' => 'SPP-JULI-1',
+            'user_id' => $this->admin->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => now()->format('Y-m-d'),
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2027,
+            'jumlah_bayar' => 250000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $component = Livewire::test(CreatePembayaranGabungan::class)
+            ->set('jurusan_id', $this->jurusan->id)
+            ->set('kelas_id', $this->kelas->id)
+            ->call('bukaModal');
+
+        $bulanOptions = $component->instance()->bulanOptions;
+
+        // Juni sudah lunas untuk Siswa A & Siswa B -> tidak muncul
+        $this->assertArrayNotHasKey('Juni', $bulanOptions);
+        // Juli masih belum lunas untuk Siswa B -> tetap muncul
+        $this->assertArrayHasKey('Juli', $bulanOptions);
+
+        // Jika hanya memilih Siswa A (yang Juli & Juni sudah lunas), Juli juga ikut hilang
+        $component->set('siswa_ids', [$this->siswa->id]);
+        $bulanOptionsSiswaA = $component->instance()->bulanOptions;
+
+        $this->assertArrayNotHasKey('Juni', $bulanOptionsSiswaA);
+        $this->assertArrayNotHasKey('Juli', $bulanOptionsSiswaA);
+        $this->assertArrayHasKey('Agustus', $bulanOptionsSiswaA);
+    }
+
     public function test_tagihan_bulanan_memakai_tahun_kalender_yang_benar(): void
     {
         $spp = Spp::query()->create([

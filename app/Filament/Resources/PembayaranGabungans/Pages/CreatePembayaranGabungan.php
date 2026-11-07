@@ -146,14 +146,42 @@ class CreatePembayaranGabungan extends CreateRecord
     }
 
     /**
-     * @return array<int, string>
+     * Months that still have an open SPP bill for at least one selected student,
+     * preserving the academic year order (Juli -> Juni).
+     *
+     * @return array<string, string>
      */
     public function getBulanOptionsProperty(): array
     {
-        return array_combine(
+        if (! $this->kelas_id || $this->siswa_ids === []) {
+            return [];
+        }
+
+        $service = app(PembayaranService::class);
+        $bulanTerbuka = [];
+
+        foreach ($this->siswaTerpilih() as $siswa) {
+            foreach ($service->tagihanTerbuka($siswa) as $item) {
+                if (($item['tipe'] ?? null) === 'spp' && ! empty($item['bulan']) && (int) ($item['sisa'] ?? 0) > 0) {
+                    $bulanTerbuka[(string) $item['bulan']] = true;
+                }
+            }
+
+            if (count($bulanTerbuka) === count(Pembayaran::TAHUN_AJARAN_BULAN_LIST)) {
+                break;
+            }
+        }
+
+        $tersedia = array_values(array_filter(
             Pembayaran::TAHUN_AJARAN_BULAN_LIST,
-            Pembayaran::TAHUN_AJARAN_BULAN_LIST,
-        ) ?: [];
+            static fn (string $namaBulan): bool => isset($bulanTerbuka[$namaBulan]),
+        ));
+
+        if ($tersedia === []) {
+            return [];
+        }
+
+        return array_combine($tersedia, $tersedia) ?: [];
     }
 
     /**
@@ -252,6 +280,10 @@ class CreatePembayaranGabungan extends CreateRecord
 
     public function updatedSiswaIds(): void
     {
+        if ($this->bulan !== []) {
+            $this->bulan = array_values(array_intersect($this->bulan, array_values($this->bulanOptions)));
+        }
+
         if ($this->modal) {
             $this->hitungTotal();
         }
@@ -282,6 +314,7 @@ class CreatePembayaranGabungan extends CreateRecord
     public function kosongkan(): void
     {
         $this->siswa_ids = [];
+        $this->bulan = [];
         $this->totalEstimasi = 0;
     }
 
@@ -298,7 +331,7 @@ class CreatePembayaranGabungan extends CreateRecord
 
     public function pilihSemuaBulan(): void
     {
-        $this->bulan = Pembayaran::TAHUN_AJARAN_BULAN_LIST;
+        $this->bulan = array_values($this->bulanOptions);
         $this->hitungTotal();
     }
 
@@ -329,6 +362,10 @@ class CreatePembayaranGabungan extends CreateRecord
             $this->galat = 'Pilih minimal satu siswa.';
 
             return;
+        }
+
+        if ($this->bulan !== []) {
+            $this->bulan = array_values(array_intersect($this->bulan, array_values($this->bulanOptions)));
         }
 
         $this->galat = null;

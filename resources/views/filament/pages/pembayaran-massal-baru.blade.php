@@ -221,6 +221,7 @@
     {{-- Payment item selection modal --}}
     @if ($modal)
         @php
+            $bulanList = $this->bulanOptions;
             $nonSppList = $this->nonSppOptions;
             $nonSppTerpilih = array_map('intval', $this->non_spp_ids);
         @endphp
@@ -243,27 +244,35 @@
                     <div class="space-y-2.5">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Bulan SPP</span>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <x-filament::button type="button" color="gray" size="xs" outlined wire:click="pilihSemuaBulan">
-                                    Semua Bulan
-                                </x-filament::button>
-                                <x-filament::button type="button" color="gray" size="xs" outlined wire:click="kosongkanBulan">
-                                    Kosongkan
-                                </x-filament::button>
-                            </div>
+                            @if ($bulanList !== [])
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <x-filament::button type="button" color="gray" size="xs" outlined wire:click="pilihSemuaBulan">
+                                        Semua Bulan
+                                    </x-filament::button>
+                                    <x-filament::button type="button" color="gray" size="xs" outlined wire:click="kosongkanBulan">
+                                        Kosongkan
+                                    </x-filament::button>
+                                </div>
+                            @endif
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                            @foreach ($this->bulanOptions as $namaBulan)
-                                <label class="pm-month" wire:key="bulan-{{ $namaBulan }}">
-                                    <input type="checkbox"
-                                        wire:model.live="bulan"
-                                        value="{{ $namaBulan }}"
-                                        @checked(in_array($namaBulan, $this->bulan, true))>
-                                    <span class="font-medium">{{ $namaBulan }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                        @if ($bulanList !== [])
+                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                                @foreach ($bulanList as $namaBulan)
+                                    <label class="pm-month" wire:key="bulan-{{ $namaBulan }}">
+                                        <input type="checkbox"
+                                            wire:model.live="bulan"
+                                            value="{{ $namaBulan }}"
+                                            @checked(in_array($namaBulan, $this->bulan, true))>
+                                        <span class="font-medium">{{ $namaBulan }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Seluruh bulan SPP untuk siswa yang dipilih sudah lunas atau ditanggung pemerintah.
+                            </p>
+                        @endif
                     </div>
 
                     {{-- Tarif / Pos Biaya Lain (Non-SPP) --}}
