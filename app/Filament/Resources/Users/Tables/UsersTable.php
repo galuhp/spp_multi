@@ -33,15 +33,23 @@ class UsersTable
                     ->formatStateUsing(fn ($state): string => match ($state?->value ?? $state) {
                         'admin' => 'Administrator',
                         'petugas' => 'Petugas TU',
+                        'wali_kelas' => 'Wali Kelas',
                         'siswa' => 'Siswa',
                         default => (string) $state,
                     })
                     ->color(fn ($state): string => match ($state?->value ?? $state) {
                         'admin' => 'danger',
                         'petugas' => 'info',
+                        'wali_kelas' => 'warning',
                         'siswa' => 'success',
                         default => 'gray',
                     }),
+
+                TextColumn::make('kelasWali.nama_kelas')
+                    ->label('Kelas Binaan')
+                    ->badge()
+                    ->color('primary')
+                    ->placeholder('-'),
 
                 TextColumn::make('email')
                     ->label('Email')
@@ -59,6 +67,7 @@ class UsersTable
                     ->options([
                         'admin' => 'Administrator',
                         'petugas' => 'Petugas TU',
+                        'wali_kelas' => 'Wali Kelas',
                         'siswa' => 'Siswa',
                     ]),
             ])

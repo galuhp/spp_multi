@@ -42,6 +42,11 @@ class KelasTable
                     ->label('Kompetensi Keahlian')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('waliKelas.name')
+                    ->label('Wali Kelas')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('-'),
                 TextColumn::make('siswas_count')
                     ->counts('siswas')
                     ->label('Jumlah Siswa')
@@ -57,6 +62,9 @@ class KelasTable
                 SelectFilter::make('jurusan_id')
                     ->label('Filter Jurusan')
                     ->relationship('jurusan', 'nama'),
+                SelectFilter::make('wali_kelas_id')
+                    ->label('Filter Wali Kelas')
+                    ->relationship('waliKelas', 'name'),
             ])
             ->recordActions([
                 EditAction::make(),

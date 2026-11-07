@@ -34,10 +34,21 @@ class UserForm
                     ->options([
                         'admin' => 'Administrator',
                         'petugas' => 'Petugas TU / Kasir',
+                        'wali_kelas' => 'Wali Kelas',
                         'siswa' => 'Siswa',
                     ])
+                    ->live()
                     ->default('petugas')
                     ->required(),
+
+                Select::make('kelas_wali_ids')
+                    ->label('Kelas Binaan (Wali Kelas)')
+                    ->multiple()
+                    ->options(fn (): array => \App\Models\Kelas::query()->orderBy('nama_kelas')->pluck('nama_kelas', 'id')->all())
+                    ->searchable()
+                    ->preload()
+                    ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get): bool => $get('role') === 'wali_kelas')
+                    ->helperText('Tentukan kelas yang dibina oleh akun wali kelas ini.'),
 
                 TextInput::make('password')
                     ->label('Kata Sandi')

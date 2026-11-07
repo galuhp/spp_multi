@@ -39,6 +39,13 @@ class LatestPembayaranWidget extends TableWidget
                     $siswa
                         ? $query->where('siswa_id', $siswa->id)
                         : $query->whereRaw('0 = 1');
+                } elseif (auth()->user()?->isWaliKelas()) {
+                    $kelasIds = auth()->user()->kelasWaliIds();
+                    $siswaIds = Siswa::whereIn('kelas_id', $kelasIds)->pluck('id')->all();
+
+                    ! empty($siswaIds)
+                        ? $query->whereIn('siswa_id', $siswaIds)
+                        : $query->whereRaw('0 = 1');
                 }
 
                 return $query;

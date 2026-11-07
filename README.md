@@ -16,20 +16,21 @@ Aplikasi web manajemen pembayaran SPP (Sumbangan Pembinaan Pendidikan) dan biaya
 | **Tanggungan Pemerintah / Beasiswa** | Penandaan siswa penerima bantuan pemerintah (SPP penuh atau pos biaya tertentu) beserta periode berlaku & proteksi tagihan otomatis |
 | **Laporan & Buku Besar Siswa** | Laporan Penerimaan (Pemasukan), **Laporan & Rekapitulasi Pengeluaran Sekolah**, Laporan Tunggakan & **Cetak Tunggakan per Kelas** (lembar distribusi Wali Kelas ber-page-break), Rekap Potensi vs Realisasi, Kartu Pembayaran Siswa (*Student Ledger*), dan Laporan Siswa Ditanggung Pemerintah |
 | **Portal Mandiri Siswa** | Siswa/orang tua memantau kartu SPP 12 bulan, deteksi tunggakan tahun ajaran sebelumnya, rincian biaya non-SPP, riwayat transaksi, dan mencetak ulang kuitansi |
-| **Pengguna, Role & Lisensi Paket** | Tiga peran (`admin`, `petugas`, `siswa`), Login Google OAuth, matriks izin modul (`role_permissions`), Log Aktivitas, serta sistem **Segmentasi Paket `basic` & `pro`** |
+| **Pengguna, Role & Lisensi Paket** | Empat peran (`admin`, `petugas`, `wali_kelas`, `siswa`), Login Google OAuth, matriks izin modul (`role_permissions`), Log Aktivitas, serta sistem **Segmentasi Paket `basic` & `pro`** |
 
 ## Hak Akses
 
-| Fitur | Admin | Petugas | Siswa |
-|---|:-:|:-:|:-:|
-| Dashboard | ✓ | ✓ | ✓ (portal) |
-| Jurusan, Kelas, Tarif SPP, Tahun Ajaran, Pengguna, Role | ✓ | ✗ | ✗ |
-| Data Siswa, Kenaikan Kelas, Kelulusan | ✓ | ✓* | ✗ |
-| Entri Pembayaran, Kasir Cepat, Pembayaran Gabungan & Kuitansi | ✓ | ✓ | ✗ |
-| Pengeluaran Operasional Sekolah & Cetak Voucher | ✓ | ✓ | ✗ |
-| Void Transaksi | ✓ | ✗ | ✗ |
-| Laporan & Rekapitulasi (termasuk Cetak per Kelas) | ✓ | ✓ | ✗ |
-| Tagihan & Riwayat Pribadi (Portal Siswa) | ✗ | ✗ | ✓ |
+| Fitur | Admin | Petugas | Wali Kelas | Siswa |
+|---|:-:|:-:|:-:|:-:|
+| Dashboard | ✓ | ✓ | ✓ (ringkasan kelas) | ✓ (portal) |
+| Jurusan, Kelas, Tarif SPP, Tahun Ajaran, Pengguna, Role | ✓ | ✗ | ✗ | ✗ |
+| Data Siswa, Kenaikan Kelas, Kelulusan | ✓ | ✓* | ✗ | ✗ |
+| Entri Pembayaran, Kasir Cepat, Pembayaran Gabungan & Kuitansi | ✓ | ✓ | ✗ | ✗ |
+| Pengeluaran Operasional Sekolah & Cetak Voucher | ✓ | ✓ | ✗ | ✗ |
+| Void Transaksi | ✓ | ✗ | ✗ | ✗ |
+| Laporan & Rekapitulasi Umum (Pemasukan, Pengeluaran, Potensi) | ✓ | ✓ | ✗ | ✗ |
+| **Laporan Tunggakan (View Only Kelas Binaan)** | ✓ | ✓ | **✓ (View Only)** | ✗ |
+| Tagihan & Riwayat Pribadi (Portal Siswa) | ✗ | ✗ | ✗ | ✓ |
 
 *\*Hak akses tiap modul dapat dikustomisasi secara dinamis melalui menu **Manajemen Role** (`role_permissions`).*
 

@@ -42,6 +42,21 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $walikelas = User::firstOrCreate(
+            ['username' => 'walikelas'],
+            [
+                'name' => 'Siti Aminah, S.Pd (Wali Kelas)',
+                'email' => 'walikelas@spp.test',
+                'password' => Hash::make('password'),
+                'role' => UserRole::WaliKelas,
+            ]
+        );
+
+        \App\Models\RolePermission::firstOrCreate([
+            'role' => UserRole::WaliKelas->value,
+            'permission' => \App\Models\RolePermission::LAPORAN_TUNGGAKAN,
+        ]);
+
         // 2. Jurusan
         $jurusans = [
             ['kode' => 'RPL', 'nama' => 'Rekayasa Perangkat Lunak', 'deskripsi' => 'Pengembangan perangkat lunak, web, dan aplikasi mobile.'],
@@ -73,6 +88,10 @@ class DatabaseSeeder extends Seeder
                 ['nama_kelas' => $kelas['nama_kelas']],
                 $kelas
             );
+        }
+
+        if (isset($kelasModels['X RPL 1'])) {
+            $kelasModels['X RPL 1']->update(['wali_kelas_id' => $walikelas->id]);
         }
 
         // 4. Tahun Ajaran

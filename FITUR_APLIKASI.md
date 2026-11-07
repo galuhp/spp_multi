@@ -132,7 +132,12 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
 1. **Login Ganda: Username/NISN & Google OAuth (*Login with Google*)**
    - Mendukung login akun sekolah via Google (dengan pembatasan domain email resmi sekolah opsional) maupun username/NISN + password.
 2. **Manajemen Role & Matriks Hak Akses Dinamis**
-   - Tiga peran pengguna (**Administrator**, **Petugas TU/Kasir**, dan **Siswa**) dengan matriks izin modul yang dapat diatur langsung dari menu *Manajemen Role*.
+   - Empat peran pengguna terintegrasi:
+     - **Administrator**: Akses penuh sistem, manajemen pengaturan, pengguna, dan audit.
+     - **Petugas TU/Kasir**: Operasional kasir, penerimaan & pengeluaran, kenaikan/kelulusan, dan laporan.
+     - **Wali Kelas**: Hak akses *View Only* khusus Laporan Tunggakan untuk memantau status pembayaran siswa di kelas binaan masing-masing tanpa dapat mengubah atau melihat modul keuangan internal lainnya.
+     - **Siswa / Orang Tua**: Portal mandiri cek tagihan dan riwayat pembayaran.
+   - Matriks izin modul dapat disesuaikan fleksibel langsung dari menu *Manajemen Role*.
 3. **Log Aktivitas (*Audit Trail*)**
    - Mencatat setiap aktivitas sensitif (pembuatan/pembatalan pembayaran, perubahan role, kenaikan kelas, impor data) lengkap dengan waktu, nama pelaku, deskripsi, dan alamat IP.
 4. **Performa Tinggi & Siap Produksi**

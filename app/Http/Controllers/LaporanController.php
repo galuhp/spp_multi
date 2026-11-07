@@ -125,7 +125,17 @@ class LaporanController extends Controller
      */
     public function cetakTunggakan(Request $request, LaporanSppService $service): View
     {
-        $this->pastikanAkses();
+        $user = $request->user();
+
+        if (! $user) {
+            abort(403);
+        }
+
+        if (! $user->isAdmin() && ! $user->isWaliKelas()) {
+            if (! $user->isStaff() || (! RolePermission::allowed($user->role, RolePermission::LAPORAN) && ! RolePermission::allowed($user->role, RolePermission::LAPORAN_TUNGGAKAN))) {
+                abort(403);
+            }
+        }
 
         $filters = [
             'tahun_ajaran_id' => $request->query('tahun_ajaran_id'),
@@ -135,6 +145,20 @@ class LaporanController extends Controller
             'urutkan' => (string) $request->query('urutkan', 'kelas'),
             'mode' => (string) $request->query('mode', ''),
         ];
+
+        // Scope Wali Kelas strictly to their own assigned class
+        if ($user->isWaliKelas()) {
+            $waliKelasIds = $user->kelasWaliIds();
+            if (empty($waliKelasIds)) {
+                abort(403, 'Akun Anda belum ditugaskan sebagai wali kelas pada rombel manapun.');
+            }
+
+            if (blank($filters['kelas_id']) || ! in_array((int) $filters['kelas_id'], $waliKelasIds, true)) {
+                $filters['kelas_id'] = (string) $waliKelasIds[0];
+            }
+
+            $filters['mode'] = '';
+        }
 
         return view('laporan.tunggakan-cetak', [
             'laporan' => $service->tunggakan($filters),

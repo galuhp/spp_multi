@@ -6,6 +6,7 @@ enum UserRole: string
 {
     case Admin = 'admin';
     case Petugas = 'petugas';
+    case WaliKelas = 'wali_kelas';
     case Siswa = 'siswa';
 
     /**
@@ -16,6 +17,7 @@ enum UserRole: string
         return match ($this) {
             self::Admin => 'Administrator',
             self::Petugas => 'Petugas',
+            self::WaliKelas => 'Wali Kelas',
             self::Siswa => 'Siswa',
         };
     }
@@ -28,6 +30,7 @@ enum UserRole: string
         return match ($this) {
             self::Admin => 'bg-sky-50 text-sky-700 border border-sky-200/80',
             self::Petugas => 'bg-blue-50 text-blue-700 border border-blue-200/80',
+            self::WaliKelas => 'bg-purple-50 text-purple-700 border border-purple-200/80',
             self::Siswa => 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
         };
     }

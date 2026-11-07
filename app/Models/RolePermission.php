@@ -15,6 +15,8 @@ class RolePermission extends Model
 
     public const LAPORAN = 'laporan';
 
+    public const LAPORAN_TUNGGAKAN = 'laporan_tunggakan';
+
     public const PORTAL_SISWA = 'portal_siswa';
 
     public const KESISWAAN = 'kesiswaan';
@@ -31,7 +33,8 @@ class RolePermission extends Model
     public const AVAILABLE = [
         self::DASHBOARD => 'Dashboard',
         self::TRANSAKSI_SPP => 'Transaksi SPP',
-        self::LAPORAN => 'Laporan',
+        self::LAPORAN => 'Laporan (Semua)',
+        self::LAPORAN_TUNGGAKAN => 'Laporan Tunggakan',
         self::PORTAL_SISWA => 'Portal Siswa',
         self::KESISWAAN => 'Kesiswaan',
         self::MASTER_DATA => 'Master Data',
@@ -84,7 +87,17 @@ class RolePermission extends Model
      */
     public static function allowed(UserRole $role, string $permission): bool
     {
-        return isset(static::permissionsMap()[$role->value][$permission]);
+        $map = static::permissionsMap();
+
+        if (isset($map[$role->value][$permission])) {
+            return true;
+        }
+
+        if ($permission === self::LAPORAN_TUNGGAKAN && isset($map[$role->value][self::LAPORAN])) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -53,6 +53,43 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
             ];
         }
 
+        if ($user?->isWaliKelas()) {
+            $kelasIds = $user->kelasWaliIds();
+            $kelasNama = $user->kelasWali->pluck('nama_kelas')->implode(', ') ?: 'Belum Ditugaskan';
+            $siswaQuery = Siswa::whereIn('kelas_id', $kelasIds);
+            $totalSiswa = $siswaQuery->count();
+
+            $service = app(\App\Support\Laporan\LaporanSppService::class);
+            $laporan = ! empty($kelasIds) ? $service->tunggakan([
+                'kelas_id' => count($kelasIds) === 1 ? (string) $kelasIds[0] : null,
+            ]) : null;
+
+            $ringkasan = $laporan['ringkasan'] ?? [
+                'jumlah_menunggak' => 0,
+                'tunggakan' => 0,
+                'persentase' => 0,
+            ];
+
+            return [
+                Stat::make('Kelas Binaan', $kelasNama)
+                    ->description($totalSiswa.' total siswa di kelas Anda')
+                    ->icon(Heroicon::OutlinedAcademicCap)
+                    ->color('primary'),
+                Stat::make('Siswa Menunggak', $ringkasan['jumlah_menunggak'].' Siswa')
+                    ->description('Perlu pemantauan pelunasan')
+                    ->icon(Heroicon::OutlinedExclamationTriangle)
+                    ->color($ringkasan['jumlah_menunggak'] > 0 ? 'danger' : 'success'),
+                Stat::make('Total Tunggakan Kelas', 'Rp '.number_format($ringkasan['tunggakan'], 0, ',', '.'))
+                    ->description('SPP dan pos non-SPP tertunggak')
+                    ->icon(Heroicon::OutlinedBanknotes)
+                    ->color($ringkasan['tunggakan'] > 0 ? 'warning' : 'success'),
+                Stat::make('Capaian Pembayaran', number_format($ringkasan['persentase'], 1, ',', '.').'%')
+                    ->description('Tingkat pelunasan tagihan kelas')
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->color('info'),
+            ];
+        }
+
         $today = Carbon::today();
         $startOfMonth = Carbon::now()->startOfMonth();
 

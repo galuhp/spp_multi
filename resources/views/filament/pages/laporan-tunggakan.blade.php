@@ -13,6 +13,42 @@
         $bulan = collect($laporan['bulan']);
     @endphp
 
+    @php
+        $isWaliKelas = auth()->user()?->isWaliKelas();
+        $kelasBinaan = $isWaliKelas ? auth()->user()->kelasWali : collect();
+    @endphp
+
+    @if($isWaliKelas)
+        @if($kelasBinaan->isEmpty())
+            <div class="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800 shadow-xs dark:border-rose-500/30 dark:bg-rose-950/40 dark:text-rose-200">
+                <div class="flex items-center gap-3">
+                    <x-filament::icon icon="heroicon-o-exclamation-triangle" class="size-5 text-rose-600 dark:text-rose-400 shrink-0" />
+                    <div>
+                        <strong class="font-semibold">Akun Belum Ditugaskan ke Kelas:</strong>
+                        <span>Akun Anda memiliki role <strong>Wali Kelas</strong>, tetapi belum dihubungkan ke kelas rombel manapun. Silakan hubungi Administrator untuk mengatur kelas binaan Anda.</span>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="rounded-xl border border-purple-200 bg-purple-50/80 px-4 py-3 text-sm text-purple-900 shadow-xs dark:border-purple-500/30 dark:bg-purple-950/40 dark:text-purple-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="flex h-2.5 w-2.5 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-600"></span>
+                    </span>
+                    <div>
+                        <span class="font-semibold">Mode Pemantauan Wali Kelas:</span>
+                        <span>Memantau tunggakan siswa kelas <strong>{{ $kelasBinaan->pluck('nama_kelas')->implode(', ') }}</strong>.</span>
+                    </div>
+                </div>
+                <div class="inline-flex items-center gap-1.5 rounded-full bg-purple-100/90 px-3 py-1 text-xs font-semibold text-purple-800 dark:bg-purple-900/60 dark:text-purple-200">
+                    <x-filament::icon icon="heroicon-o-eye" class="size-3.5" />
+                    <span>Akses View Only</span>
+                </div>
+            </div>
+        @endif
+    @endif
+
     <!-- Filter Card -->
     <div class="fi-section rounded-xl bg-white p-6 shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
         <div class="mb-4 flex items-center justify-between">
@@ -21,7 +57,7 @@
                     Filter Laporan Tunggakan
                 </h3>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    SPP dihitung sampai bulan jatuh tempo; non-SPP dihitung penuh untuk tahun ajaran yang sudah dimulai.
+                    {{ $isWaliKelas ? 'Memantau data tagihan dan tunggakan siswa kelas binaan Anda.' : 'SPP dihitung sampai bulan jatuh tempo; non-SPP dihitung penuh untuk tahun ajaran yang sudah dimulai.' }}
                 </p>
             </div>
             <x-filament::button color="gray" size="sm" wire:click="resetFilter">

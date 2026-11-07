@@ -99,6 +99,7 @@ class ManajemenRole extends Page
                 'deskripsi' => match ($role) {
                     UserRole::Admin => 'Akses penuh, termasuk pengaturan sekolah dan manajemen role.',
                     UserRole::Petugas => 'Transaksi pembayaran, laporan, dan kesiswaan.',
+                    UserRole::WaliKelas => 'Akses view only laporan tunggakan untuk memantau siswa di kelas binaan.',
                     UserRole::Siswa => 'Portal siswa untuk melihat tagihan dan riwayat pembayaran.',
                 },
             ])

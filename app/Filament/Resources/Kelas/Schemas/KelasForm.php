@@ -45,6 +45,22 @@ class KelasForm
                     ->searchable()
                     ->preload()
                     ->nullable(),
+                Select::make('wali_kelas_id')
+                    ->label('Wali Kelas (Guru)')
+                    ->relationship(
+                        'waliKelas',
+                        'name',
+                        fn ($query) => $query->whereIn('role', [
+                            \App\Enums\UserRole::WaliKelas->value,
+                            \App\Enums\UserRole::Petugas->value,
+                            \App\Enums\UserRole::Admin->value,
+                        ])
+                    )
+                    ->placeholder('Pilih Wali Kelas (Opsional)')
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->helperText('Guru/petugas yang ditugaskan memantau laporan tunggakan kelas ini.'),
             ]);
     }
 }

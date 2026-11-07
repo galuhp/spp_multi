@@ -70,11 +70,39 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Check if user is staff (admin or petugas).
+     * Determine whether the user has wali kelas role.
+     */
+    public function isWaliKelas(): bool
+    {
+        return $this->role === UserRole::WaliKelas;
+    }
+
+    /**
+     * Check if user is staff (admin, petugas, or wali kelas).
      */
     public function isStaff(): bool
     {
-        return $this->role === UserRole::Admin || $this->role === UserRole::Petugas;
+        return $this->role === UserRole::Admin
+            || $this->role === UserRole::Petugas
+            || $this->role === UserRole::WaliKelas;
+    }
+
+    /**
+     * Classes assigned to this wali kelas.
+     */
+    public function kelasWali(): HasMany
+    {
+        return $this->hasMany(Kelas::class, 'wali_kelas_id');
+    }
+
+    /**
+     * Class IDs managed by this wali kelas.
+     *
+     * @return array<int>
+     */
+    public function kelasWaliIds(): array
+    {
+        return $this->kelasWali()->pluck('id')->all();
     }
 
     /**
