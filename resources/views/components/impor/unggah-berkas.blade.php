@@ -11,9 +11,14 @@
     $namaBerkasAwal = is_object($berkas) && method_exists($berkas, 'getClientOriginalName')
         ? $berkas->getClientOriginalName()
         : null;
-    $ukuranBerkasAwal = is_object($berkas) && method_exists($berkas, 'getSize')
-        ? number_format($berkas->getSize() / 1024, 0, ',', '.').' KB'
-        : null;
+    $ukuranBerkasAwal = null;
+
+    if (is_object($berkas) && method_exists($berkas, 'getSize')) {
+        $ukuranBerkas = $berkas->getSize();
+        $ukuranBerkasAwal = $ukuranBerkas >= 1048576
+            ? number_format($ukuranBerkas / 1048576, 2, ',', '.').' MB'
+            : number_format($ukuranBerkas / 1024, 0, ',', '.').' KB';
+    }
 @endphp
 
 <div
@@ -29,7 +34,7 @@
             this.namaBerkas = file ? file.name : null;
             this.ukuranBerkas = file
                 ? (file.size >= 1048576
-                    ? (file.size / 1048576).toFixed(2) + ' MB'
+                    ? (file.size / 1048576).toFixed(2).replace('.', ',') + ' MB'
                     : Math.max(1, Math.round(file.size / 1024)) + ' KB')
                 : null;
         },
@@ -57,7 +62,7 @@
 
         <span class="space-y-1">
             <span class="block text-sm font-semibold text-slate-900 dark:text-white" x-show="! namaBerkas">
-                Klik untuk memilih {{ $label }}
+                Klik atau seret {{ $label }} ke sini
             </span>
 
             <span

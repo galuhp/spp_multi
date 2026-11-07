@@ -106,7 +106,7 @@
     @if ($gagal > 0 && $errors !== [])
         <div class="px-5 pb-5">
             <details class="group overflow-hidden rounded-lg border border-rose-200/80 bg-rose-50/50 dark:border-rose-500/20 dark:bg-rose-500/5" {{ ! $sukses ? 'open' : '' }}>
-                <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 [&::-webkit-details-marker]:hidden">
                     <span class="flex items-center gap-2 text-xs font-semibold text-rose-700 dark:text-rose-400">
                         <x-heroicon-o-exclamation-triangle class="size-4 shrink-0" aria-hidden="true" />
                         {{ $gagal }} baris gagal / dilewati

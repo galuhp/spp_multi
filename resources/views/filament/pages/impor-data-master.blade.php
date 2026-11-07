@@ -40,7 +40,7 @@
         {{-- Navigasi tab --}}
         <div class="rounded-xl border border-slate-200/80 bg-slate-100/80 p-1.5 shadow-xs dark:border-white/10 dark:bg-white/[0.04]">
             <nav
-                class="impor-tabs-scroll flex min-w-0 gap-1.5 overflow-x-auto"
+                class="impor-tabs-scroll flex min-w-0 snap-x snap-mandatory gap-1.5 overflow-x-auto"
                 role="tablist"
                 aria-label="Jenis data master"
                 x-on:keydown.arrow-right.prevent="$event.target.nextElementSibling?.focus()"
@@ -56,7 +56,7 @@
                     aria-controls="panel-tarif"
                     tabindex="{{ $tabAktif === 'tarif' ? '0' : '-1' }}"
                     wire:click="setTab('tarif')"
-                    class="group flex min-w-[15rem] flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {{ $tabAktif === 'tarif' ? $tabAktifClass : $tabNonAktifClass }}"
+                    class="group flex min-w-[15rem] flex-1 snap-start items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {{ $tabAktif === 'tarif' ? $tabAktifClass : $tabNonAktifClass }}"
                 >
                     <span class="flex size-9 shrink-0 items-center justify-center rounded-lg {{ $tabAktif === 'tarif' ? $tabIkonAktifClass : $tabIkonNonAktifClass }}">
                         <x-heroicon-o-banknotes class="size-5" aria-hidden="true" />
@@ -76,7 +76,7 @@
                     aria-controls="panel-kelas"
                     tabindex="{{ $tabAktif === 'kelas' ? '0' : '-1' }}"
                     wire:click="setTab('kelas')"
-                    class="group flex min-w-[15rem] flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {{ $tabAktif === 'kelas' ? $tabAktifClass : $tabNonAktifClass }}"
+                    class="group flex min-w-[15rem] flex-1 snap-start items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {{ $tabAktif === 'kelas' ? $tabAktifClass : $tabNonAktifClass }}"
                 >
                     <span class="flex size-9 shrink-0 items-center justify-center rounded-lg {{ $tabAktif === 'kelas' ? $tabIkonAktifClass : $tabIkonNonAktifClass }}">
                         <x-heroicon-o-building-office-2 class="size-5" aria-hidden="true" />
@@ -96,7 +96,7 @@
                     aria-controls="panel-jurusan"
                     tabindex="{{ $tabAktif === 'jurusan' ? '0' : '-1' }}"
                     wire:click="setTab('jurusan')"
-                    class="group flex min-w-[15rem] flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {{ $tabAktif === 'jurusan' ? $tabAktifClass : $tabNonAktifClass }}"
+                    class="group flex min-w-[15rem] flex-1 snap-start items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 {{ $tabAktif === 'jurusan' ? $tabAktifClass : $tabNonAktifClass }}"
                 >
                     <span class="flex size-9 shrink-0 items-center justify-center rounded-lg {{ $tabAktif === 'jurusan' ? $tabIkonAktifClass : $tabIkonNonAktifClass }}">
                         <x-heroicon-o-academic-cap class="size-5" aria-hidden="true" />
@@ -111,8 +111,7 @@
         </div>
 
         {{-- TAB 1: IMPOR TARIF --}}
-        @if ($tabAktif === 'tarif')
-            <div id="panel-tarif" role="tabpanel" aria-labelledby="tab-tarif" tabindex="0" class="space-y-5 focus-visible:outline-none">
+        <div id="panel-tarif" role="tabpanel" aria-labelledby="tab-tarif" class="space-y-5 {{ $tabAktif === 'tarif' ? '' : 'hidden' }}">
                 @if ($hasilTarif)
                     <x-impor.hasil
                         judul="Hasil Impor Tarif"
@@ -137,7 +136,7 @@
                                 </div>
                             </div>
 
-                            <x-filament::button tag="a" href="{{ route('impor.template.tarif') }}" color="gray" size="sm" icon="heroicon-o-arrow-down-tray">
+                            <x-filament::button tag="a" href="{{ route('impor.template.tarif') }}" color="gray" size="sm" icon="heroicon-o-arrow-down-tray" class="w-full sm:w-auto">
                                 Unduh Template
                             </x-filament::button>
                         </div>
@@ -178,12 +177,10 @@
                         catatan="Baris pertama harus berisi header kolom. Baris kosong diabaikan, dan nominal harus berupa angka."
                     />
                 </div>
-            </div>
-        @endif
+        </div>
 
         {{-- TAB 2: IMPOR KELAS --}}
-        @if ($tabAktif === 'kelas')
-            <div id="panel-kelas" role="tabpanel" aria-labelledby="tab-kelas" tabindex="0" class="space-y-5 focus-visible:outline-none">
+        <div id="panel-kelas" role="tabpanel" aria-labelledby="tab-kelas" class="space-y-5 {{ $tabAktif === 'kelas' ? '' : 'hidden' }}">
                 @if ($hasilKelas)
                     <x-impor.hasil
                         judul="Hasil Impor Kelas"
@@ -208,7 +205,7 @@
                                 </div>
                             </div>
 
-                            <x-filament::button tag="a" href="{{ route('impor.template.kelas') }}" color="gray" size="sm" icon="heroicon-o-arrow-down-tray">
+                            <x-filament::button tag="a" href="{{ route('impor.template.kelas') }}" color="gray" size="sm" icon="heroicon-o-arrow-down-tray" class="w-full sm:w-auto">
                                 Unduh Template
                             </x-filament::button>
                         </div>
@@ -292,12 +289,10 @@
                         catatan="Baris pertama harus berisi header kolom. Tahun ajaran default di form digunakan jika kolom tahun_ajaran kosong."
                     />
                 </div>
-            </div>
-        @endif
+        </div>
 
         {{-- TAB 3: IMPOR JURUSAN --}}
-        @if ($tabAktif === 'jurusan')
-            <div id="panel-jurusan" role="tabpanel" aria-labelledby="tab-jurusan" tabindex="0" class="space-y-5 focus-visible:outline-none">
+        <div id="panel-jurusan" role="tabpanel" aria-labelledby="tab-jurusan" class="space-y-5 {{ $tabAktif === 'jurusan' ? '' : 'hidden' }}">
                 @if ($hasilJurusan)
                     <x-impor.hasil
                         judul="Hasil Impor Jurusan"
@@ -322,7 +317,7 @@
                                 </div>
                             </div>
 
-                            <x-filament::button tag="a" href="{{ route('impor.template.jurusan') }}" color="gray" size="sm" icon="heroicon-o-arrow-down-tray">
+                            <x-filament::button tag="a" href="{{ route('impor.template.jurusan') }}" color="gray" size="sm" icon="heroicon-o-arrow-down-tray" class="w-full sm:w-auto">
                                 Unduh Template
                             </x-filament::button>
                         </div>
@@ -363,7 +358,6 @@
                         catatan="Baris pertama harus berisi header kolom. Kode jurusan disimpan dalam huruf kapital."
                     />
                 </div>
-            </div>
-        @endif
+        </div>
     </div>
 </x-filament-panels::page>
