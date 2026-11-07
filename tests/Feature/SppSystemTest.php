@@ -241,4 +241,49 @@ class SppSystemTest extends TestCase
         $riwayatResponse->assertSee('Riwayat Pembayaran SPP Saya');
         $riwayatResponse->assertSee($this->siswa->nama);
     }
+
+    public function test_bukti_pembayaran_valid_meskipun_satu_kode_transaksi_memiliki_banyak_baris(): void
+    {
+        $baris1 = Pembayaran::create([
+            'kode_transaksi' => 'SPP-20261107-0007',
+            'user_id' => $this->petugas->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => '2026-11-07',
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 250000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $baris2 = Pembayaran::create([
+            'kode_transaksi' => 'SPP-20261107-0007',
+            'user_id' => $this->petugas->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => '2026-11-07',
+            'bulan_dibayar' => 'Agustus',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 250000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        // Baik diakses dari URL baris ke-1, baris ke-2, maupun token lama berbasis ID baris ke-2 tetap valid
+        $this->get($baris1->buktiUrl())
+            ->assertOk()
+            ->assertSee('Bukti Pembayaran Terverifikasi Sah')
+            ->assertSee('SPP-20261107-0007')
+            ->assertSee('Rp 500.000');
+
+        $this->get($baris2->buktiUrl())
+            ->assertOk()
+            ->assertSee('Bukti Pembayaran Terverifikasi Sah');
+
+        $this->get(route('bukti.pembayaran', [
+            'kode' => 'SPP-20261107-0007',
+            'token' => $baris2->legacyVerificationToken(),
+        ]))
+            ->assertOk()
+            ->assertSee('Bukti Pembayaran Terverifikasi Sah');
+    }
 }

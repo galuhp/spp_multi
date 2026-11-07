@@ -215,12 +215,25 @@ class Pembayaran extends Model
     }
 
     /**
-     * Retrieve all payments recorded in the same checkout batch for this student.
+     * Retrieve all payments recorded in the same checkout batch / receipt code for this student.
      *
      * @return Collection<int, self>
      */
     public function relatedBatchPayments(): Collection
     {
+        if (filled($this->kode_transaksi)) {
+            $byKode = static::query()
+                ->with('spp')
+                ->where('kode_transaksi', $this->kode_transaksi)
+                ->when(! $this->isVoid(), fn (Builder $q): Builder => $q->whereNull('void_at'))
+                ->orderBy('id')
+                ->get();
+
+            if ($byKode->isNotEmpty()) {
+                return $byKode;
+            }
+        }
+
         $query = static::query()
             ->with('spp')
             ->where('siswa_id', $this->siswa_id)
@@ -239,8 +252,20 @@ class Pembayaran extends Model
 
     /**
      * Generate a deterministic HMAC-SHA256 verification token for public receipt links.
+     * Uses kode_transaksi + siswa_id so all rows sharing the same receipt number produce an identical token.
      */
     public function verificationToken(): string
+    {
+        $secret = (string) config('app.key', 'spp-verification-key');
+        $payload = 'bukti-spp:'.$this->siswa_id.':'.$this->kode_transaksi;
+
+        return substr(hash_hmac('sha256', $payload, $secret), 0, 16);
+    }
+
+    /**
+     * Legacy token based on the row primary key (kept for backward compatibility with already printed QR codes).
+     */
+    public function legacyVerificationToken(): string
     {
         $secret = (string) config('app.key', 'spp-verification-key');
         $payload = 'bukti-spp:'.$this->id.':'.$this->kode_transaksi;
@@ -253,7 +278,10 @@ class Pembayaran extends Model
      */
     public function hasValidVerificationToken(string $token): bool
     {
-        return hash_equals($this->verificationToken(), strtolower($token));
+        $normalized = strtolower(trim($token));
+
+        return hash_equals($this->verificationToken(), $normalized)
+            || hash_equals($this->legacyVerificationToken(), $normalized);
     }
 
     /**

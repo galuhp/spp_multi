@@ -12,11 +12,14 @@ class BuktiPembayaranController extends Controller
      */
     public function show(string $kode, string $token): Response
     {
-        $pembayaran = Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp'])
+        $rows = Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp'])
             ->where('kode_transaksi', $kode)
-            ->first();
+            ->orderBy('id')
+            ->get();
 
-        if ($pembayaran === null || ! $pembayaran->hasValidVerificationToken($token)) {
+        $pembayaran = $rows->first(fn (Pembayaran $row): bool => $row->hasValidVerificationToken($token));
+
+        if ($pembayaran === null) {
             return response()->view('pembayaran.bukti', [
                 'valid' => false,
                 'void' => false,
@@ -24,20 +27,27 @@ class BuktiPembayaranController extends Controller
             ], 404);
         }
 
-        if ($pembayaran->isVoid()) {
+        $activeRows = $rows->filter(fn (Pembayaran $row): bool => ! $row->isVoid())->values();
+
+        if ($activeRows->isEmpty()) {
+            $firstRow = $rows->first();
+
             return response()->view('pembayaran.bukti', [
                 'valid' => false,
                 'void' => true,
                 'kode' => $kode,
-                'alasan' => $pembayaran->void_alasan,
+                'alasan' => $pembayaran->void_alasan ?: $firstRow?->void_alasan,
             ], 410);
         }
+
+        $utama = $pembayaran->isVoid() ? $activeRows->first() : $pembayaran;
 
         return response()->view('pembayaran.bukti', [
             'valid' => true,
             'void' => false,
-            'pembayaran' => $pembayaran,
-            'relatedPayments' => $pembayaran->relatedBatchPayments(),
+            'pembayaran' => $utama,
+            'relatedPayments' => $activeRows,
         ]);
     }
 }
+
