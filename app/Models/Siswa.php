@@ -58,15 +58,45 @@ class Siswa extends Model
         });
 
         static::creating(function (Siswa $siswa): void {
-            if (blank($siswa->tahun_masuk)) {
-                if ($siswa->tanggal_masuk) {
-                    $siswa->tahun_masuk = (int) $siswa->tanggal_masuk->format('Y');
-                } elseif ($siswa->spp_id && ($spp = Spp::find($siswa->spp_id))) {
-                    $siswa->tahun_masuk = Pembayaran::tahunMulaiTarif($spp);
-                } else {
-                    $siswa->tahun_masuk = (int) now()->year;
+            if (filled($siswa->tahun_masuk)) {
+                return;
+            }
+
+            if ($siswa->tanggal_masuk) {
+                $siswa->tahun_masuk = (int) $siswa->tanggal_masuk->format('Y');
+
+                return;
+            }
+
+            $tahunKelas = null;
+
+            if ($siswa->kelas_id) {
+                $kelas = $siswa->relationLoaded('kelas')
+                    ? $siswa->kelas
+                    : Kelas::with('tahunAjaran')->find($siswa->kelas_id);
+
+                $namaTahunAjaran = $kelas?->tahunAjaran?->nama;
+
+                if ($namaTahunAjaran !== null && preg_match('/^(\d{4})/', $namaTahunAjaran, $m)) {
+                    $tahunKelas = (int) $m[1];
                 }
             }
+
+            // Tahun ajaran kelas adalah acuan utama untuk siswa baru.
+            // Tarif SPP bisa saja masih menunjuk tahun ajaran lama.
+            if ($tahunKelas !== null) {
+                $siswa->tahun_masuk = $tahunKelas;
+
+                return;
+            }
+
+            if ($siswa->spp_id && ($spp = Spp::find($siswa->spp_id))) {
+                $siswa->tahun_masuk = Pembayaran::tahunMulaiTarif($spp);
+
+                return;
+            }
+
+            $siswa->tahun_masuk = (int) now()->year;
         });
 
         static::created(function (Siswa $siswa): void {
@@ -317,6 +347,9 @@ class Siswa extends Model
     /**
      * Hitung ulang dan sinkronkan tanggal_masuk dan tahun_masuk untuk seluruh siswa yang sudah ada di database.
      *
+     * Tahun masuk yang sudah valid tidak diturunkan agar siswa baru di tingkat atas
+     * tidak tiba-tiba memiliki tunggakan dari tahun ajaran sebelum mereka masuk.
+     *
      * @return array{total: int, diperbarui: int}
      */
     public static function sinkronkanDataMasuk(bool $force = false): array
@@ -363,33 +396,61 @@ class Siswa extends Model
                 $tahunMasukKalkulasi = max(2000, $taYear - $selisih);
 
                 // Cek riwayat kelas paling awal jika ada
+                $tahunRiwayatAwal = null;
                 if ($siswa->riwayatKelas->isNotEmpty()) {
                     $riwayatAwal = $siswa->riwayatKelas
                         ->sortBy(fn ($r) => $r->tahunAjaran?->tanggal_mulai ?? $r->tahunAjaran?->nama)
                         ->first();
 
                     if ($riwayatAwal?->tahunAjaran?->nama && preg_match('/^(\d{4})/', $riwayatAwal->tahunAjaran->nama, $m)) {
-                        $tahunAwalRiwayat = (int) $m[1];
-                        if ($tahunAwalRiwayat < $tahunMasukKalkulasi) {
-                            $tahunMasukKalkulasi = $tahunAwalRiwayat;
+                        $tahunRiwayatAwal = (int) $m[1];
+                        if ($tahunRiwayatAwal < $tahunMasukKalkulasi) {
+                            $tahunMasukKalkulasi = $tahunRiwayatAwal;
                         }
                     }
                 }
 
-                $needsUpdate = false;
-                $tglMasuk = $siswa->tanggal_masuk ? \Carbon\Carbon::parse($siswa->tanggal_masuk)->format('Y-m-d') : null;
-                $thnMasuk = $siswa->tahun_masuk ? (int) $siswa->tahun_masuk : null;
+                // Siswa yang pertama kali tercatat pada tahun ajaran kelasnya
+                // saat ini adalah siswa baru/angkatan tahun tersebut, walaupun
+                // ditempatkan di tingkat yang lebih tinggi. Jangan turunkan
+                // tahun masuknya karena akan memunculkan tunggakan fiktif.
+                $tahunDibuat = $siswa->created_at?->year;
+                $siswaBaruPadaTahunKelas = $tahunDibuat !== null
+                    && $tahunDibuat >= $taYear
+                    && $siswa->riwayatKelas->count() <= 1
+                    && ($tahunRiwayatAwal === null || $tahunRiwayatAwal >= $taYear);
 
-                if ($force || empty($thnMasuk) || $thnMasuk > $taYear || $thnMasuk < 2000) {
-                    if ($siswa->tahun_masuk !== $tahunMasukKalkulasi) {
-                        $siswa->tahun_masuk = $tahunMasukKalkulasi;
-                        $needsUpdate = true;
-                    }
+                if ($siswaBaruPadaTahunKelas) {
+                    $tahunMasukKalkulasi = max($tahunMasukKalkulasi, $taYear);
+                }
+
+                $needsUpdate = false;
+                $tglMasuk = $siswa->tanggal_masuk ? \Carbon\Carbon::parse($siswa->tanggal_masuk) : null;
+                $thnMasuk = $siswa->tahun_masuk ? (int) $siswa->tahun_masuk : null;
+                $tahunTanggal = $tglMasuk?->year;
+
+                $tahunTercatatValid = $thnMasuk !== null && $thnMasuk >= 2000 && $thnMasuk <= $taYear;
+                $tahunTanggalValid = $tahunTanggal !== null && $tahunTanggal >= 2000 && $tahunTanggal <= $taYear;
+
+                if ($tahunTercatatValid) {
+                    // Tahun masuk yang sudah valid dipertahankan. Nilai hanya
+                    // dinaikkan bila ada bukti siswa baru di tingkat atas atau
+                    // tanggal masuk menunjukkan tahun yang lebih baru.
+                    $tahunMasukKalkulasi = $siswaBaruPadaTahunKelas
+                        ? max($tahunMasukKalkulasi, $taYear, $thnMasuk, $tahunTanggalValid ? $tahunTanggal : 0)
+                        : max($thnMasuk, $tahunTanggalValid ? $tahunTanggal : $thnMasuk);
+                } elseif ($tahunTanggalValid) {
+                    $tahunMasukKalkulasi = max($tahunMasukKalkulasi, $tahunTanggal);
+                }
+
+                if ((int) $siswa->tahun_masuk !== $tahunMasukKalkulasi) {
+                    $siswa->tahun_masuk = $tahunMasukKalkulasi;
+                    $needsUpdate = true;
                 }
 
                 $targetTgl = "{$siswa->tahun_masuk}-07-01";
-                if ($force || empty($tglMasuk)) {
-                    if ($tglMasuk !== $targetTgl) {
+                if ($tglMasuk === null || $tglMasuk->year !== (int) $siswa->tahun_masuk) {
+                    if ($siswa->tanggal_masuk?->format('Y-m-d') !== $targetTgl) {
                         $siswa->tanggal_masuk = $targetTgl;
                         $needsUpdate = true;
                     }

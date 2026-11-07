@@ -11,17 +11,33 @@
     --color-primary: var(--primary-600, var(--color-sky-600));
 }
 
-.impor-master .impor-tabs-scroll {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.impor-master .impor-tabs-scroll::-webkit-scrollbar {
-    display: none;
+.impor-master [role='tab'] {
+    -webkit-tap-highlight-color: transparent;
 }
 
 .impor-master [role='tabpanel'] {
     animation: impor-fade-in 180ms ease-out;
+}
+
+/* Dropzone: highlight while a file is dragged over it. */
+.impor-master .impor-dropzone[data-menyeret='true'] {
+    border-color: var(--color-primary-400, #38bdf8);
+    background-color: color-mix(in oklab, var(--color-primary-50, #f0f9ff) 70%, transparent);
+}
+
+.dark .impor-master .impor-dropzone[data-menyeret='true'] {
+    border-color: var(--color-primary-500, #0ea5e9);
+    background-color: color-mix(in oklab, var(--color-primary-500, #0ea5e9) 12%, transparent);
+}
+
+/* Keep the scrollable error list visually consistent in both themes. */
+.impor-master .impor-error-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-300, #cbd5e1) transparent;
+}
+
+.dark .impor-master .impor-error-scroll {
+    scrollbar-color: var(--color-gray-600, #4b5563) transparent;
 }
 
 [x-cloak] {

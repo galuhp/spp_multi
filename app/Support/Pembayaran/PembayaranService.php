@@ -135,6 +135,10 @@ class PembayaranService
         }
 
         foreach ($nonSppList->unique('id') as $tarif) {
+            if ($tarif->tahunMulai() < $tahunMasuk) {
+                continue;
+            }
+
             $dibayar = $this->totalDibayar($siswa, $tarif);
             $nominal = (int) $tarif->nominal;
             $sisa = max(0, $nominal - $dibayar);
@@ -191,6 +195,10 @@ class PembayaranService
 
         foreach ($nonSpp as $tarifLain) {
             if ($tarif && $tarifLain->id === $tarif->id) {
+                continue;
+            }
+
+            if ($tarifLain->tahunMulai() < $tahunMasuk) {
                 continue;
             }
 

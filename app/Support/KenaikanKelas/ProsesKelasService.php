@@ -821,6 +821,10 @@ class ProsesKelasService
 
             // Non-SPP calculation
             foreach ($nonSppList as $tarifNon) {
+                if ($tarifNon->tahunMulai() < $tahunMasuk) {
+                    continue;
+                }
+
                 if ($tanggunganService->isPosDitanggung($siswa, $tarifNon)) {
                     continue;
                 }

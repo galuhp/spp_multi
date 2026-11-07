@@ -638,6 +638,7 @@ class LaporanSppService
                 $tarif = $tarifPerSiswa[(int) $siswa->id] ?? null;
                 $nominal = (int) ($tarif?->nominal ?? 0);
                 $tingkat = Spp::normalisasiTingkat($kelas->tingkat);
+                $tahunMasukSiswa = $siswa->tahunMasuk();
 
                 // 1. Current Academic Year (Running Timeline)
                 $tagihanSppCur = 0;
@@ -699,7 +700,7 @@ class LaporanSppService
                     $taPriorYear = $taCurYear - $selisih;
 
                     // Lewati tahun ajaran sebelum siswa masuk ke sekolah
-                    if ($taPriorYear < $siswa->tahunMasuk()) {
+                    if ($taPriorYear < $tahunMasukSiswa) {
                         continue;
                     }
 
@@ -727,6 +728,10 @@ class LaporanSppService
                     }
 
                     foreach ($lvlTarifs['non_spp'] as $nonSppPrior) {
+                        if ($nonSppPrior->tahunMulai() < $tahunMasukSiswa) {
+                            continue;
+                        }
+
                         if ($tanggunganService->isPosDitanggung($siswa, $nonSppPrior)) {
                             continue;
                         }

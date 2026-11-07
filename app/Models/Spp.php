@@ -214,6 +214,14 @@ class Spp extends Model
     }
 
     /**
+     * Starting calendar year of this tariff's academic year.
+     */
+    public function tahunMulai(): int
+    {
+        return Pembayaran::tahunMulaiTarif($this);
+    }
+
+    /**
      * Determine if this tariff is paid monthly.
      */
     public function isBulanan(): bool

@@ -204,6 +204,7 @@ class TagihanSiswa extends Page
         $tanggunganPemerintah = app(TanggunganPemerintahService::class);
         $tahunMulai = Pembayaran::tahunMulaiTarif($siswa->spp);
         $activeTahunAjaran = $siswa->spp?->tahun_ajaran;
+        $tahunMasukSiswa = $siswa->tahunMasuk();
 
         $riwayatPembayaran = $siswa->pembayarans()
             ->whereNull('void_at')
@@ -221,7 +222,7 @@ class TagihanSiswa extends Page
             $bulan = $periode['bulan'];
             $tahun = $periode['tahun'];
 
-            if (! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
+            if ($tahun < $tahunMasukSiswa || ! $siswa->sudahMasukPadaPeriode($bulan, $tahun)) {
                 continue;
             }
 
@@ -280,6 +281,10 @@ class TagihanSiswa extends Page
         $totalNonSppDitanggung = 0;
 
         foreach ($nonSppTarifs as $tarif) {
+            if ($tarif->tahunMulai() < $tahunMasukSiswa) {
+                continue;
+            }
+
             $bayarList = $riwayatPembayaran->where('spp_id', $tarif->id);
             $dibayar = (int) $bayarList->sum('jumlah_bayar');
             $ditanggung = $tanggunganPemerintah->isPosDitanggung($siswa, $tarif);
@@ -322,7 +327,6 @@ class TagihanSiswa extends Page
         }
 
         $taCurYear = $siswa->kelas?->tahunAjaran ? (int) substr($siswa->kelas->tahunAjaran->nama, 0, 4) : (int) now()->year;
-        $tahunMasukSiswa = $siswa->tahunMasuk();
 
         foreach ($priorLevels as $pLvl) {
             $tarifPrior = Spp::untukTingkat($pLvl);
@@ -371,6 +375,10 @@ class TagihanSiswa extends Page
 
             $nonSppPriorList = Spp::nonSppUntukTingkat($pLvl);
             foreach ($nonSppPriorList as $tNonPrior) {
+                if ($tNonPrior->tahunMulai() < $tahunMasukSiswa) {
+                    continue;
+                }
+
                 if ($tanggunganPemerintah->isPosDitanggung($siswa, $tNonPrior)) {
                     continue;
                 }

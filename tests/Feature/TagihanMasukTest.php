@@ -2,14 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
+use App\Filament\Pages\TagihanSiswa;
 use App\Models\Jurusan;
 use App\Models\Kelas;
+use App\Models\RiwayatKelas;
+use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Support\Pembayaran\PembayaranService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class TagihanMasukTest extends TestCase
@@ -84,5 +89,272 @@ class TagihanMasukTest extends TestCase
         // Pastikan tidak ada satupun tagihan dari tahun 2025
         $tagihan2025 = array_filter($tagihan, fn ($item) => ($item['tahun'] ?? null) === 2025);
         $this->assertEmpty($tagihan2025, 'Siswa yang masuk 2026 tidak boleh memiliki tagihan dari tahun 2025.');
+    }
+
+    public function test_sinkronisasi_tidak_menurunkan_tahun_masuk_siswa_baru_di_tingkat_atas(): void
+    {
+        $ta = TahunAjaran::create([
+            'nama' => '2026/2027',
+            'tanggal_mulai' => '2026-07-01',
+            'tanggal_selesai' => '2027-06-30',
+            'aktif' => true,
+        ]);
+
+        $jurusan = Jurusan::create([
+            'kode' => 'RPL',
+            'nama' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        $kelas = Kelas::create([
+            'nama_kelas' => 'XI RPL 1',
+            'tingkat' => '11',
+            'jurusan_id' => $jurusan->id,
+            'tahun_ajaran_id' => $ta->id,
+        ]);
+
+        $spp = Spp::create([
+            'kategori' => 'SPP',
+            'nama' => 'SPP Bulanan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '11',
+            'nominal' => 100000,
+        ]);
+
+        $siswa = $this->buatSiswa($kelas, $spp, 'Siswa Baru XI', '26002', '26002');
+
+        // Simulasikan data yang sempat dihitung ulang sebagai angkatan 2025.
+        Siswa::query()->whereKey($siswa->id)->update([
+            'tahun_masuk' => 2025,
+            'tanggal_masuk' => '2025-07-01',
+            'created_at' => '2026-07-01 00:00:00',
+        ]);
+
+        Siswa::sinkronkanDataMasuk(true);
+
+        $siswa->refresh();
+
+        $this->assertSame(2026, (int) $siswa->tahun_masuk);
+        $this->assertSame('2026-07-01', $siswa->tanggal_masuk?->format('Y-m-d'));
+    }
+
+    public function test_sinkronisasi_tidak_menaikkan_tahun_masuk_siswa_lama_yang_tinggal_kelas(): void
+    {
+        TahunAjaran::create([
+            'nama' => '2024/2025',
+            'tanggal_mulai' => '2024-07-01',
+            'tanggal_selesai' => '2025-06-30',
+            'aktif' => false,
+        ]);
+
+        $ta = TahunAjaran::create([
+            'nama' => '2026/2027',
+            'tanggal_mulai' => '2026-07-01',
+            'tanggal_selesai' => '2027-06-30',
+            'aktif' => true,
+        ]);
+
+        $jurusan = Jurusan::create([
+            'kode' => 'RPL',
+            'nama' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        $kelas = Kelas::create([
+            'nama_kelas' => 'XI RPL 1',
+            'tingkat' => '11',
+            'jurusan_id' => $jurusan->id,
+            'tahun_ajaran_id' => $ta->id,
+        ]);
+
+        $spp = Spp::create([
+            'kategori' => 'SPP',
+            'nama' => 'SPP Bulanan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '11',
+            'nominal' => 100000,
+        ]);
+
+        $siswa = Siswa::create([
+            'kelas_id' => $kelas->id,
+            'spp_id' => $spp->id,
+            'nisn' => '26005',
+            'nis' => '26005',
+            'nama' => 'Siswa Mengulang',
+            'jenis_kelamin' => 'L',
+            'tanggal_masuk' => '2024-07-01',
+            'tahun_masuk' => 2024,
+            'status' => 'aktif',
+        ]);
+
+        RiwayatKelas::query()->create([
+            'siswa_id' => $siswa->id,
+            'tahun_ajaran_id' => TahunAjaran::query()->where('nama', '2024/2025')->value('id'),
+            'kelas_id' => $kelas->id,
+            'status' => RiwayatKelas::STATUS_AKTIF,
+        ]);
+
+        Siswa::query()->whereKey($siswa->id)->update([
+            'created_at' => '2024-07-01 00:00:00',
+        ]);
+
+        Siswa::sinkronkanDataMasuk(true);
+
+        $siswa->refresh();
+
+        $this->assertSame(2024, (int) $siswa->tahun_masuk);
+        $this->assertSame('2024-07-01', $siswa->tanggal_masuk?->format('Y-m-d'));
+    }
+
+    public function test_siswa_baru_2026_di_tingkat_atas_tidak_memiliki_tunggakan_prior(): void
+    {
+        $ta = TahunAjaran::create([
+            'nama' => '2026/2027',
+            'tanggal_mulai' => '2026-07-01',
+            'tanggal_selesai' => '2027-06-30',
+            'aktif' => true,
+        ]);
+
+        TahunAjaran::create([
+            'nama' => '2025/2026',
+            'tanggal_mulai' => '2025-07-01',
+            'tanggal_selesai' => '2026-06-30',
+            'aktif' => false,
+        ]);
+
+        $jurusan = Jurusan::create([
+            'kode' => 'RPL',
+            'nama' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        $kelas = Kelas::create([
+            'nama_kelas' => 'XI RPL 1',
+            'tingkat' => '11',
+            'jurusan_id' => $jurusan->id,
+            'tahun_ajaran_id' => $ta->id,
+        ]);
+
+        $sppSekarang = Spp::create([
+            'kategori' => 'SPP',
+            'nama' => 'SPP Bulanan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '11',
+            'nominal' => 100000,
+        ]);
+
+        Spp::create([
+            'kategori' => 'SPP',
+            'nama' => 'SPP Bulanan',
+            'tipe' => 'bulanan',
+            'tahun' => 2025,
+            'tahun_ajaran' => '2025/2026',
+            'tingkat' => '10',
+            'nominal' => 100000,
+        ]);
+
+        Spp::create([
+            'kategori' => 'Uang Gedung',
+            'nama' => 'Uang Gedung',
+            'tipe' => 'sekali_bayar',
+            'tahun' => 2024,
+            'tahun_ajaran' => '2024/2025',
+            'tingkat' => '10',
+            'nominal' => 1200000,
+        ]);
+
+        $siswa = $this->buatSiswa($kelas, $sppSekarang, 'Siswa Baru XI', '26003', '26003');
+
+        Siswa::query()->whereKey($siswa->id)->update([
+            'tahun_masuk' => 2025,
+            'tanggal_masuk' => '2025-07-01',
+            'created_at' => '2026-07-01 00:00:00',
+        ]);
+
+        Siswa::sinkronkanDataMasuk(true);
+
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        RolePermission::query()->firstOrCreate([
+            'role' => UserRole::Admin,
+            'permission' => RolePermission::PORTAL_SISWA,
+        ]);
+        $this->actingAs($admin);
+
+        $component = Livewire::test(TagihanSiswa::class)
+            ->call('pilihSiswa', $siswa->id);
+
+        $tagihan = $component->instance()->getTagihanDataProperty();
+
+        $this->assertSame([], $tagihan['tunggakanPrior']);
+        $this->assertSame(0, $tagihan['totalTunggakanPrior']);
+    }
+
+    public function test_pos_non_spp_sebelum_tahun_masuk_tidak_dihitung(): void
+    {
+        $ta = TahunAjaran::create([
+            'nama' => '2026/2027',
+            'tanggal_mulai' => '2026-07-01',
+            'tanggal_selesai' => '2027-06-30',
+            'aktif' => true,
+        ]);
+
+        $jurusan = Jurusan::create([
+            'kode' => 'RPL',
+            'nama' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        $kelas = Kelas::create([
+            'nama_kelas' => 'X RPL 1',
+            'tingkat' => '10',
+            'jurusan_id' => $jurusan->id,
+            'tahun_ajaran_id' => $ta->id,
+        ]);
+
+        $spp = Spp::create([
+            'kategori' => 'SPP',
+            'nama' => 'SPP Bulanan',
+            'tipe' => 'bulanan',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 100000,
+        ]);
+
+        $nonSppLama = Spp::create([
+            'kategori' => 'Uang Gedung',
+            'nama' => 'Uang Gedung',
+            'tipe' => 'sekali_bayar',
+            'tahun' => 2024,
+            'tahun_ajaran' => '2024/2025',
+            'tingkat' => '10',
+            'nominal' => 1200000,
+        ]);
+
+        $siswa = $this->buatSiswa($kelas, $spp, 'Siswa Baru X', '26004', '26004');
+
+        $tagihan = app(PembayaranService::class)->tagihanTerbuka($siswa);
+
+        $this->assertFalse(
+            collect($tagihan)->contains(fn (array $item): bool => $item['spp_id'] === $nonSppLama->id),
+            'Pos non-SPP sebelum tahun masuk tidak boleh menjadi tagihan.'
+        );
+    }
+
+    private function buatSiswa(Kelas $kelas, Spp $spp, string $nama, string $nisn, string $nis): Siswa
+    {
+        return Siswa::create([
+            'kelas_id' => $kelas->id,
+            'spp_id' => $spp->id,
+            'nisn' => $nisn,
+            'nis' => $nis,
+            'nama' => $nama,
+            'jenis_kelamin' => 'L',
+            'tanggal_masuk' => '2026-07-01',
+            'tahun_masuk' => 2026,
+            'status' => 'aktif',
+        ]);
     }
 }
