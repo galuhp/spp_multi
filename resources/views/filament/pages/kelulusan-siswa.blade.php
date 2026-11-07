@@ -64,16 +64,36 @@
                             Hanya siswa berstatus <strong>Lunas</strong> yang dapat dicentang untuk kelulusan.
                         </p>
                     </div>
-                    <div class="flex flex-wrap gap-2 text-xs tabular-nums">
-                        <span class="rounded-md border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300">
-                            Bebas Tunggakan: {{ $siswaBebasTunggakan->count() }}
-                        </span>
-                        <span class="rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300">
-                            Menunggak: {{ $siswaMenunggak->count() }} (Rp {{ number_format($totalTunggakan, 0, ',', '.') }})
-                        </span>
-                        <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                            Dipilih: {{ $jumlahPilih }}
-                        </span>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex flex-wrap gap-2 text-xs tabular-nums">
+                            <span class="rounded-md border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300">
+                                Bebas Tunggakan: {{ $siswaBebasTunggakan->count() }}
+                            </span>
+                            <span class="rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300">
+                                Menunggak: {{ $siswaMenunggak->count() }} (Rp {{ number_format($totalTunggakan, 0, ',', '.') }})
+                            </span>
+                            <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                Dipilih: {{ $jumlahPilih }}
+                            </span>
+                        </div>
+
+                        @if (auth()->user()?->isStaff())
+                            <div class="flex items-center gap-2">
+                                <x-filament::button type="button" color="gray" size="sm" outlined wire:click="pratinjau"
+                                    wire:loading.attr="disabled" wire:target="pratinjau">
+                                    <x-filament::icon icon="heroicon-o-eye" class="size-4 mr-1 inline" />
+                                    <span>Pratinjau</span>
+                                </x-filament::button>
+
+                                <x-filament::button type="button" size="sm" color="primary" wire:click="eksekusi"
+                                    wire:loading.attr="disabled" wire:target="eksekusi"
+                                    @disabled($jumlahPilih === 0)
+                                    wire:confirm="Yakin ingin langsung meluluskan dan mengarsipkan {{ $jumlahPilih }} siswa terpilih?">
+                                    <x-filament::icon icon="heroicon-o-check-circle" class="size-4 mr-1 inline" />
+                                    <span>Simpan &amp; Proses Kelulusan</span>
+                                </x-filament::button>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -171,13 +191,28 @@
                         </div>
                     </div>
                 @else
-                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                    <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-4 dark:border-gray-800">
+                        <div class="text-xs text-slate-500 dark:text-gray-400">
+                            Anda dapat langsung mengeksekusi kelulusan siswa terpilih dengan tombol <strong class="text-slate-800 dark:text-gray-200">Simpan &amp; Proses Kelulusan</strong>, atau klik <strong class="text-slate-800 dark:text-gray-200">Pratinjau</strong> terlebih dahulu.
+                        </div>
+
                         @if (auth()->user()?->isStaff())
-                            <x-filament::button type="button" color="primary" size="sm" wire:click="pratinjau"
-                                wire:loading.attr="disabled" wire:target="pratinjau">
-                                <span wire:loading.remove wire:target="pratinjau">Pratinjau Kelulusan</span>
-                                <span wire:loading wire:target="pratinjau">Memproses Pratinjau...</span>
-                            </x-filament::button>
+                            <div class="flex items-center gap-2">
+                                <x-filament::button type="button" color="gray" size="sm" outlined wire:click="pratinjau"
+                                    wire:loading.attr="disabled" wire:target="pratinjau">
+                                    <x-filament::icon icon="heroicon-o-eye" class="size-4 mr-1 inline" />
+                                    <span wire:loading.remove wire:target="pratinjau">Pratinjau Kelulusan</span>
+                                    <span wire:loading wire:target="pratinjau">Memproses Pratinjau...</span>
+                                </x-filament::button>
+
+                                <x-filament::button type="button" size="sm" color="primary" wire:click="eksekusi"
+                                    wire:loading.attr="disabled" wire:target="eksekusi"
+                                    @disabled($jumlahPilih === 0)
+                                    wire:confirm="Yakin ingin langsung meluluskan dan mengarsipkan {{ $jumlahPilih }} siswa terpilih?">
+                                    <x-filament::icon icon="heroicon-o-check-circle" class="size-4 mr-1 inline" />
+                                    <span>Simpan &amp; Proses Kelulusan</span>
+                                </x-filament::button>
+                            </div>
                         @else
                             <p class="text-xs text-slate-500 dark:text-gray-400">Hanya staf yang dapat menyimpan kelulusan.</p>
                         @endif

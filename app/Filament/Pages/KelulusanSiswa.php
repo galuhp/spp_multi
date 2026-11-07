@@ -140,7 +140,7 @@ class KelulusanSiswa extends Page
             ->all();
     }
 
-    public function pratinjau(): void
+    protected function validasiForm(): bool
     {
         $this->galat = null;
 
@@ -148,21 +148,21 @@ class KelulusanSiswa extends Page
             $this->galat = 'Pilih tahun ajaran dan kelas tingkat akhir terlebih dahulu.';
             Notification::make()->title('Form belum lengkap')->body($this->galat)->danger()->send();
 
-            return;
+            return false;
         }
 
         if ($this->siswa_ids === []) {
             $this->galat = 'Pilih minimal satu siswa yang bebas tunggakan untuk diluluskan.';
             Notification::make()->title('Belum ada siswa dipilih')->body($this->galat)->danger()->send();
 
-            return;
+            return false;
         }
 
         if (blank($this->tanggal_lulus)) {
             $this->galat = 'Tanggal lulus wajib diisi.';
             Notification::make()->title('Tanggal lulus kosong')->body($this->galat)->danger()->send();
 
-            return;
+            return false;
         }
 
         // Validasi ketat: siswa dengan tunggakan TIDAK BISA lulus
@@ -189,6 +189,15 @@ class KelulusanSiswa extends Page
                 ->danger()
                 ->send();
 
+            return false;
+        }
+
+        return true;
+    }
+
+    public function pratinjau(): void
+    {
+        if (! $this->validasiForm()) {
             return;
         }
 
@@ -197,7 +206,7 @@ class KelulusanSiswa extends Page
 
         Notification::make()
             ->title('Pratinjau Kelulusan Siap')
-            ->body("{$jumlah} siswa bebas tunggakan memenuhi syarat kelulusan dan siap diarsipkan.")
+            ->body("{$jumlah} siswa bebas tunggakan memenuhi syarat kelulusan dan siap diarsipkan. Silakan periksa rincian di bawah lalu klik Proses Kelulusan Siswa.")
             ->success()
             ->send();
     }
@@ -208,9 +217,7 @@ class KelulusanSiswa extends Page
             abort(403);
         }
 
-        if (! $this->pratinjau) {
-            $this->galat = 'Lakukan pratinjau sebelum menyimpan.';
-
+        if (! $this->validasiForm()) {
             return;
         }
 
@@ -233,11 +240,12 @@ class KelulusanSiswa extends Page
 
             Notification::make()
                 ->title('Kelulusan selesai')
-                ->body("{$hasil['diproses']} siswa diluluskan dan diarsipkan.")
+                ->body("{$hasil['diproses']} siswa berhasil diluluskan dan diarsipkan.")
                 ->success()
                 ->send();
         } catch (\Throwable $exception) {
             $this->galat = $exception->getMessage();
+            Notification::make()->title('Gagal memproses kelulusan')->body($this->galat)->danger()->send();
         }
     }
 

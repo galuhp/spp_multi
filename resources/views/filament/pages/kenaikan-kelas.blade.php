@@ -92,10 +92,29 @@
                     @php
                         $totalTunggakanSiswa = $siswaList->sum(fn ($b) => $b['tunggakan']['nominal'] ?? 0);
                     @endphp
-                    <div class="flex flex-wrap gap-2 text-xs tabular-nums">
-                        <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Naik: {{ $jumlahNaik }}</span>
-                        <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">Tinggal: {{ $jumlahTinggal }}</span>
-                        <span class="rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300">Total Tunggakan: Rp {{ number_format($totalTunggakanSiswa, 0, ',', '.') }}</span>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex flex-wrap gap-2 text-xs tabular-nums">
+                            <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">Naik: {{ $jumlahNaik }}</span>
+                            <span class="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">Tinggal: {{ $jumlahTinggal }}</span>
+                            <span class="rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-1 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300">Total Tunggakan: Rp {{ number_format($totalTunggakanSiswa, 0, ',', '.') }}</span>
+                        </div>
+
+                        @if (auth()->user()?->isStaff())
+                            <div class="flex items-center gap-2">
+                                <x-filament::button type="button" color="gray" size="sm" outlined wire:click="pratinjau"
+                                    wire:loading.attr="disabled" wire:target="pratinjau">
+                                    <x-filament::icon icon="heroicon-o-eye" class="size-4 mr-1 inline" />
+                                    <span>Pratinjau</span>
+                                </x-filament::button>
+
+                                <x-filament::button type="button" size="sm" color="primary" wire:click="eksekusi"
+                                    wire:loading.attr="disabled" wire:target="eksekusi"
+                                    wire:confirm="Yakin ingin langsung memproses kenaikan kelas untuk {{ $jumlahNaik }} siswa naik dan {{ $jumlahTinggal }} siswa tinggal?">
+                                    <x-filament::icon icon="heroicon-o-check-circle" class="size-4 mr-1 inline" />
+                                    <span>Simpan &amp; Proses Kenaikan</span>
+                                </x-filament::button>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -203,13 +222,27 @@
                         </div>
                     </div>
                 @else
-                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                    <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-4 dark:border-gray-800">
+                        <div class="text-xs text-slate-500 dark:text-gray-400">
+                            Anda dapat langsung mengeksekusi dengan tombol <strong class="text-slate-800 dark:text-gray-200">Simpan &amp; Proses Kenaikan Kelas</strong>, atau klik <strong class="text-slate-800 dark:text-gray-200">Pratinjau</strong> untuk melihat rincian sebelum memproses.
+                        </div>
+
                         @if (auth()->user()?->isStaff())
-                            <x-filament::button type="button" color="primary" size="sm" wire:click="pratinjau"
-                                wire:loading.attr="disabled" wire:target="pratinjau">
-                                <span wire:loading.remove wire:target="pratinjau">Pratinjau Kenaikan Kelas</span>
-                                <span wire:loading wire:target="pratinjau">Memproses Pratinjau...</span>
-                            </x-filament::button>
+                            <div class="flex items-center gap-2">
+                                <x-filament::button type="button" color="gray" size="sm" outlined wire:click="pratinjau"
+                                    wire:loading.attr="disabled" wire:target="pratinjau">
+                                    <x-filament::icon icon="heroicon-o-eye" class="size-4 mr-1 inline" />
+                                    <span wire:loading.remove wire:target="pratinjau">Pratinjau Kenaikan</span>
+                                    <span wire:loading wire:target="pratinjau">Memproses Pratinjau...</span>
+                                </x-filament::button>
+
+                                <x-filament::button type="button" size="sm" color="primary" wire:click="eksekusi"
+                                    wire:loading.attr="disabled" wire:target="eksekusi"
+                                    wire:confirm="Yakin ingin langsung memproses kenaikan kelas untuk {{ $jumlahNaik }} siswa naik dan {{ $jumlahTinggal }} siswa tinggal?">
+                                    <x-filament::icon icon="heroicon-o-check-circle" class="size-4 mr-1 inline" />
+                                    <span>Simpan &amp; Proses Kenaikan Kelas</span>
+                                </x-filament::button>
+                            </div>
                         @else
                             <p class="text-xs text-slate-500 dark:text-gray-400">Hanya staf yang dapat menyimpan proses kenaikan kelas.</p>
                         @endif

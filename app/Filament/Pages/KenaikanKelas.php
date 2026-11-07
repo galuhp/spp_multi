@@ -383,7 +383,7 @@ class KenaikanKelas extends Page
         }
     }
 
-    public function pratinjau(): void
+    protected function validasiForm(): bool
     {
         $this->galat = null;
 
@@ -391,21 +391,21 @@ class KenaikanKelas extends Page
             $this->galat = 'Lengkapi tahun ajaran asal, tahun ajaran tujuan, dan kelas asal terlebih dahulu.';
             Notification::make()->title('Form belum lengkap')->body($this->galat)->danger()->send();
 
-            return;
+            return false;
         }
 
         if ($this->tahun_ajaran_asal_id === $this->tahun_ajaran_tujuan_id) {
             $this->galat = 'Tahun ajaran tujuan tidak boleh sama dengan tahun ajaran asal.';
             Notification::make()->title('Tahun ajaran tidak valid')->body($this->galat)->danger()->send();
 
-            return;
+            return false;
         }
 
         if (! $this->isTahunAjaranTujuanValid()) {
             $this->galat = 'Tahun ajaran tujuan harus lebih besar dari tahun ajaran asal.';
             Notification::make()->title('Tahun ajaran tidak valid')->body($this->galat)->danger()->send();
 
-            return;
+            return false;
         }
 
         $siswaList = $this->siswa;
@@ -414,7 +414,7 @@ class KenaikanKelas extends Page
             $this->galat = 'Tidak ada siswa aktif pada kelas asal ini.';
             Notification::make()->title('Siswa tidak ditemukan')->body($this->galat)->danger()->send();
 
-            return;
+            return false;
         }
 
         // Pastikan seluruh siswa memiliki keputusan dan kelas tujuan
@@ -440,8 +440,17 @@ class KenaikanKelas extends Page
                 $this->galat = "Pilih kelas tujuan untuk siswa: {$baris['siswa']->nama}.";
                 Notification::make()->title('Kelas tujuan belum lengkap')->body($this->galat)->danger()->send();
 
-                return;
+                return false;
             }
+        }
+
+        return true;
+    }
+
+    public function pratinjau(): void
+    {
+        if (! $this->validasiForm()) {
+            return;
         }
 
         $this->pratinjau = true;
@@ -451,7 +460,7 @@ class KenaikanKelas extends Page
 
         Notification::make()
             ->title('Pratinjau Kenaikan Kelas Siap')
-            ->body("{$jumlahNaik} siswa akan naik kelas dan {$jumlahTinggal} siswa tinggal kelas. Silakan periksa rincian di bawah lalu klik Simpan.")
+            ->body("{$jumlahNaik} siswa akan naik kelas dan {$jumlahTinggal} siswa tinggal kelas. Silakan periksa rincian di bawah lalu klik Simpan Kenaikan Kelas Sekarang.")
             ->success()
             ->send();
     }
@@ -462,9 +471,7 @@ class KenaikanKelas extends Page
             abort(403);
         }
 
-        if (! $this->pratinjau) {
-            $this->galat = 'Lakukan pratinjau sebelum menyimpan.';
-
+        if (! $this->validasiForm()) {
             return;
         }
 
@@ -488,11 +495,12 @@ class KenaikanKelas extends Page
 
             Notification::make()
                 ->title('Kenaikan kelas selesai')
-                ->body("{$hasil['diproses']} siswa diproses.")
+                ->body("{$hasil['diproses']} siswa berhasil diproses naik/tinggal kelas.")
                 ->success()
                 ->send();
         } catch (\Throwable $exception) {
             $this->galat = $exception->getMessage();
+            Notification::make()->title('Gagal memproses kenaikan')->body($this->galat)->danger()->send();
         }
     }
 
