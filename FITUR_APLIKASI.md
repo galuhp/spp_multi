@@ -77,6 +77,10 @@ Seluruh laporan dilengkapi tampilan pratinjau interaktif dan **mode cetak dokume
 6. **Cetak Tunggakan Siswa per Kelas (Distribusi Wali Kelas)**
    - Mendukung pencetakan daftar tunggakan yang dipisahkan rapi per rombel kelas (*page-break* otomatis untuk setiap kelas atau cetak langsung dari tombol aksi per kelas).
    - Setiap lembar cetak kelas memuat kop surat sekolah resmi, identitas rombel, tabel siswa menunggak (NISN, Nama, Tarif SPP, Tunggakan SPP, Tunggakan Non-SPP, Total Tunggakan, Bulan Menunggak), subtotal per kelas, serta lembar tanda tangan **Wali Kelas** dan **Bendahara Sekolah**.
+7. **Laporan & Rekapitulasi Pengeluaran Sekolah (Cetak Rekap Kas Keluar)**
+   - Format cetak dokumen resmi (A4 Landscape) yang seragam dengan rekap penerimaan pembayaran.
+   - Memuat kop surat resmi, filter periode tanggal, kategori pos belanja, metode bayar, nomor bukti (`EXP-YYYYMMDD-XXXX`), uraian keperluan, penerima, total pengeluaran, kalimat terbilang Rupiah otomatis, serta tanda tangan Kepala Sekolah dan Bendahara Keuangan.
+   - Tersedia di halaman khusus **Laporan Pengeluaran** serta tombol aksi cepat **Cetak Rekap Pengeluaran** pada tabel Transaksi Pengeluaran.
 
 ---
 

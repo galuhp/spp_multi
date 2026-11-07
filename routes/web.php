@@ -70,7 +70,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
         Route::get('/pembayaran/{pembayaran}/cetak', [PembayaranController::class, 'cetak'])->name('pembayaran.cetak');
 
-        // Cetak Bukti Pengeluaran Kas
+        // Cetak Rekap & Bukti Pengeluaran Kas
+        Route::get('/pengeluaran/rekap/cetak', [\App\Http\Controllers\PengeluaranController::class, 'cetakRekap'])->name('pengeluaran.rekap.cetak');
         Route::get('/pengeluaran/{pengeluaran}/cetak', [\App\Http\Controllers\PengeluaranController::class, 'cetak'])->name('pengeluaran.cetak');
 
         // Laporan & Rekap Pembayaran
