@@ -581,28 +581,80 @@ class LaporanSppService
             $tahunAjaran,
         );
 
+        $siswaIds = $siswaList->pluck('id')->all();
+
+        // Index all payments for multi-year timeline evaluation
+        $semuaPembayaranSpp = Pembayaran::query()
+            ->whereIn('siswa_id', $siswaIds)
+            ->whereNull('void_at')
+            ->whereNotNull('bulan_dibayar')
+            ->get(['siswa_id', 'spp_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar']);
+
+        $sppBayarMap = [];
+        foreach ($semuaPembayaranSpp as $p) {
+            $k1 = $p->siswa_id . '|' . $p->spp_id . '|' . $p->bulan_dibayar;
+            $sppBayarMap[$k1] = ($sppBayarMap[$k1] ?? 0) + (int) $p->jumlah_bayar;
+            $k2 = $p->siswa_id . '|' . $p->bulan_dibayar . '|' . $p->tahun_dibayar;
+            $sppBayarMap[$k2] = ($sppBayarMap[$k2] ?? 0) + (int) $p->jumlah_bayar;
+        }
+
+        $semuaPembayaranNonSpp = Pembayaran::query()
+            ->whereIn('siswa_id', $siswaIds)
+            ->whereNull('void_at')
+            ->whereNull('bulan_dibayar')
+            ->get(['siswa_id', 'spp_id', 'jumlah_bayar']);
+
+        $nonSppBayarMap = [];
+        foreach ($semuaPembayaranNonSpp as $p) {
+            $k = $p->siswa_id . '|' . $p->spp_id;
+            $nonSppBayarMap[$k] = ($nonSppBayarMap[$k] ?? 0) + (int) $p->jumlah_bayar;
+        }
+
+        $tarifsPerTingkat = [];
+        foreach (['10', '11', '12', '13', '7', '8', '9', '1', '2', '3', '4', '5', '6'] as $t) {
+            $tarifsPerTingkat[$t] = [
+                'spp' => Spp::untukTingkat($t),
+                'non_spp' => Spp::nonSppUntukTingkat($t),
+            ];
+        }
+
+        $tanggunganService = app(\App\Support\Pembayaran\TanggunganPemerintahService::class);
+
         return $siswaList
-            ->map(function (Siswa $siswa) use ($kelasById, $kelasPerSiswa, $tarifPerSiswa, $pembayaranPerBulan, $nonSppPerSiswa, $bulan): array {
+            ->map(function (Siswa $siswa) use (
+                $kelasById,
+                $kelasPerSiswa,
+                $tarifPerSiswa,
+                $pembayaranPerBulan,
+                $nonSppPerSiswa,
+                $bulan,
+                $tarifsPerTingkat,
+                $sppBayarMap,
+                $nonSppBayarMap,
+                $tanggunganService,
+            ): array {
                 /** @var Kelas $kelas */
                 $kelas = $kelasById->get($kelasPerSiswa[(int) $siswa->id]);
                 $tarif = $tarifPerSiswa[(int) $siswa->id] ?? null;
                 $nominal = (int) ($tarif?->nominal ?? 0);
+                $tingkat = Spp::normalisasiTingkat($kelas->tingkat);
 
-                $tagihanSpp = 0;
-                $dibayarSpp = 0;
-                $tunggakanSpp = 0;
+                // 1. Current Academic Year (Running Timeline)
+                $tagihanSppCur = 0;
+                $dibayarSppCur = 0;
+                $tunggakanSppCur = 0;
                 $bulanTertunggak = [];
 
                 foreach ($bulan as $periode) {
-                    $tagihanSpp += $nominal;
+                    $tagihanSppCur += $nominal;
 
                     $kunci = $siswa->id.'|'.$periode['bulan'].'|'.$periode['tahun'];
                     $jumlahBayar = (int) ($pembayaranPerBulan[$kunci] ?? 0);
 
-                    $dibayarSpp += min($jumlahBayar, $nominal);
+                    $dibayarSppCur += min($jumlahBayar, $nominal);
 
                     $sisa = max(0, $nominal - $jumlahBayar);
-                    $tunggakanSpp += $sisa;
+                    $tunggakanSppCur += $sisa;
 
                     if ($sisa > 0) {
                         $bulanTertunggak[] = $periode['bulan'].' '.$periode['tahun'];
@@ -610,22 +662,93 @@ class LaporanSppService
                 }
 
                 $posNonSpp = $nonSppPerSiswa[(int) $siswa->id] ?? [];
-                $tagihanNonSpp = (int) collect($posNonSpp)->sum('nominal');
-                $dibayarNonSpp = (int) collect($posNonSpp)->sum('dibayar');
-                $tunggakanNonSpp = (int) collect($posNonSpp)->sum('tunggakan');
+                $tagihanNonSppCur = (int) collect($posNonSpp)->sum('nominal');
+                $dibayarNonSppCur = (int) collect($posNonSpp)->sum('dibayar');
+                $tunggakanNonSppCur = (int) collect($posNonSpp)->sum('tunggakan');
                 $posNonSppTertunggak = collect($posNonSpp)
                     ->filter(fn (array $pos): bool => $pos['tunggakan'] > 0)
                     ->map(fn (array $pos): string => $pos['tarif']->nama ?: $pos['tarif']->kategori)
                     ->values()
                     ->all();
 
+                // 2. Prior Grade Levels (Completed Past Timeline)
+                $priorLevels = $this->tingkatSebelumnya((string) $tingkat);
+                $tagihanSppPrior = 0;
+                $dibayarSppPrior = 0;
+                $tunggakanSppPrior = 0;
+                $bulanTertunggakPrior = [];
+
+                $tagihanNonSppPrior = 0;
+                $dibayarNonSppPrior = 0;
+                $tunggakanNonSppPrior = 0;
+                $posNonSppTertunggakPrior = [];
+
+                foreach ($priorLevels as $pLvl) {
+                    $lvlTarifs = $tarifsPerTingkat[$pLvl] ?? [
+                        'spp' => Spp::untukTingkat($pLvl),
+                        'non_spp' => Spp::nonSppUntukTingkat($pLvl),
+                    ];
+                    $sppPrior = $lvlTarifs['spp'];
+
+                    if ($sppPrior && $sppPrior->isBulanan()) {
+                        $nomPrior = (int) $sppPrior->nominal;
+                        foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bln) {
+                            if ($tanggunganService->isSppDitanggung($siswa, $sppPrior, $bln, 0)) {
+                                continue;
+                            }
+                            $tagihanSppPrior += $nomPrior;
+                            $bayar = (int) ($sppBayarMap[$siswa->id.'|'.$sppPrior->id.'|'.$bln] ?? 0);
+                            $dibayarSppPrior += min($bayar, $nomPrior);
+                            $sisa = max(0, $nomPrior - $bayar);
+                            $tunggakanSppPrior += $sisa;
+                            if ($sisa > 0) {
+                                $bulanTertunggakPrior[] = "{$bln} (Kelas ".Spp::labelTingkat($pLvl).")";
+                            }
+                        }
+                    }
+
+                    foreach ($lvlTarifs['non_spp'] as $nonSppPrior) {
+                        if ($tanggunganService->isPosDitanggung($siswa, $nonSppPrior)) {
+                            continue;
+                        }
+                        $nomNon = (int) $nonSppPrior->nominal;
+                        $tagihanNonSppPrior += $nomNon;
+                        $bayar = (int) ($nonSppBayarMap[$siswa->id.'|'.$nonSppPrior->id] ?? 0);
+                        $dibayarNonSppPrior += min($bayar, $nomNon);
+                        $sisa = max(0, $nomNon - $bayar);
+                        $tunggakanNonSppPrior += $sisa;
+                        if ($sisa > 0) {
+                            $posNonSppTertunggakPrior[] = ($nonSppPrior->nama ?: $nonSppPrior->kategori)." (Kelas ".Spp::labelTingkat($pLvl).")";
+                        }
+                        $posNonSpp[] = [
+                            'tarif' => $nonSppPrior,
+                            'nominal' => $nomNon,
+                            'dibayar' => min($bayar, $nomNon),
+                            'tunggakan' => $sisa,
+                            'status' => $sisa === 0 ? 'lunas' : ($bayar > 0 ? 'sebagian' : 'belum'),
+                        ];
+                    }
+                }
+
+                // 3. Multi-year Timeline Totals
+                $tagihanSpp = $tagihanSppCur + $tagihanSppPrior;
+                $dibayarSpp = $dibayarSppCur + $dibayarSppPrior;
+                $tunggakanSpp = $tunggakanSppCur + $tunggakanSppPrior;
+
+                $tagihanNonSpp = $tagihanNonSppCur + $tagihanNonSppPrior;
+                $dibayarNonSpp = $dibayarNonSppCur + $dibayarNonSppPrior;
+                $tunggakanNonSpp = $tunggakanNonSppCur + $tunggakanNonSppPrior;
+
                 $tagihan = $tagihanSpp + $tagihanNonSpp;
                 $dibayar = $dibayarSpp + $dibayarNonSpp;
                 $tunggakan = $tunggakanSpp + $tunggakanNonSpp;
 
+                $semuaBulanTertunggak = array_merge($bulanTertunggakPrior, $bulanTertunggak);
+                $semuaPosNonSppTertunggak = array_merge($posNonSppTertunggakPrior, $posNonSppTertunggak);
+
                 $status = 'belum_jatuh_tempo';
 
-                if ($bulan !== [] || $posNonSpp !== []) {
+                if ($bulan !== [] || $posNonSpp !== [] || $priorLevels !== []) {
                     if ($tagihan <= 0) {
                         $status = 'tanpa_tarif';
                     } elseif ($tunggakan > 0) {
@@ -649,12 +772,18 @@ class LaporanSppService
                     'tagihan_non_spp' => $tagihanNonSpp,
                     'dibayar_non_spp' => $dibayarNonSpp,
                     'tunggakan_non_spp' => $tunggakanNonSpp,
+                    'tunggakan_prior' => $tunggakanSppPrior + $tunggakanNonSppPrior,
+                    'tunggakan_prior_spp' => $tunggakanSppPrior,
+                    'tunggakan_prior_non_spp' => $tunggakanNonSppPrior,
+                    'tunggakan_berjalan' => $tunggakanSppCur + $tunggakanNonSppCur,
+                    'tunggakan_spp_berjalan' => $tunggakanSppCur,
+                    'tunggakan_non_spp_berjalan' => $tunggakanNonSppCur,
                     'non_spp' => $posNonSpp,
                     'jumlah_pos_non_spp' => count($posNonSpp),
-                    'jumlah_pos_non_spp_tertunggak' => count($posNonSppTertunggak),
-                    'pos_non_spp_tertunggak' => $posNonSppTertunggak,
-                    'jumlah_bulan_tertunggak' => count($bulanTertunggak),
-                    'bulan_tertunggak' => $bulanTertunggak,
+                    'jumlah_pos_non_spp_tertunggak' => count($semuaPosNonSppTertunggak),
+                    'pos_non_spp_tertunggak' => $semuaPosNonSppTertunggak,
+                    'jumlah_bulan_tertunggak' => count($semuaBulanTertunggak),
+                    'bulan_tertunggak' => $semuaBulanTertunggak,
                     'status' => $status,
                 ];
             })
@@ -882,6 +1011,36 @@ class LaporanSppService
             Spp::TINGKAT_LIST[$normal] ?? null,
             $tingkat,
         ])));
+    }
+
+    /**
+     * Prior completed grade levels for a given grade level along the student's study timeline.
+     *
+     * @return array<int, string>
+     */
+    public function tingkatSebelumnya(?string $tingkat): array
+    {
+        $normal = Spp::normalisasiTingkat($tingkat);
+
+        if (! is_numeric($normal)) {
+            return [];
+        }
+
+        $num = (int) $normal;
+
+        if ($num >= 10 && $num <= 13) {
+            return array_map('strval', range(10, $num - 1));
+        }
+
+        if ($num >= 7 && $num <= 9) {
+            return array_map('strval', range(7, $num - 1));
+        }
+
+        if ($num >= 1 && $num <= 6) {
+            return array_map('strval', range(1, $num - 1));
+        }
+
+        return [];
     }
 
     /**

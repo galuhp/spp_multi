@@ -93,16 +93,29 @@ class Spp extends Model
             return null;
         }
 
-        $exact = self::query()
+        if ($tahunAjaran) {
+            $exact = self::query()
+                ->where('kategori', self::KATEGORI_SPP)
+                ->where('tipe', self::TIPE_BULANAN)
+                ->where('tahun_ajaran', $tahunAjaran)
+                ->where('tingkat', $tingkat)
+                ->first();
+
+            if ($exact) {
+                return $exact;
+            }
+        }
+
+        // Fallback: match by tingkat without year constraint
+        $byTingkat = self::query()
             ->where('kategori', self::KATEGORI_SPP)
             ->where('tipe', self::TIPE_BULANAN)
-            ->when($tahunAjaran, fn (Builder $query): Builder => $query->where('tahun_ajaran', $tahunAjaran))
             ->where('tingkat', $tingkat)
             ->orderByDesc('tahun_ajaran')
             ->first();
 
-        if ($exact) {
-            return $exact;
+        if ($byTingkat) {
+            return $byTingkat;
         }
 
         return self::query()
@@ -112,6 +125,39 @@ class Spp extends Model
             ->whereNull('tingkat')
             ->orderByDesc('tahun_ajaran')
             ->first();
+    }
+
+    /**
+     * Non-SPP tariffs that apply to a level, with fallback if year not specified.
+     *
+     * @return \Illuminate\Support\Collection<int, self>
+     */
+    public static function nonSppUntukTingkat(?string $tingkat, ?string $tahunAjaran = null): \Illuminate\Support\Collection
+    {
+        $tingkat = self::normalisasiTingkat($tingkat);
+
+        if ($tingkat === null) {
+            return collect();
+        }
+
+        if ($tahunAjaran) {
+            $exact = self::query()
+                ->where('kategori', '!=', self::KATEGORI_SPP)
+                ->where('tahun_ajaran', $tahunAjaran)
+                ->where('tingkat', $tingkat)
+                ->orderBy('id')
+                ->get();
+
+            if ($exact->isNotEmpty()) {
+                return $exact;
+            }
+        }
+
+        return self::query()
+            ->where('kategori', '!=', self::KATEGORI_SPP)
+            ->where('tingkat', $tingkat)
+            ->orderBy('id')
+            ->get();
     }
 
     /**

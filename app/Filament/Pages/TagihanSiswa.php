@@ -272,43 +272,73 @@ class TagihanSiswa extends Page
             ];
         }
 
-        // Tunggakan tahun ajaran sebelumnya dari riwayat kelas
-        $siswa->loadMissing(['riwayatKelas.spp', 'riwayatKelas.tahunAjaran']);
+        // Tunggakan tahun/tingkat sebelumnya sepanjang timeline siswa
         $tunggakanPrior = [];
         $totalTunggakanPrior = 0;
 
-        foreach ($siswa->riwayatKelas as $riwayat) {
-            $tarifPrior = $riwayat->spp;
-            if (! $tarifPrior || ! $tarifPrior->isBulanan() || (int) $tarifPrior->id === (int) ($siswa->spp?->id ?? 0)) {
-                continue;
+        $tingkatSekarang = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+        $priorLevels = [];
+        if ($tingkatSekarang !== null) {
+            $num = (int) $tingkatSekarang;
+            if ($num >= 10 && $num <= 13) {
+                $priorLevels = array_map('strval', range(10, $num - 1));
+            } elseif ($num >= 7 && $num <= 9) {
+                $priorLevels = array_map('strval', range(7, $num - 1));
+            } elseif ($num >= 1 && $num <= 6) {
+                $priorLevels = array_map('strval', range(1, $num - 1));
+            }
+        }
+
+        foreach ($priorLevels as $pLvl) {
+            $tarifPrior = Spp::untukTingkat($pLvl);
+            if ($tarifPrior && $tarifPrior->isBulanan() && (int) $tarifPrior->id !== (int) ($siswa->spp?->id ?? 0)) {
+                $nominalPrior = (int) $tarifPrior->nominal;
+                foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bPrior) {
+                    if ($tanggunganPemerintah->isSppDitanggung($siswa, $tarifPrior, $bPrior, 0)) {
+                        continue;
+                    }
+
+                    $dibayarPrior = (int) $riwayatPembayaran
+                        ->where('spp_id', $tarifPrior->id)
+                        ->where('bulan_dibayar', $bPrior)
+                        ->sum('jumlah_bayar');
+
+                    $sisaPrior = max(0, $nominalPrior - $dibayarPrior);
+                    if ($sisaPrior > 0) {
+                        $totalTunggakanPrior += $sisaPrior;
+                        $tunggakanPrior[] = [
+                            'tahun_ajaran' => 'Kelas '.Spp::labelTingkat($pLvl),
+                            'bulan' => 'SPP '.$bPrior,
+                            'tipe' => 'SPP',
+                            'nominal' => $nominalPrior,
+                            'dibayar' => $dibayarPrior,
+                            'sisa' => $sisaPrior,
+                        ];
+                    }
+                }
             }
 
-            $tahunMulaiPrior = Pembayaran::tahunMulaiTarif($tarifPrior);
-            $nominalPrior = (int) $tarifPrior->nominal;
-
-            foreach (Pembayaran::bulanTahunAjaran($tahunMulaiPrior) as $periodePrior) {
-                $bPrior = $periodePrior['bulan'];
-                $tPrior = $periodePrior['tahun'];
-
-                if ($tanggunganPemerintah->isSppDitanggung($siswa, $tarifPrior, $bPrior, $tPrior)) {
+            $nonSppPriorList = Spp::nonSppUntukTingkat($pLvl);
+            foreach ($nonSppPriorList as $tNonPrior) {
+                if ($tanggunganPemerintah->isPosDitanggung($siswa, $tNonPrior)) {
                     continue;
                 }
 
-                $dibayarPrior = (int) $riwayatPembayaran
-                    ->where('spp_id', $tarifPrior->id)
-                    ->where('bulan_dibayar', $bPrior)
+                $nominalNonPrior = (int) $tNonPrior->nominal;
+                $dibayarNonPrior = (int) $riwayatPembayaran
+                    ->where('spp_id', $tNonPrior->id)
                     ->sum('jumlah_bayar');
 
-                $sisaPrior = max(0, $nominalPrior - $dibayarPrior);
-                if ($sisaPrior > 0) {
-                    $totalTunggakanPrior += $sisaPrior;
+                $sisaNonPrior = max(0, $nominalNonPrior - $dibayarNonPrior);
+                if ($sisaNonPrior > 0) {
+                    $totalTunggakanPrior += $sisaNonPrior;
                     $tunggakanPrior[] = [
-                        'tahun_ajaran' => $tarifPrior->tahun_ajaran ?: ($riwayat->tahunAjaran?->nama ?? '-'),
-                        'bulan' => $bPrior,
-                        'tahun' => $tPrior,
-                        'nominal' => $nominalPrior,
-                        'dibayar' => $dibayarPrior,
-                        'sisa' => $sisaPrior,
+                        'tahun_ajaran' => 'Kelas '.Spp::labelTingkat($pLvl),
+                        'bulan' => $tNonPrior->nama ?: $tNonPrior->kategori,
+                        'tipe' => 'Non-SPP',
+                        'nominal' => $nominalNonPrior,
+                        'dibayar' => $dibayarNonPrior,
+                        'sisa' => $sisaNonPrior,
                     ];
                 }
             }

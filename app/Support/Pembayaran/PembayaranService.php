@@ -29,8 +29,29 @@ class PembayaranService
         $items = [];
         $siswa->loadMissing(['spp', 'kelas', 'riwayatKelas.spp']);
 
-        // Collect all distinct tariffs assigned to the student (historical from riwayat_kelas + current)
+        $tingkatSekarang = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
+        $tingkatList = [];
+        if ($tingkatSekarang !== null) {
+            $num = (int) $tingkatSekarang;
+            if ($num >= 10 && $num <= 13) {
+                $tingkatList = array_map('strval', range(10, $num));
+            } elseif ($num >= 7 && $num <= 9) {
+                $tingkatList = array_map('strval', range(7, $num));
+            } elseif ($num >= 1 && $num <= 6) {
+                $tingkatList = array_map('strval', range(1, $num));
+            } else {
+                $tingkatList = [$tingkatSekarang];
+            }
+        }
+
+        // Collect all distinct tariffs assigned to the student along their study timeline
         $daftarTarif = collect();
+        foreach ($tingkatList as $t) {
+            $sppLvl = Spp::untukTingkat($t);
+            if ($sppLvl) {
+                $daftarTarif->push($sppLvl);
+            }
+        }
         foreach ($siswa->riwayatKelas as $riwayat) {
             if ($riwayat->spp) {
                 $daftarTarif->push($riwayat->spp);
@@ -112,31 +133,17 @@ class PembayaranService
             }
         }
 
-        $tahunTarif = $tarif?->tahun;
-        $tahunAjaran = $tarif?->tahun_ajaran;
-        $tingkat = Spp::normalisasiTingkat($siswa->kelas?->tingkat);
-        $variasiTingkat = array_values(array_unique(array_filter([
-            $tingkat,
-            $tingkat ? (Spp::TINGKAT_LIST[$tingkat] ?? null) : null,
-        ])));
+        $variasiTingkat = [];
+        foreach ($tingkatList as $t) {
+            $variasiTingkat[] = $t;
+            if (isset(Spp::TINGKAT_LIST[$t])) {
+                $variasiTingkat[] = Spp::TINGKAT_LIST[$t];
+            }
+        }
+        $variasiTingkat = array_values(array_unique(array_filter($variasiTingkat)));
 
         $nonSpp = Spp::query()
             ->where('kategori', '!=', Spp::KATEGORI_SPP)
-            ->when($tahunTarif || $tahunAjaran, function ($query) use ($tahunTarif, $tahunAjaran): void {
-                $query->where(function ($subquery) use ($tahunTarif, $tahunAjaran): void {
-                    if ($tahunTarif) {
-                        $subquery->whereIn('tahun', [$tahunTarif, $tahunTarif + 1]);
-                    }
-
-                    if ($tahunAjaran) {
-                        if ($tahunTarif) {
-                            $subquery->orWhere('tahun_ajaran', $tahunAjaran);
-                        } else {
-                            $subquery->where('tahun_ajaran', $tahunAjaran);
-                        }
-                    }
-                });
-            })
             ->where(function ($query) use ($variasiTingkat): void {
                 $query->whereNull('tingkat');
 
@@ -144,6 +151,7 @@ class PembayaranService
                     $query->orWhereIn('tingkat', $variasiTingkat);
                 }
             })
+            ->orderBy('tingkat')
             ->orderBy('id')
             ->get();
 

@@ -673,11 +673,37 @@ def seed():
             VALUES (?, ?, ?, ?, ?, ?)
             """, (siswa_id, nama_ayah, nama_ibu, hp_wali, now_str, now_str))
 
-            # Insert Riwayat Kelas
-            cursor.execute("""
-            INSERT INTO riwayat_kelas (siswa_id, kelas_id, tahun_ajaran_id, spp_id, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, 'aktif', ?, ?)
-            """, (siswa_id, kelas_id, ta_aktif_id, spp_id, now_str, now_str))
+            # Insert Riwayat Kelas based on timeline
+            if tingkat == '10':
+                cursor.execute("""
+                INSERT INTO riwayat_kelas (siswa_id, kelas_id, tahun_ajaran_id, spp_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, 'aktif', ?, ?)
+                """, (siswa_id, kelas_id, ta_aktif_id, spp_id, now_str, now_str))
+            elif tingkat == '11':
+                prev_x = kelas_x_rpl_id if kelas_id == kelas_xi_rpl_id else kelas_x_tkj_id
+                cursor.execute("""
+                INSERT INTO riwayat_kelas (siswa_id, kelas_id, tahun_ajaran_id, spp_id, status, created_at, updated_at)
+                VALUES (?, ?, 2, ?, 'naik', ?, ?)
+                """, (siswa_id, prev_x, spp_tarifs['10'], now_str, now_str))
+                cursor.execute("""
+                INSERT INTO riwayat_kelas (siswa_id, kelas_id, tahun_ajaran_id, spp_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, 'aktif', ?, ?)
+                """, (siswa_id, kelas_id, ta_aktif_id, spp_id, now_str, now_str))
+            elif tingkat == '12':
+                prev_x = kelas_x_rpl_id if kelas_id == kelas_xii_rpl_id else kelas_x_tkj_id
+                prev_xi = kelas_xi_rpl_id if kelas_id == kelas_xii_rpl_id else kelas_xi_tkj_id
+                cursor.execute("""
+                INSERT INTO riwayat_kelas (siswa_id, kelas_id, tahun_ajaran_id, spp_id, status, created_at, updated_at)
+                VALUES (?, ?, 1, ?, 'naik', ?, ?)
+                """, (siswa_id, prev_x, spp_tarifs['10'], now_str, now_str))
+                cursor.execute("""
+                INSERT INTO riwayat_kelas (siswa_id, kelas_id, tahun_ajaran_id, spp_id, status, created_at, updated_at)
+                VALUES (?, ?, 2, ?, 'naik', ?, ?)
+                """, (siswa_id, prev_xi, spp_tarifs['11'], now_str, now_str))
+                cursor.execute("""
+                INSERT INTO riwayat_kelas (siswa_id, kelas_id, tahun_ajaran_id, spp_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, 'aktif', ?, ?)
+                """, (siswa_id, kelas_id, ta_aktif_id, spp_id, now_str, now_str))
 
         return students
 
@@ -705,6 +731,7 @@ def seed():
     # 10. Seed Realistic Payments for Demo
     # Academic months: Juli, Agustus, September, Oktober, November
     months_ta = ['Juli', 'Agustus', 'September', 'Oktober', 'November']
+    full_months = ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni']
     kode_counter = 1
 
     # Get non-spp tariffs per level
@@ -714,35 +741,110 @@ def seed():
         '12': [t for t in all_tarifs if t['tingkat'] == '12' and t['kategori'] != 'SPP'],
     }
 
-    # Simulate realistic payments:
-    # In Kelas XII:
-    # First 12 students: Fully paid all SPP (all 12 months) + paid all non-SPP fees!
-    # These 12 students are completely free of arrears (Bebas Tunggakan) -> Ready for Graduation demo!
-    full_months = ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni']
+    # Simulate realistic multi-year payments:
+    # A. In Kelas XII:
+    # First 12 students: Fully paid all fees across Grade 10, Grade 11, and Grade 12!
+    # These 12 students are completely free of arrears (Bebas Tunggakan across 3-year timeline) -> Ready for Graduation demo!
     for s_id in siswas_xii_rpl[:12]:
+        # Grade 10 SPP & Non-SPP (2024/2025)
+        for b in full_months:
+            thn = 2024 if b in ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] else 2025
+            kode = f"SPP-2024{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2024-11-10', ?, ?, 100000, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, spp_tarifs['10'], b, thn, f"Pembayaran SPP Bulan {b}", now_str, now_str))
+        for t in non_spp_by_tingkat['10']:
+            kode = f"NSP-2024{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2024-09-15', NULL, 2024, ?, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
+
+        # Grade 11 SPP & Non-SPP (2025/2026)
+        for b in full_months:
+            thn = 2025 if b in ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] else 2026
+            kode = f"SPP-2025{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2025-11-10', ?, ?, 100000, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, spp_tarifs['11'], b, thn, f"Pembayaran SPP Bulan {b}", now_str, now_str))
+        for t in non_spp_by_tingkat['11']:
+            kode = f"NSP-2025{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2025-09-15', NULL, 2025, ?, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
+
+        # Grade 12 SPP & Non-SPP (2026/2027)
         for b in full_months:
             thn = 2026 if b in ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] else 2027
-            kode = f"SPP-2026110{kode_counter:04d}"
+            kode = f"SPP-2026{kode_counter:05d}"
             kode_counter += 1
             cursor.execute("""
             INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
             VALUES (?, ?, ?, ?, '2026-10-15', ?, ?, 100000, 'Tunai', ?, ?, ?)
             """, (kode, petugas_id, s_id, spp_tarifs['12'], b, thn, f"Pembayaran SPP Bulan {b}", now_str, now_str))
-
-        # Pay all non-SPP for this student so they are truly 100% lunas
         for t in non_spp_by_tingkat['12']:
-            kode = f"NSP-2026110{kode_counter:04d}"
+            kode = f"NSP-2026{kode_counter:05d}"
             kode_counter += 1
             cursor.execute("""
             INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
             VALUES (?, ?, ?, ?, '2026-10-20', NULL, 2026, ?, 'Tunai', ?, ?, ?)
             """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
 
-    # Remaining students in Kelas XII: partially paid (e.g. 1-4 months SPP and 1-2 non-SPP items)
+    # Remaining students in Kelas XII: have realistic arrears from Grade 10, 11, or 12
     for i, s_id in enumerate(siswas_xii_rpl[12:] + siswas_xii_tkj):
+        # Grade 10: paid 10-12 months SPP and most non-spp
+        paid_x_months = 10 + (i % 3)
+        for b in full_months[:paid_x_months]:
+            thn = 2024 if b in ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] else 2025
+            kode = f"SPP-2024{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2024-11-10', ?, ?, 100000, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, spp_tarifs['10'], b, thn, f"Pembayaran SPP Bulan {b}", now_str, now_str))
+        # Grade 10 non-spp: pay all except Study Banding if i % 2 == 1
+        for idx_t, t in enumerate(non_spp_by_tingkat['10']):
+            if (i % 2 == 1) and ('Study Banding' in t['nama']):
+                continue
+            kode = f"NSP-2024{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2024-09-15', NULL, 2024, ?, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
+
+        # Grade 11: paid 9-11 months SPP
+        paid_xi_months = 9 + (i % 3)
+        for b in full_months[:paid_xi_months]:
+            thn = 2025 if b in ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] else 2026
+            kode = f"SPP-2025{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2025-11-10', ?, ?, 100000, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, spp_tarifs['11'], b, thn, f"Pembayaran SPP Bulan {b}", now_str, now_str))
+        # Grade 11 non-spp: pay all except Prakerin if i % 2 == 0
+        for idx_t, t in enumerate(non_spp_by_tingkat['11']):
+            if (i % 2 == 0) and ('Prakerin' in t['nama']):
+                continue
+            kode = f"NSP-2025{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2025-09-15', NULL, 2025, ?, 'Tunai', ?, ?, ?)
+            """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
+
+        # Grade 12 (running year): paid 1-4 months SPP
         paid_month_count = (i % 4) + 1
         for b in months_ta[:paid_month_count]:
-            kode = f"SPP-2026110{kode_counter:04d}"
+            kode = f"SPP-2026{kode_counter:05d}"
             kode_counter += 1
             cursor.execute("""
             INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
@@ -750,46 +852,81 @@ def seed():
             """, (kode, petugas_id, s_id, spp_tarifs['12'], b, f"Pembayaran SPP Bulan {b}", now_str, now_str))
 
         if i % 2 == 0 and non_spp_by_tingkat['12']:
-            t = non_spp_by_tingkat['12'][0] # Tabungan
-            kode = f"NSP-2026110{kode_counter:04d}"
+            t = non_spp_by_tingkat['12'][0]
+            kode = f"NSP-2026{kode_counter:05d}"
             kode_counter += 1
             cursor.execute("""
             INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
             VALUES (?, ?, ?, ?, '2026-09-12', NULL, 2026, ?, 'Transfer Bank', ?, ?, ?)
             """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
 
-    # Kelas X payments
+    # B. Kelas XI payments (Multi-year: Grade 10 completed + Grade 11 running)
+    for i, s_id in enumerate(siswas_xi_rpl + siswas_xi_tkj):
+        # Grade 10:
+        if i % 2 == 0:
+            # Fully paid Grade 10 SPP & Non-SPP
+            for b in full_months:
+                thn = 2025 if b in ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] else 2026
+                kode = f"SPP-2025{kode_counter:05d}"
+                kode_counter += 1
+                cursor.execute("""
+                INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+                VALUES (?, ?, ?, ?, '2025-10-15', ?, ?, 100000, 'Tunai', ?, ?, ?)
+                """, (kode, petugas_id, s_id, spp_tarifs['10'], b, thn, f"Pembayaran SPP Bulan {b}", now_str, now_str))
+            for t in non_spp_by_tingkat['10']:
+                kode = f"NSP-2025{kode_counter:05d}"
+                kode_counter += 1
+                cursor.execute("""
+                INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+                VALUES (?, ?, ?, ?, '2025-08-20', NULL, 2025, ?, 'Tunai', ?, ?, ?)
+                """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
+        else:
+            # Partially paid Grade 10 (e.g. 10 months SPP, 1 non-spp unpaid)
+            for b in full_months[:10]:
+                thn = 2025 if b in ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] else 2026
+                kode = f"SPP-2025{kode_counter:05d}"
+                kode_counter += 1
+                cursor.execute("""
+                INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+                VALUES (?, ?, ?, ?, '2025-10-15', ?, ?, 100000, 'Tunai', ?, ?, ?)
+                """, (kode, petugas_id, s_id, spp_tarifs['10'], b, thn, f"Pembayaran SPP Bulan {b}", now_str, now_str))
+            for t in non_spp_by_tingkat['10'][:-1]: # skip last item (Kaos/Study Banding)
+                kode = f"NSP-2025{kode_counter:05d}"
+                kode_counter += 1
+                cursor.execute("""
+                INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+                VALUES (?, ?, ?, ?, '2025-08-20', NULL, 2025, ?, 'Tunai', ?, ?, ?)
+                """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
+
+        # Grade 11 (running year, 5 months: Juli - November)
+        paid_count = ((i + 1) % 5)
+        for b in months_ta[:paid_count]:
+            kode = f"SPP-2026{kode_counter:05d}"
+            kode_counter += 1
+            cursor.execute("""
+            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, '2026-09-05', ?, 2026, 100000, 'Transfer Bank', ?, ?, ?)
+            """, (kode, petugas_id, s_id, spp_tarifs['11'], b, f"Pembayaran SPP Bulan {b}", now_str, now_str))
+
+    # C. Kelas X payments (Grade 10 running year)
     for i, s_id in enumerate(siswas_x_rpl + siswas_x_tkj):
-        # vary payments: some paid up to November, some paid 2 months, some 0 months
         paid_count = (i % 5)
         for b in months_ta[:paid_count]:
-            kode = f"SPP-2026110{kode_counter:04d}"
+            kode = f"SPP-2026{kode_counter:05d}"
             kode_counter += 1
             cursor.execute("""
             INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
             VALUES (?, ?, ?, ?, '2026-08-15', ?, 2026, 100000, 'Tunai', ?, ?, ?)
             """, (kode, petugas_id, s_id, spp_tarifs['10'], b, f"Pembayaran SPP Bulan {b}", now_str, now_str))
 
-        # Some paid Kaos Olah Raga or Map Rapot
         if i % 3 == 0 and len(non_spp_by_tingkat['10']) > 8:
-            t = non_spp_by_tingkat['10'][8] # Kaos Olah Raga
-            kode = f"NSP-2026110{kode_counter:04d}"
+            t = non_spp_by_tingkat['10'][8]
+            kode = f"NSP-2026{kode_counter:05d}"
             kode_counter += 1
             cursor.execute("""
             INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
             VALUES (?, ?, ?, ?, '2026-08-20', NULL, 2026, ?, 'Tunai', ?, ?, ?)
             """, (kode, petugas_id, s_id, t['id'], t['nominal'], f"Pembayaran {t['nama']}", now_str, now_str))
-
-    # Kelas XI payments
-    for i, s_id in enumerate(siswas_xi_rpl + siswas_xi_tkj):
-        paid_count = ((i + 1) % 5)
-        for b in months_ta[:paid_count]:
-            kode = f"SPP-2026110{kode_counter:04d}"
-            kode_counter += 1
-            cursor.execute("""
-            INSERT INTO pembayarans (kode_transaksi, user_id, siswa_id, spp_id, tgl_bayar, bulan_dibayar, tahun_dibayar, jumlah_bayar, metode_pembayaran, catatan, created_at, updated_at)
-            VALUES (?, ?, ?, ?, '2026-09-05', ?, 2026, 100000, 'Transfer Bank', ?, ?, ?)
-            """, (kode, petugas_id, s_id, spp_tarifs['11'], b, f"Pembayaran SPP Bulan {b}", now_str, now_str))
 
     # 11. Seed School Operational Expenditures (Pengeluaran Operasional Sekolah)
     pengeluarans = [
