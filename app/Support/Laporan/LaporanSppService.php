@@ -8,6 +8,7 @@ use App\Models\RiwayatKelas;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
+use App\Support\Pembayaran\SubsidiSiswaService;
 use App\Support\Pembayaran\TanggunganPemerintahService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -26,6 +27,14 @@ class LaporanSppService
      * @var array<string, Spp|null>
      */
     private array $tarifCache = [];
+
+    public function __construct(
+        private ?SubsidiSiswaService $subsidiService = null,
+        private ?TanggunganPemerintahService $tanggunganService = null,
+    ) {
+        $this->subsidiService ??= app(SubsidiSiswaService::class);
+        $this->tanggunganService ??= app(TanggunganPemerintahService::class);
+    }
 
     /**
      * Resolve the selected academic year, falling back to the active one.
@@ -193,14 +202,23 @@ class LaporanSppService
 
                 $noKuitansi = $bayarBulan->pluck('kode_transaksi')->filter()->unique()->join(', ');
 
+                $wajibSpp = $tarif ? $this->subsidiService->kewajibanSiswa($siswa, $tarif, $periode['bulan'], $periode['tahun'], $tahunAjaran) : $nominalSpp;
+                $potonganSpp = $nominalSpp - $wajibSpp;
+                $persenSubsidi = $tarif ? $this->subsidiService->persentaseSiswa($siswa, $tarif, $periode['bulan'], $periode['tahun'], $tahunAjaran) : 0;
+
+                $uraian = 'Tagihan SPP '.$periode['bulan'].' '.$periode['tahun'];
+                if ($persenSubsidi > 0) {
+                    $uraian .= " (Subsidi {$persenSubsidi}%)";
+                }
+
                 $entries->push([
                     'tanggal' => Carbon::create($periode['tahun'], $this->nomorBulan($periode['bulan']), 1)->startOfDay(),
                     'tipe' => 'tagihan_spp',
                     'prioritas' => 0,
                     'urutan' => $urutan++,
-                    'uraian' => 'Tagihan SPP '.$periode['bulan'].' '.$periode['tahun'],
+                    'uraian' => $uraian,
                     'referensi' => $noKuitansi ?: null,
-                    'debit' => $nominalSpp,
+                    'debit' => $wajibSpp,
                     'kredit' => 0,
                     'status' => in_array($periode['bulan'].'|'.$periode['tahun'], $kunciJatuhTempo, true)
                         ? 'jatuh_tempo'
@@ -208,6 +226,9 @@ class LaporanSppService
                     'meta' => [
                         'bulan' => $periode['bulan'],
                         'tahun' => $periode['tahun'],
+                        'nominal_asli' => $nominalSpp,
+                        'potongan' => $potonganSpp,
+                        'persen_subsidi' => $persenSubsidi,
                         'no_kuitansi' => $noKuitansi ?: null,
                     ],
                 ]);
@@ -224,6 +245,15 @@ class LaporanSppService
                 continue;
             }
 
+            $wajibNonSpp = $this->subsidiService->kewajibanSiswa($siswa, $tarifNon, null, null, $tahunAjaran);
+            $potonganNonSpp = $nominalNonSpp - $wajibNonSpp;
+            $persenNonSpp = $this->subsidiService->persentaseSiswa($siswa, $tarifNon, null, null, $tahunAjaran);
+
+            $uraian = 'Tagihan '.($tarifNon->nama ?: $tarifNon->kategori);
+            if ($persenNonSpp > 0) {
+                $uraian .= " (Subsidi {$persenNonSpp}%)";
+            }
+
             $bayarNon = $pembayarans->where('spp_id', $tarifNon->id);
             $noKuitansiNon = $bayarNon->pluck('kode_transaksi')->filter()->unique()->join(', ');
 
@@ -232,14 +262,17 @@ class LaporanSppService
                 'tipe' => 'tagihan_non_spp',
                 'prioritas' => 0,
                 'urutan' => $urutan++,
-                'uraian' => 'Tagihan '.($tarifNon->nama ?: $tarifNon->kategori),
+                'uraian' => $uraian,
                 'referensi' => $noKuitansiNon ?: null,
-                'debit' => $nominalNonSpp,
+                'debit' => $wajibNonSpp,
                 'kredit' => 0,
                 'status' => 'jatuh_tempo',
                 'meta' => [
                     'tarif_id' => $tarifNon->id,
                     'kategori' => $tarifNon->kategori,
+                    'nominal_asli' => $nominalNonSpp,
+                    'potongan' => $potonganNonSpp,
+                    'persen_subsidi' => $persenNonSpp,
                     'no_kuitansi' => $noKuitansiNon ?: null,
                 ],
             ]);
@@ -795,7 +828,8 @@ class LaporanSppService
             ];
         }
 
-        $tanggunganService = app(TanggunganPemerintahService::class);
+        $tanggunganService = $this->tanggunganService;
+        $subsidiService = $this->subsidiService;
 
         return $siswaList
             ->map(function (Siswa $siswa) use (
@@ -809,6 +843,7 @@ class LaporanSppService
                 $sppBayarMap,
                 $nonSppBayarMap,
                 $tanggunganService,
+                $subsidiService,
                 $tahunAjaran,
             ): array {
                 /** @var Kelas $kelas */
@@ -829,16 +864,17 @@ class LaporanSppService
                         continue;
                     }
 
-                    $tagihanSppCur += $nominal;
+                    $wajibNominal = $tarif ? $subsidiService->kewajibanSiswa($siswa, $tarif, $periode['bulan'], $periode['tahun'], $tahunAjaran) : 0;
+                    $tagihanSppCur += $wajibNominal;
 
                     $kunci = $tarif
                         ? $siswa->id.'|'.$tarif->id.'|'.$periode['bulan'].'|'.$periode['tahun']
                         : $siswa->id.'|'.$periode['bulan'].'|'.$periode['tahun'];
                     $jumlahBayar = (int) ($pembayaranPerBulan[$kunci] ?? 0);
 
-                    $dibayarSppCur += min($jumlahBayar, $nominal);
+                    $dibayarSppCur += min($jumlahBayar, $wajibNominal);
 
-                    $sisa = max(0, $nominal - $jumlahBayar);
+                    $sisa = max(0, $wajibNominal - $jumlahBayar);
                     $tunggakanSppCur += $sisa;
 
                     if ($sisa > 0) {
@@ -886,7 +922,6 @@ class LaporanSppService
                     }
 
                     if ($sppPrior && $sppPrior->isBulanan()) {
-                        $nomPrior = (int) $sppPrior->nominal;
                         foreach (Pembayaran::TAHUN_AJARAN_BULAN_LIST as $bln) {
                             $thnPrior = in_array($bln, ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'], true) ? $taPriorYear : ($taPriorYear + 1);
 
@@ -897,10 +932,11 @@ class LaporanSppService
                             if ($tanggunganService->isSppDitanggung($siswa, $sppPrior, $bln, $thnPrior)) {
                                 continue;
                             }
-                            $tagihanSppPrior += $nomPrior;
+                            $wajibPrior = $subsidiService->kewajibanSiswa($siswa, $sppPrior, $bln, $thnPrior);
+                            $tagihanSppPrior += $wajibPrior;
                             $bayar = (int) ($sppBayarMap[$siswa->id.'|'.$bln.'|'.$thnPrior] ?? 0);
-                            $dibayarSppPrior += min($bayar, $nomPrior);
-                            $sisa = max(0, $nomPrior - $bayar);
+                            $dibayarSppPrior += min($bayar, $wajibPrior);
+                            $sisa = max(0, $wajibPrior - $bayar);
                             $tunggakanSppPrior += $sisa;
                             if ($sisa > 0) {
                                 $bulanTertunggakPrior[] = "{$bln} (Kelas ".Spp::labelTingkat($pLvl).')';
@@ -932,11 +968,12 @@ class LaporanSppService
                                     continue;
                                 }
 
+                                $wajibNon = $subsidiService->kewajibanSiswa($siswa, $nonSppPrior, $bln, $thn);
                                 $bayar = (int) ($sppBayarMap[$siswa->id.'|'.$nonSppPrior->id.'|'.$bln] ?? 0);
 
-                                $tagihanNonSppPrior += $nomNon;
-                                $dibayarNonSppPrior += min($bayar, $nomNon);
-                                $sisa = max(0, $nomNon - $bayar);
+                                $tagihanNonSppPrior += $wajibNon;
+                                $dibayarNonSppPrior += min($bayar, $wajibNon);
+                                $sisa = max(0, $wajibNon - $bayar);
                                 $tunggakanNonSppPrior += $sisa;
 
                                 if ($sisa > 0) {
@@ -945,8 +982,11 @@ class LaporanSppService
 
                                 $posNonSpp[] = [
                                     'tarif' => $nonSppPrior,
-                                    'nominal' => $nomNon,
-                                    'dibayar' => min($bayar, $nomNon),
+                                    'nominal' => $wajibNon,
+                                    'nominal_asli' => $nomNon,
+                                    'potongan' => $nomNon - $wajibNon,
+                                    'persen_subsidi' => $subsidiService->persentaseSiswa($siswa, $nonSppPrior, $bln, $thn),
+                                    'dibayar' => min($bayar, $wajibNon),
                                     'tunggakan' => $sisa,
                                     'bulan' => $bln,
                                     'tahun' => $thn,
@@ -957,18 +997,22 @@ class LaporanSppService
                             continue;
                         }
 
-                        $tagihanNonSppPrior += $nomNon;
+                        $wajibNon = $subsidiService->kewajibanSiswa($siswa, $nonSppPrior);
+                        $tagihanNonSppPrior += $wajibNon;
                         $bayar = (int) ($nonSppBayarMap[$siswa->id.'|'.$nonSppPrior->id] ?? 0);
-                        $dibayarNonSppPrior += min($bayar, $nomNon);
-                        $sisa = max(0, $nomNon - $bayar);
+                        $dibayarNonSppPrior += min($bayar, $wajibNon);
+                        $sisa = max(0, $wajibNon - $bayar);
                         $tunggakanNonSppPrior += $sisa;
                         if ($sisa > 0) {
                             $posNonSppTertunggakPrior[] = ($nonSppPrior->nama ?: $nonSppPrior->kategori).' (Kelas '.Spp::labelTingkat($pLvl).')';
                         }
                         $posNonSpp[] = [
                             'tarif' => $nonSppPrior,
-                            'nominal' => $nomNon,
-                            'dibayar' => min($bayar, $nomNon),
+                            'nominal' => $wajibNon,
+                            'nominal_asli' => $nomNon,
+                            'potongan' => $nomNon - $wajibNon,
+                            'persen_subsidi' => $subsidiService->persentaseSiswa($siswa, $nonSppPrior),
+                            'dibayar' => min($bayar, $wajibNon),
                             'tunggakan' => $sisa,
                             'status' => $sisa === 0 ? 'lunas' : ($bayar > 0 ? 'sebagian' : 'belum'),
                         ];
@@ -1126,17 +1170,21 @@ class LaporanSppService
                         $thn = $periode['tahun'];
                         $kunciBulan = $siswa->id.'|'.$tarif->id.'|'.$bln.'|'.$thn;
                         $dibayar = (int) ($dibayarPerSiswaTarifBulan[$kunciBulan] ?? 0);
-                        $sisa = max(0, $nominal - $dibayar);
+                        $wajibNominal = $this->subsidiService->kewajibanSiswa($siswa, $tarif, $bln, $thn, $tahunAjaran);
+                        $sisa = max(0, $wajibNominal - $dibayar);
 
                         $pos[] = [
                             'tarif' => $tarif,
-                            'nominal' => $nominal,
-                            'dibayar' => min($dibayar, $nominal),
+                            'nominal' => $wajibNominal,
+                            'nominal_asli' => $nominal,
+                            'potongan' => $nominal - $wajibNominal,
+                            'persen_subsidi' => $this->subsidiService->persentaseSiswa($siswa, $tarif, $bln, $thn, $tahunAjaran),
+                            'dibayar' => min($dibayar, $wajibNominal),
                             'tunggakan' => $sisa,
                             'bulan' => $bln,
                             'tahun' => $thn,
                             'status' => match (true) {
-                                $nominal <= 0, $sisa === 0 => 'lunas',
+                                $wajibNominal <= 0, $sisa === 0 => 'lunas',
                                 $dibayar > 0 => 'sebagian',
                                 default => 'belum',
                             },
@@ -1146,16 +1194,20 @@ class LaporanSppService
                     continue;
                 }
 
+                $wajibNominal = $this->subsidiService->kewajibanSiswa($siswa, $tarif, null, null, $tahunAjaran);
                 $dibayar = (int) ($dibayarPerSiswaTarif[$siswa->id.'|'.$tarif->id] ?? 0);
-                $sisa = max(0, $nominal - $dibayar);
+                $sisa = max(0, $wajibNominal - $dibayar);
 
                 $pos[] = [
                     'tarif' => $tarif,
-                    'nominal' => $nominal,
-                    'dibayar' => min($dibayar, $nominal),
+                    'nominal' => $wajibNominal,
+                    'nominal_asli' => $nominal,
+                    'potongan' => $nominal - $wajibNominal,
+                    'persen_subsidi' => $this->subsidiService->persentaseSiswa($siswa, $tarif, null, null, $tahunAjaran),
+                    'dibayar' => min($dibayar, $wajibNominal),
                     'tunggakan' => $sisa,
                     'status' => match (true) {
-                        $nominal <= 0, $sisa === 0 => 'lunas',
+                        $wajibNominal <= 0, $sisa === 0 => 'lunas',
                         $dibayar > 0 => 'sebagian',
                         default => 'belum',
                     },

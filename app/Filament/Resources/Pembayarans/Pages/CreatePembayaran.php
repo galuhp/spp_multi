@@ -110,15 +110,18 @@ class CreatePembayaran extends CreateRecord
             $bulanLunas = [];
             $bulanDitanggung = [];
 
+            $subsidiService = app(\App\Support\Pembayaran\SubsidiSiswaService::class);
             foreach ($bulanList as $bulan) {
-                if ($tanggunganPemerintah->isSppDitanggung($siswa, $spp, $bulan, Pembayaran::tahunUntukBulan($bulan, $tahunMulai))) {
+                $thnBulan = Pembayaran::tahunUntukBulan($bulan, $tahunMulai);
+                if ($tanggunganPemerintah->isSppDitanggung($siswa, $spp, $bulan, $thnBulan)) {
                     $bulanDitanggung[] = $bulan;
 
                     continue;
                 }
 
+                $wajibSpp = $subsidiService->kewajibanSiswa($siswa, $spp, $bulan, $thnBulan);
                 $dibayar = (int) ($dibayarPerBulan->get($bulan) ?? 0);
-                $sisa = max(0, $nominalSpp - $dibayar);
+                $sisa = max(0, $wajibSpp - $dibayar);
 
                 if ($sisa <= 0) {
                     $bulanLunas[] = $bulan;
@@ -149,6 +152,7 @@ class CreatePembayaran extends CreateRecord
         }
 
         $validatedNonSpp = [];
+        $subsidiService ??= app(\App\Support\Pembayaran\SubsidiSiswaService::class);
 
         foreach ($nonSppKeys as $key) {
             [$tarifId, $bulan, $tahun] = array_pad(explode('|', $key), 3, null);
@@ -173,7 +177,8 @@ class CreatePembayaran extends CreateRecord
                     ->where('bulan_dibayar', $bulan)
                     ->where('tahun_dibayar', $tahun)
                     ->sum('jumlah_bayar');
-                $sisa = max(0, (int) $tarif->nominal - $dibayar);
+                $wajibTarif = $subsidiService->kewajibanSiswa($siswa, $tarif, $bulan, $tahun);
+                $sisa = max(0, $wajibTarif - $dibayar);
 
                 if ($sisa <= 0) {
                     $this->tolak("Tagihan {$tarif->kategori} bulan {$bulan} {$tahun} sudah lunas.");
@@ -189,8 +194,9 @@ class CreatePembayaran extends CreateRecord
                 continue;
             }
 
+            $wajibTarif = $subsidiService->kewajibanSiswa($siswa, $tarif);
             $dibayar = (int) $siswa->pembayarans->where('spp_id', $tarif->id)->sum('jumlah_bayar');
-            $sisa = max(0, (int) $tarif->nominal - $dibayar);
+            $sisa = max(0, $wajibTarif - $dibayar);
 
             if ($sisa <= 0) {
                 $this->tolak("Tagihan {$tarif->kategori} sudah lunas.");

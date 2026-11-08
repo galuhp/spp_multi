@@ -9,6 +9,7 @@ use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Support\Pembayaran\PembayaranService;
+use App\Support\Pembayaran\SubsidiSiswaService;
 use App\Support\Pembayaran\TanggunganPemerintahService;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -227,10 +228,13 @@ class EntriPembayaranKasir extends Page
             }
         }
 
+        $subsidiService = app(SubsidiSiswaService::class);
+
         if ($spp?->isBulanan()) {
             foreach (Pembayaran::bulanTahunAjaran($tahunAjaranSekarang) as $index => $periode) {
                 $key = "spp:{$spp->id}:{$periode['bulan']}:{$periode['tahun']}";
                 $terbuka = $items->get($key);
+                $wajibNominal = $subsidiService->kewajibanSiswa($siswa, $spp, $periode['bulan'], $periode['tahun']);
 
                 if (! $terbuka) {
                     $status = $tanggunganPemerintah->isSppDitanggung($siswa, $spp, $periode['bulan'], $periode['tahun'])
@@ -248,7 +252,7 @@ class EntriPembayaranKasir extends Page
                     'key' => $key,
                     'bulan' => $periode['bulan'],
                     'tahun' => $periode['tahun'],
-                    'nominal' => $terbuka ? (int) $terbuka['sisa'] : $nominal,
+                    'nominal' => $terbuka ? (int) $terbuka['sisa'] : $wajibNominal,
                     'status' => $status,
                 ];
             }
@@ -261,6 +265,7 @@ class EntriPembayaranKasir extends Page
         foreach ($tarifBulananList as $tarifBulanan) {
             $isSppUtama = $spp && (int) $tarifBulanan->id === (int) $spp->id;
             $nominalBulanan = (int) $tarifBulanan->nominal;
+            $wajibTarifBulanan = $subsidiService->kewajibanSiswa($siswa, $tarifBulanan);
             $groupMonths = [];
 
             if ($isSppUtama) {
@@ -271,6 +276,7 @@ class EntriPembayaranKasir extends Page
                 foreach (Pembayaran::bulanTahunAjaran($tahunAjaranSekarang) as $index => $periode) {
                     $key = "spp:{$tarifBulanan->id}:{$periode['bulan']}:{$periode['tahun']}";
                     $terbuka = $items->get($key);
+                    $wajibPosBulanan = $subsidiService->kewajibanSiswa($siswa, $tarifBulanan, $periode['bulan'], $periode['tahun']);
 
                     if (! $terbuka) {
                         $status = $ditanggungPos
@@ -288,7 +294,7 @@ class EntriPembayaranKasir extends Page
                         'key' => $key,
                         'bulan' => $periode['bulan'],
                         'tahun' => $periode['tahun'],
-                        'nominal' => $terbuka ? (int) $terbuka['sisa'] : $nominalBulanan,
+                        'nominal' => $terbuka ? (int) $terbuka['sisa'] : $wajibPosBulanan,
                         'status' => $status,
                     ];
                 }
@@ -298,7 +304,7 @@ class EntriPembayaranKasir extends Page
                 'id' => $tarifBulanan->id,
                 'nama' => $tarifBulanan->nama ?: $tarifBulanan->kategori,
                 'kategori' => $tarifBulanan->kategori,
-                'tarif' => $nominalBulanan,
+                'tarif' => $wajibTarifBulanan,
                 'tipe' => $isSppUtama ? 'spp' : 'non_spp',
                 'months' => $groupMonths,
             ];

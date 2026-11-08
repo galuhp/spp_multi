@@ -168,15 +168,19 @@ class PembayaranForm
                                     ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
                                 $unpaid = [];
+                                $subsidiService = app(\App\Support\Pembayaran\SubsidiSiswaService::class);
                                 foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
                                     if ($tanggungan->isSppDitanggung($siswa, $siswa->spp, $periode['bulan'], $periode['tahun'])) {
                                         continue;
                                     }
 
-                                    $sisa = max(0, $nominal - (int) ($dibayarPerBulan->get($periode['bulan']) ?? 0));
+                                    $wajib = $subsidiService->kewajibanSiswa($siswa, $siswa->spp, $periode['bulan'], $periode['tahun']);
+                                    $persen = $subsidiService->persentaseSiswa($siswa, $siswa->spp, $periode['bulan'], $periode['tahun']);
+                                    $sisa = max(0, $wajib - (int) ($dibayarPerBulan->get($periode['bulan']) ?? 0));
 
                                     if ($sisa > 0) {
-                                        $unpaid[$periode['bulan']] = "{$periode['bulan']} {$periode['tahun']} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
+                                        $subLabel = $persen > 0 ? " [Subsidi {$persen}%]" : '';
+                                        $unpaid[$periode['bulan']] = "{$periode['bulan']} {$periode['tahun']}{$subLabel} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
                                     }
                                 }
 
@@ -245,6 +249,7 @@ class PembayaranForm
                                         $nominal = (int) $tarif->nominal;
                                         $pembayarans = $siswa->pembayarans->where('spp_id', $tarif->id);
                                         $nama = $tarif->nama ?: $tarif->kategori;
+                                        $subsidiService = app(\App\Support\Pembayaran\SubsidiSiswaService::class);
 
                                         if ($tarif->isBulanan()) {
                                             foreach (Pembayaran::bulanTahunAjaran($tarif->tahunMulai()) as $periode) {
@@ -255,27 +260,33 @@ class PembayaranForm
                                                     continue;
                                                 }
 
+                                                $wajib = $subsidiService->kewajibanSiswa($siswa, $tarif, $bulan, $tahun);
+                                                $persen = $subsidiService->persentaseSiswa($siswa, $tarif, $bulan, $tahun);
                                                 $dibayar = (int) $pembayarans
                                                     ->where('bulan_dibayar', $bulan)
                                                     ->where('tahun_dibayar', $tahun)
                                                     ->sum('jumlah_bayar');
-                                                $sisa = max(0, $nominal - $dibayar);
+                                                $sisa = max(0, $wajib - $dibayar);
 
                                                 if ($sisa <= 0) {
                                                     continue;
                                                 }
 
-                                                $options[$tarif->id.'|'.$bulan.'|'.$tahun] = "{$tarif->kategori} - {$nama} — {$bulan} {$tahun} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
+                                                $subLabel = $persen > 0 ? " [Subsidi {$persen}%]" : '';
+                                                $options[$tarif->id.'|'.$bulan.'|'.$tahun] = "{$tarif->kategori} - {$nama} — {$bulan} {$tahun}{$subLabel} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
                                             }
 
                                             return $options;
                                         }
 
+                                        $wajib = $subsidiService->kewajibanSiswa($siswa, $tarif);
+                                        $persen = $subsidiService->persentaseSiswa($siswa, $tarif);
                                         $dibayar = (int) $pembayarans->sum('jumlah_bayar');
-                                        $sisa = max(0, $nominal - $dibayar);
+                                        $sisa = max(0, $wajib - $dibayar);
 
                                         if ($sisa > 0) {
-                                            $options[$tarif->id] = "{$tarif->kategori} - {$nama} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
+                                            $subLabel = $persen > 0 ? " [Subsidi {$persen}%]" : '';
+                                            $options[$tarif->id] = "{$tarif->kategori} - {$nama}{$subLabel} (Sisa: Rp ".number_format($sisa, 0, ',', '.').')';
                                         }
 
                                         return $options;

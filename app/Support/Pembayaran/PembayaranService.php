@@ -7,6 +7,7 @@ use App\Models\Pembayaran;
 use App\Models\PembayaranGabungan;
 use App\Models\PembayaranGabunganBaris;
 use App\Models\Siswa;
+use App\Models\SiswaSubsidi;
 use App\Models\Spp;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,10 @@ class PembayaranService
 {
     public function __construct(
         private readonly TanggunganPemerintahService $tanggunganPemerintah,
-    ) {}
+        private ?SubsidiSiswaService $subsidiService = null,
+    ) {
+        $this->subsidiService ??= app(SubsidiSiswaService::class);
+    }
 
     /**
      * Outstanding bills for a student, oldest first.
@@ -101,8 +105,13 @@ class PembayaranService
                     continue;
                 }
 
+                $subsidi = $this->subsidiService->subsidiUntuk($siswa, $sppLvl, $bulan, $tahun);
+                $persenSubsidi = $subsidi?->persentase ?? 0;
+                $wajibBayar = $subsidi ? SiswaSubsidi::hitungKewajiban($nominal, $persenSubsidi) : $nominal;
+                $potongan = $nominal - $wajibBayar;
+
                 $dibayar = (int) ($dibayarPerBulan->get($sppLvl->id.'|'.$bulan.'|'.$tahun) ?? 0);
-                $sisa = max(0, $nominal - $dibayar);
+                $sisa = max(0, $wajibBayar - $dibayar);
 
                 if ($sisa <= 0) {
                     continue;
@@ -112,13 +121,20 @@ class PembayaranService
                     ? "SPP {$bulan} {$tahun} (Kelas ".Spp::labelTingkat($t).')'
                     : "SPP {$bulan} {$tahun}";
 
+                if ($persenSubsidi > 0) {
+                    $label .= " [Subsidi {$persenSubsidi}%]";
+                }
+
                 $items[] = [
                     'key' => "spp:{$sppLvl->id}:{$bulan}:{$tahun}",
                     'spp_id' => $sppLvl->id,
                     'bulan' => $bulan,
                     'tahun' => $tahun,
                     'nominal' => $nominal,
-                    'dibayar' => min($dibayar, $nominal),
+                    'wajib_bayar' => $wajibBayar,
+                    'potongan' => $potongan,
+                    'persen_subsidi' => $persenSubsidi,
+                    'dibayar' => min($dibayar, $wajibBayar),
                     'sisa' => $sisa,
                     'label' => $label,
                     'tipe' => 'spp',
@@ -201,14 +217,23 @@ class PembayaranService
                     continue;
                 }
 
+                $subsidi = $this->subsidiService->subsidiUntuk($siswa, $tarifBulanan, $bulan, $tahun);
+                $persenSubsidi = $subsidi?->persentase ?? 0;
+                $wajibBayar = $subsidi ? SiswaSubsidi::hitungKewajiban($nominalBulanan, $persenSubsidi) : $nominalBulanan;
+                $potongan = $nominalBulanan - $wajibBayar;
+
                 $dibayar = (int) ($dibayarNonSppBulanan->get($tarifBulanan->id.'|'.$bulan.'|'.$tahun) ?? 0);
-                $sisa = max(0, $nominalBulanan - $dibayar);
+                $sisa = max(0, $wajibBayar - $dibayar);
 
                 if ($sisa <= 0) {
                     continue;
                 }
 
                 $labelTingkat = $tarifBulanan->tingkat ? ' (Kelas '.Spp::labelTingkat($tarifBulanan->tingkat).')' : '';
+                $label = ($tarifBulanan->nama ?: $tarifBulanan->kategori)." {$bulan} {$tahun}".$labelTingkat;
+                if ($persenSubsidi > 0) {
+                    $label .= " [Subsidi {$persenSubsidi}%]";
+                }
 
                 $items[] = [
                     'key' => "spp:{$tarifBulanan->id}:{$bulan}:{$tahun}",
@@ -216,9 +241,12 @@ class PembayaranService
                     'bulan' => $bulan,
                     'tahun' => $tahun,
                     'nominal' => $nominalBulanan,
-                    'dibayar' => min($dibayar, $nominalBulanan),
+                    'wajib_bayar' => $wajibBayar,
+                    'potongan' => $potongan,
+                    'persen_subsidi' => $persenSubsidi,
+                    'dibayar' => min($dibayar, $wajibBayar),
                     'sisa' => $sisa,
-                    'label' => ($tarifBulanan->nama ?: $tarifBulanan->kategori)." {$bulan} {$tahun}".$labelTingkat,
+                    'label' => $label,
                     'tipe' => 'non_spp',
                 ];
             }
@@ -235,21 +263,34 @@ class PembayaranService
                 continue;
             }
 
-            $dibayar = $this->totalDibayar($siswa, $tarif);
             $nominal = (int) $tarif->nominal;
-            $sisa = max(0, $nominal - $dibayar);
+            $subsidi = $this->subsidiService->subsidiUntuk($siswa, $tarif);
+            $persenSubsidi = $subsidi?->persentase ?? 0;
+            $wajibBayar = $subsidi ? SiswaSubsidi::hitungKewajiban($nominal, $persenSubsidi) : $nominal;
+            $potongan = $nominal - $wajibBayar;
+
+            $dibayar = $this->totalDibayar($siswa, $tarif);
+            $sisa = max(0, $wajibBayar - $dibayar);
 
             if ($sisa > 0) {
                 $labelTingkat = $tarif->tingkat ? ' (Kelas '.Spp::labelTingkat($tarif->tingkat).')' : '';
+                $label = ($tarif->nama ?: $tarif->kategori).$labelTingkat;
+                if ($persenSubsidi > 0) {
+                    $label .= " [Subsidi {$persenSubsidi}%]";
+                }
+
                 $items[] = [
                     'key' => "spp:{$tarif->id}",
                     'spp_id' => $tarif->id,
                     'bulan' => null,
                     'tahun' => (int) $tarif->tahun,
                     'nominal' => $nominal,
-                    'dibayar' => min($dibayar, $nominal),
+                    'wajib_bayar' => $wajibBayar,
+                    'potongan' => $potongan,
+                    'persen_subsidi' => $persenSubsidi,
+                    'dibayar' => min($dibayar, $wajibBayar),
                     'sisa' => $sisa,
-                    'label' => ($tarif->nama ?: $tarif->kategori).$labelTingkat,
+                    'label' => $label,
                     'tipe' => 'non_spp',
                 ];
             }
@@ -307,10 +348,19 @@ class PembayaranService
 
             $dibayar = (int) ($dibayarPerPos[$tarifLain->id] ?? 0);
             $nominal = (int) $tarifLain->nominal;
-            $sisa = max(0, $nominal - $dibayar);
+            $subsidi = $this->subsidiService->subsidiUntuk($siswa, $tarifLain);
+            $persenSubsidi = $subsidi?->persentase ?? 0;
+            $wajibBayar = $subsidi ? SiswaSubsidi::hitungKewajiban($nominal, $persenSubsidi) : $nominal;
+            $potongan = $nominal - $wajibBayar;
+            $sisa = max(0, $wajibBayar - $dibayar);
 
             if ($sisa <= 0) {
                 continue;
+            }
+
+            $label = $tarifLain->namaLengkap();
+            if ($persenSubsidi > 0) {
+                $label .= " [Subsidi {$persenSubsidi}%]";
             }
 
             $items[] = [
@@ -319,9 +369,12 @@ class PembayaranService
                 'bulan' => null,
                 'tahun' => (int) $tarifLain->tahun,
                 'nominal' => $nominal,
-                'dibayar' => min($dibayar, $nominal),
+                'wajib_bayar' => $wajibBayar,
+                'potongan' => $potongan,
+                'persen_subsidi' => $persenSubsidi,
+                'dibayar' => min($dibayar, $wajibBayar),
                 'sisa' => $sisa,
-                'label' => $tarifLain->namaLengkap(),
+                'label' => $label,
                 'tipe' => 'non_spp',
             ];
         }

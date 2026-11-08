@@ -237,6 +237,30 @@ class Siswa extends Model
     }
 
     /**
+     * Subsidies / fee discounts assigned to this student.
+     */
+    public function subsidies(): HasMany
+    {
+        return $this->hasMany(SiswaSubsidi::class);
+    }
+
+    /**
+     * Get active subsidy for a specific tariff and period.
+     */
+    public function subsidiUntukTarif(?Spp $spp, ?string $bulan = null, ?int $tahun = null, ?TahunAjaran $tahunAjaran = null): ?SiswaSubsidi
+    {
+        return app(\App\Support\Pembayaran\SubsidiSiswaService::class)->subsidiUntuk($this, $spp, $bulan, $tahun, $tahunAjaran);
+    }
+
+    /**
+     * Get effective obligation amount payable by student after subsidy.
+     */
+    public function kewajibanBayar(?Spp $spp, ?string $bulan = null, ?int $tahun = null, ?TahunAjaran $tahunAjaran = null): int
+    {
+        return app(\App\Support\Pembayaran\SubsidiSiswaService::class)->kewajibanSiswa($this, $spp, $bulan, $tahun, $tahunAjaran);
+    }
+
+    /**
      * Guardian data of this student.
      */
     public function wali(): HasOne

@@ -75,6 +75,7 @@ class SiswaResource extends Resource
     {
         return [
             TanggunganPemerintahRelationManager::class,
+            \App\Filament\Resources\Siswas\RelationManagers\SubsidiRelationManager::class,
         ];
     }
 
