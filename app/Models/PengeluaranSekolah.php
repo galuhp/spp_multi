@@ -126,6 +126,11 @@ class PengeluaranSekolah extends Model
         return $this->belongsTo(TahunAjaran::class);
     }
 
+    public function labelKategori(): string
+    {
+        return self::KATEGORI_LIST[$this->kategori] ?? ($this->kategori ?: '-');
+    }
+
     public function formattedNominal(): string
     {
         return 'Rp '.number_format((float) $this->nominal, 0, ',', '.');

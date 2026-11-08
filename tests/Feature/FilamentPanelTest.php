@@ -7,6 +7,7 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\ProfilSekolahSettings;
 use App\Models\Jurusan;
 use App\Models\Kelas;
+use App\Models\PengeluaranSekolah;
 use App\Models\ProfilSekolah;
 use App\Models\Siswa;
 use App\Models\Spp;
@@ -140,6 +141,28 @@ class FilamentPanelTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/laporan-pembayaran')
             ->assertStatus(200);
+    }
+
+    public function test_admin_can_access_laporan_pengeluaran_with_records(): void
+    {
+        $admin = User::factory()->create([
+            'role' => UserRole::Admin,
+        ]);
+
+        PengeluaranSekolah::create([
+            'tanggal' => now()->toDateString(),
+            'kategori' => PengeluaranSekolah::KATEGORI_ATK,
+            'keperluan' => 'Pembelian kertas dan tinta',
+            'nominal' => 150000,
+            'metode_pembayaran' => PengeluaranSekolah::METODE_TUNAI,
+            'user_id' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/laporan-pengeluaran')
+            ->assertStatus(200)
+            ->assertSee('Pembelian kertas dan tinta')
+            ->assertSee(PengeluaranSekolah::KATEGORI_ATK);
     }
 
     public function test_petugas_can_access_operational_but_not_master_data_or_user_management(): void

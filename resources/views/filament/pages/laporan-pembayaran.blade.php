@@ -101,7 +101,6 @@
                         <th class="px-4 py-3.5">Metode</th>
                         <th class="px-4 py-3.5 text-right">Jumlah</th>
                         <th class="px-4 py-3.5">Petugas</th>
-                        <th class="px-4 py-3.5 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -137,16 +136,10 @@
                             <td class="px-4 py-3 text-xs text-gray-500">
                                 {{ $p->user?->name ?? 'Kasir' }}
                             </td>
-                            <td class="px-4 py-3 text-center">
-                                <x-filament::button tag="a" href="{{ route('pembayaran.cetak', $p->id) }}" target="_blank"
-                                    color="gray" size="sm" outlined icon="heroicon-o-printer" class="whitespace-nowrap">
-                                    Cetak Kuitansi
-                                </x-filament::button>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-sm text-gray-500">
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500">
                                 Tidak ada data transaksi pembayaran yang sesuai dengan filter yang dipilih.
                             </td>
                         </tr>
