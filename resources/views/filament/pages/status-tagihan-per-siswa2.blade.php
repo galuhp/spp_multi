@@ -242,7 +242,6 @@
                             <x-ui.table.head class="text-right">Sisa Tagihan</x-ui.table.head>
                             <x-ui.table.head>Tanggal Bayar</x-ui.table.head>
                             <x-ui.table.head class="text-center">Status</x-ui.table.head>
-                            <x-ui.table.head class="text-center">Aksi</x-ui.table.head>
                         </x-ui.table.columns>
                         <x-ui.table.rows>
                             @forelse($filteredItems as $index => $item)
@@ -309,24 +308,10 @@
                                             <x-ui.badge color="rose">Belum Lunas</x-ui.badge>
                                         @endif
                                     </x-ui.table.cell>
-
-                                    {{-- Kolom: AKSI (Cetak Kuitansi) --}}
-                                    <x-ui.table.cell class="text-center">
-                                        @if($item['pembayaran_terakhir'])
-                                            <x-filament::button tag="a"
-                                                href="{{ auth()->user()?->isSiswa() ? route('portal.kuitansi', $item['pembayaran_terakhir']->id) : route('pembayaran.cetak', $item['pembayaran_terakhir']->id) }}"
-                                                target="_blank" color="gray" size="xs" outlined icon="heroicon-o-printer"
-                                                class="whitespace-nowrap">
-                                                Kuitansi
-                                            </x-filament::button>
-                                        @else
-                                            <span class="text-xs text-slate-300 dark:text-gray-600">-</span>
-                                        @endif
-                                    </x-ui.table.cell>
                                 </x-ui.table.row>
                             @empty
                                 <x-ui.table.row>
-                                    <x-ui.table.cell colspan="8" class="py-8 text-center text-sm text-slate-500 dark:text-gray-400">
+                                    <x-ui.table.cell colspan="7" class="py-8 text-center text-sm text-slate-500 dark:text-gray-400">
                                         Tidak ada rincian tagihan yang sesuai dengan filter.
                                     </x-ui.table.cell>
                                 </x-ui.table.row>
@@ -354,7 +339,7 @@
                                     <td class="px-3 py-3 text-right text-xs text-rose-700 dark:text-rose-400 tabular-nums">
                                         Rp {{ number_format($subTotalSisa, 0, ',', '.') }}
                                     </td>
-                                    <td colspan="3" class="px-3 py-3"></td>
+                                    <td colspan="2" class="px-3 py-3"></td>
                                 </tr>
                             </tfoot>
                         @endif
