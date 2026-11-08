@@ -54,6 +54,30 @@
                         </div>
                     </div>
 
+                    @if ($tingkat !== 'semua' && $this->kelasList->isNotEmpty())
+                        <div class="mt-3">
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-300">Kelas</p>
+                            <div class="mt-2 inline-flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800" role="group" aria-label="Filter kelas">
+                                @foreach ($this->kelasList as $kelas)
+                                    <button type="button" wire:click="pilihKelas({{ $kelas->id }})"
+                                        aria-pressed="{{ $kelas_id === $kelas->id ? 'true' : 'false' }}"
+                                        @class([
+                                            'rounded-md px-3.5 py-1.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
+                                            'bg-white text-gray-900 shadow-sm dark:bg-gray-950 dark:text-white' => $kelas_id === $kelas->id,
+                                            'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' => $kelas_id !== $kelas->id,
+                                        ])>
+                                        {{ $kelas->nama_kelas }}{{ $kelas->jurusan?->kode ? ' ('.$kelas->jurusan->kode.')' : '' }}
+                                    </button>
+                                @endforeach
+                            </div>
+                            @if ($kelas_id)
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Menampilkan siswa kelas terpilih. Klik kelas yang sama untuk menampilkan semua kelas di tingkat ini.
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+
                     <div class="relative mt-2">
                         <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
                             <x-heroicon-o-magnifying-glass class="size-4" />

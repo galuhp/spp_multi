@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\ProfilSekolah;
 use App\Models\RolePermission;
@@ -40,6 +41,8 @@ class EntriPembayaranKasir extends Page
 
     public string $tingkat = 'semua';
 
+    public ?int $kelas_id = null;
+
     public ?string $galat = null;
 
     public static function canAccess(): bool
@@ -67,6 +70,32 @@ class EntriPembayaranKasir extends Page
     }
 
     /**
+     * Daftar kelas yang termasuk dalam tingkat yang dipilih.
+     *
+     * @return Collection<int, Kelas>
+     */
+    public function getKelasListProperty(): Collection
+    {
+        if ($this->tingkat === 'semua') {
+            return collect();
+        }
+
+        $labelTingkat = Spp::labelTingkat($this->tingkat);
+
+        $varianTingkat = array_values(array_unique(array_filter([
+            $this->tingkat,
+            $labelTingkat,
+            mb_strtolower($labelTingkat),
+        ])));
+
+        return Kelas::query()
+            ->with('jurusan')
+            ->whereIn('tingkat', $varianTingkat)
+            ->orderBy('nama_kelas')
+            ->get();
+    }
+
+    /**
      * @return Collection<int, Siswa>
      */
     public function getSiswaHasilProperty(): Collection
@@ -91,6 +120,7 @@ class EntriPembayaranKasir extends Page
                     ])));
                 });
             })
+            ->when($this->kelas_id, fn ($query) => $query->where('kelas_id', $this->kelas_id))
             ->where(function ($query) use ($kataKunci): void {
                 $query->where('nama', 'like', "%{$kataKunci}%")
                     ->orWhere('nisn', 'like', "%{$kataKunci}%")
@@ -108,6 +138,24 @@ class EntriPembayaranKasir extends Page
         }
 
         $this->tingkat = $tingkat;
+        $this->kelas_id = null;
+        $this->cari = '';
+        $this->dispatch('focus-cari');
+    }
+
+    public function pilihKelas(?int $kelasId): void
+    {
+        if ($kelasId === null) {
+            $this->kelas_id = null;
+
+            return;
+        }
+
+        if (! $this->kelasList->contains('id', $kelasId)) {
+            return;
+        }
+
+        $this->kelas_id = $this->kelas_id === $kelasId ? null : $kelasId;
         $this->cari = '';
         $this->dispatch('focus-cari');
     }
