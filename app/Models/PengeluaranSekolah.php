@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -104,7 +105,7 @@ class PengeluaranSekolah extends Model
      */
     public static function buatNomorTransaksi(?\DateTimeInterface $tanggal = null): string
     {
-        $tgl = $tanggal ? \Carbon\Carbon::parse($tanggal) : now();
+        $tgl = $tanggal ? Carbon::parse($tanggal) : now();
         $prefix = 'EXP-'.$tgl->format('Ymd').'-';
 
         $lastNumber = static::query()

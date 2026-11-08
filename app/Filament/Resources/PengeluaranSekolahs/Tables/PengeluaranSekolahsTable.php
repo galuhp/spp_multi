@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\PengeluaranSekolahs\Tables;
 
 use App\Models\PengeluaranSekolah;
-use App\Models\TahunAjaran;
 use App\Support\Pengeluaran\PengeluaranService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;

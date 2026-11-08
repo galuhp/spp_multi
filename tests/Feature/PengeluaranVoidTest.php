@@ -26,12 +26,14 @@ class PengeluaranVoidTest extends TestCase
 
         $this->admin = User::factory()->create(['role' => UserRole::Admin]);
 
-        $this->tahunAjaran = TahunAjaran::query()->create([
-            'nama' => '2026/2027',
-            'tanggal_mulai' => '2026-07-01',
-            'tanggal_selesai' => '2027-06-30',
-            'aktif' => true,
-        ]);
+        $this->tahunAjaran = TahunAjaran::query()->updateOrCreate(
+            ['nama' => '2026/2027'],
+            [
+                'tanggal_mulai' => '2026-07-01',
+                'tanggal_selesai' => '2027-06-30',
+                'aktif' => true,
+            ],
+        );
 
         $this->actingAs($this->admin);
     }
