@@ -343,16 +343,6 @@
                                 </div>
                             @endif
 
-                            @if($spp && $spp['pembayaran'])
-                                <div class="mt-3">
-                                    <x-filament::button tag="a"
-                                        href="{{ auth()->user()?->isSiswa() ? route('portal.kuitansi', $spp['pembayaran']->id) : route('pembayaran.cetak', $spp['pembayaran']->id) }}"
-                                        target="_blank" color="gray" size="sm" outlined icon="heroicon-o-printer"
-                                        class="w-full whitespace-nowrap">
-                                        Cetak Kuitansi
-                                    </x-filament::button>
-                                </div>
-                            @endif
                         </div>
                     @endforeach
                 </div>
