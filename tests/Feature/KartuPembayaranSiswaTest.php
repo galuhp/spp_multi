@@ -7,6 +7,7 @@ use App\Filament\Pages\KartuPembayaranSiswa;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
@@ -39,6 +40,11 @@ class KartuPembayaranSiswaTest extends TestCase
         $this->travelTo(Carbon::parse('2026-11-05 09:00:00'));
 
         $this->petugas = User::factory()->create(['role' => UserRole::Petugas]);
+
+        RolePermission::query()->firstOrCreate([
+            'role' => UserRole::Petugas,
+            'permission' => RolePermission::LAPORAN,
+        ]);
 
         $this->tahunAjaran = TahunAjaran::query()->updateOrCreate(
             ['nama' => '2026/2027'],
@@ -127,31 +133,65 @@ class KartuPembayaranSiswaTest extends TestCase
         ));
     }
 
-    public function test_halaman_kartu_menampilkan_empty_state_tanpa_siswa(): void
+    public function test_rincian_tagihan_menampilkan_pos_tarif_dan_sisa_per_pos(): void
+    {
+        $gedung = Spp::query()->create([
+            'kategori' => Spp::KATEGORI_UANG_GEDUNG,
+            'tipe' => Spp::TIPE_SEKALI_BAYAR,
+            'nama' => 'Uang Gedung',
+            'tahun' => 2026,
+            'tahun_ajaran' => '2026/2027',
+            'tingkat' => '10',
+            'nominal' => 2000000,
+        ]);
+
+        $this->bayar($this->siswa, 'Juli', 250000);
+        $this->bayar($this->siswa, 'Agustus', 100000);
+        $this->bayar($this->siswa, 'September', 250000, void: true);
+        $this->bayarNonSpp($this->siswa, $gedung, 500000);
+
+        $rincian = app(LaporanSppService::class)->rincianTagihan($this->siswa, $this->tahunAjaran);
+        $items = collect($rincian['items']);
+
+        $juli = $items->firstWhere('pos_tarif', 'SPP Bulan Juli 2026');
+        $this->assertNotNull($juli);
+        $this->assertSame('lunas', $juli['status']);
+        $this->assertSame(250000, $juli['dibayar']);
+        $this->assertSame(0, $juli['sisa']);
+
+        $agustus = $items->firstWhere('pos_tarif', 'SPP Bulan Agustus 2026');
+        $this->assertNotNull($agustus);
+        $this->assertSame('sebagian', $agustus['status']);
+        $this->assertSame(100000, $agustus['dibayar']);
+        $this->assertSame(150000, $agustus['sisa']);
+
+        $september = $items->firstWhere('pos_tarif', 'SPP Bulan September 2026');
+        $this->assertNotNull($september);
+        $this->assertSame('belum', $september['status']);
+
+        $uangGedung = $items->firstWhere('pos_tarif', 'Uang Gedung');
+        $this->assertNotNull($uangGedung);
+        $this->assertSame(2000000, $uangGedung['nominal']);
+        $this->assertSame(500000, $uangGedung['dibayar']);
+        $this->assertSame(1500000, $uangGedung['sisa']);
+
+        $this->assertSame(5000000, $rincian['total_nominal']);
+        $this->assertSame(850000, $rincian['total_dibayar']);
+        $this->assertSame(4150000, $rincian['total_sisa']);
+    }
+
+    public function test_halaman_kartu_ledger_nonaktif(): void
     {
         $this->actingAs($this->petugas)
             ->get(KartuPembayaranSiswa::getUrl())
-            ->assertOk()
-            ->assertSee('Belum ada siswa dipilih');
+            ->assertForbidden();
     }
 
-    public function test_halaman_dan_cetak_kartu_pembayaran(): void
+    public function test_cetak_kartu_pembayaran_menampilkan_rincian_tagihan(): void
     {
         $this->bayar($this->siswa, 'Juli', 250000);
         $this->bayar($this->siswa, 'Agustus', 100000);
         $this->bayar($this->siswa, 'September', 250000, void: true);
-
-        $url = KartuPembayaranSiswa::getUrl()
-            .'?tahun_ajaran_id='.$this->tahunAjaran->id
-            .'&siswa_id='.$this->siswa->id;
-
-        $this->actingAs($this->petugas)
-            ->get($url)
-            ->assertOk()
-            ->assertSee('Kartu Pembayaran Siswa')
-            ->assertSee($this->siswa->nama)
-            ->assertSee('Buku Pembayaran Siswa')
-            ->assertSee('Transaksi Dibatalkan (Void)');
 
         $this->actingAs($this->petugas)
             ->get(route('laporan.kartu.cetak', [
@@ -161,8 +201,9 @@ class KartuPembayaranSiswaTest extends TestCase
             ->assertOk()
             ->assertSee('KARTU PEMBAYARAN SISWA')
             ->assertSee($this->siswa->nama)
-            ->assertSee('BUKU PEMBAYARAN')
-            ->assertSee('Transaksi Void');
+            ->assertSee('RINCIAN TAGIHAN')
+            ->assertSee('Pos Tarif')
+            ->assertSee('Transaksi Dibatalkan');
     }
 
     public function test_siswa_tidak_dapat_mengakses_kartu_pembayaran(): void

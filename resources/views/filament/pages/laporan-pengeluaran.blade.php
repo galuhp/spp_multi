@@ -104,18 +104,16 @@
                 <colgroup>
                     <col class="w-[15%]">
                     <col class="w-[9%]">
-                    <col class="w-[14%]">
-                    <col class="w-[19%]">
-                    <col class="w-[10%]">
-                    <col class="w-[10%]">
+                    <col class="w-[32%]">
                     <col class="w-[12%]">
                     <col class="w-[11%]">
+                    <col class="w-[12%]">
+                    <col class="w-[9%]">
                 </colgroup>
                 <thead class="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-700 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
                     <tr>
                         <th class="px-3 py-3">No. Bukti</th>
                         <th class="px-3 py-3">Tanggal</th>
-                        <th class="px-3 py-3">Kategori</th>
                         <th class="px-3 py-3">Uraian / Keperluan</th>
                         <th class="px-3 py-3">Penerima</th>
                         <th class="px-3 py-3">Metode</th>
@@ -133,14 +131,7 @@
                                 {{ $item->tanggal->translatedFormat('d M Y') }}
                             </td>
                             <td class="px-3 py-2">
-                                <div class="truncate" title="{{ $item->labelKategori() }}">
-                                    <span class="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
-                                        {{ $item->labelKategori() }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="px-3 py-2">
-                                <div class="truncate font-medium text-gray-900 dark:text-white" title="{{ $item->keperluan }}">
+                                <div class="whitespace-normal break-words [overflow-wrap:anywhere] text-gray-900 dark:text-white" title="{{ $item->keperluan }}">
                                     {{ $item->keperluan }}
                                 </div>
                             </td>
@@ -159,7 +150,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-sm text-gray-500">
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500">
                                 Tidak ada data transaksi pengeluaran yang sesuai dengan filter yang dipilih.
                             </td>
                         </tr>

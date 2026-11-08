@@ -12,6 +12,7 @@ use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Url;
 use UnitEnum;
 
 class StatusTagihanPerSiswa2 extends Page
@@ -20,9 +21,9 @@ class StatusTagihanPerSiswa2 extends Page
 
     protected static UnitEnum|string|null $navigationGroup = 'Portal Siswa';
 
-    protected static ?string $navigationLabel = 'Status Tagihan Per Siswa 2';
+    protected static ?string $navigationLabel = 'Rincian Tagihan per Siswa';
 
-    protected static ?string $title = 'Status Tagihan Per Siswa 2';
+    protected static ?string $title = 'Rincian Tagihan per Siswa';
 
     protected static ?string $slug = 'status-tagihan-per-siswa-2';
 
@@ -30,6 +31,7 @@ class StatusTagihanPerSiswa2 extends Page
 
     protected string $view = 'filament.pages.status-tagihan-per-siswa2';
 
+    #[Url(as: 'siswa_id', except: null)]
     public ?int $selectedSiswaId = null;
 
     public string $cara_pilih = 'cari';
@@ -38,8 +40,10 @@ class StatusTagihanPerSiswa2 extends Page
 
     public string $cari = '';
 
+    #[Url(as: 'status', except: 'semua')]
     public string $status_filter = 'semua';
 
+    #[Url(as: 'q', except: '')]
     public string $cari_pos = '';
 
     public static function canAccess(): bool
@@ -203,7 +207,8 @@ class StatusTagihanPerSiswa2 extends Page
      *     countSemua: int,
      *     countLunas: int,
      *     countBelumLunas: int,
-     *     countSebagian: int
+     *     countSebagian: int,
+     *     countDitanggung: int
      * }
      */
     public function getTagihanDataProperty(): array
@@ -220,6 +225,7 @@ class StatusTagihanPerSiswa2 extends Page
                 'countLunas' => 0,
                 'countBelumLunas' => 0,
                 'countSebagian' => 0,
+                'countDitanggung' => 0,
             ];
         }
 
@@ -341,10 +347,12 @@ class StatusTagihanPerSiswa2 extends Page
         $countLunas = 0;
         $countBelumLunas = 0;
         $countSebagian = 0;
+        $countDitanggung = 0;
 
         foreach ($items as $item) {
             if ($item['ditanggung']) {
                 $totalDitanggung += $item['nominal'];
+                $countDitanggung++;
             } else {
                 $totalNominal += $item['nominal'];
                 $totalDibayar += $item['dibayar'];
@@ -370,6 +378,7 @@ class StatusTagihanPerSiswa2 extends Page
             'countLunas' => $countLunas,
             'countBelumLunas' => $countBelumLunas,
             'countSebagian' => $countSebagian,
+            'countDitanggung' => $countDitanggung,
         ];
     }
 

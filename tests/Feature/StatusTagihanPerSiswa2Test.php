@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\RolePermission;
 use App\Models\Siswa;
+use App\Models\SiswaTanggunganPemerintah;
 use App\Models\Spp;
 use App\Models\TahunAjaran;
 use App\Models\User;
@@ -53,8 +54,9 @@ class StatusTagihanPerSiswa2Test extends TestCase
             'permission' => RolePermission::PORTAL_SISWA,
         ]);
 
-        $this->tahunAjaran = TahunAjaran::query()->create([
+        $this->tahunAjaran = TahunAjaran::query()->updateOrCreate([
             'nama' => '2026/2027',
+        ], [
             'tanggal_mulai' => '2026-07-01',
             'tanggal_selesai' => '2027-06-30',
             'aktif' => true,
@@ -99,7 +101,7 @@ class StatusTagihanPerSiswa2Test extends TestCase
         $this->actingAs($this->admin)
             ->get(StatusTagihanPerSiswa2::getUrl())
             ->assertStatus(200)
-            ->assertSee('Status Tagihan Per Siswa 2')
+            ->assertSee('Rincian Tagihan per Siswa')
             ->assertSee('Rincian Tagihan Siswa');
 
         $this->actingAs($this->petugas)
@@ -213,6 +215,75 @@ class StatusTagihanPerSiswa2Test extends TestCase
             ->assertSee('SPP Bulan Juli 2026')
             ->assertDontSee('SPP Bulan Agustus 2026')
             ->call('setStatusFilter', 'belum_lunas')
+            ->assertSee('SPP Bulan Agustus 2026')
+            ->assertDontSee('SPP Bulan Juli 2026');
+    }
+
+    public function test_filter_sebagian_hanya_menampilkan_pos_dicicil(): void
+    {
+        // Bayar sebagian SPP Juli (Rp 50.000 dari Rp 200.000).
+        Pembayaran::query()->create([
+            'kode_transaksi' => 'TRX-TEST-003',
+            'user_id' => $this->admin->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => '2026-07-10',
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 50000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(StatusTagihanPerSiswa2::class, ['siswa_id' => $this->siswa->id])
+            ->call('setStatusFilter', 'sebagian')
+            ->assertSet('status_filter', 'sebagian')
+            ->assertSee('SPP Bulan Juli 2026')
+            ->assertDontSee('SPP Bulan Agustus 2026')
+            ->assertSee('Sebagian');
+    }
+
+    public function test_total_dan_jumlah_pos_mengecualikan_tagihan_ditanggung(): void
+    {
+        SiswaTanggunganPemerintah::query()->create([
+            'siswa_id' => $this->siswa->id,
+            'cakupan' => SiswaTanggunganPemerintah::CAKUPAN_SPP,
+            'mulai' => '2026-07-01',
+        ]);
+
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(StatusTagihanPerSiswa2::class, ['siswa_id' => $this->siswa->id]);
+
+        $tagihan = $component->instance()->tagihanData;
+
+        $this->assertSame(0, $tagihan['totalNominal']);
+        $this->assertSame(0, $tagihan['totalSisa']);
+        $this->assertSame(12 * 200000, $tagihan['totalDitanggung']);
+        $this->assertSame(12, $tagihan['countDitanggung']);
+        $this->assertSame(12, $tagihan['countLunas']);
+        $this->assertSame(0, $tagihan['countBelumLunas']);
+        $this->assertSame(12, $tagihan['countSemua']);
+
+        $component
+            ->assertSee('Ditanggung Pemerintah')
+            ->assertSee('0 pos tagihan (di luar ditanggung)')
+            ->assertSee('12 pos ditanggung');
+    }
+
+    public function test_filter_tersimpan_di_query_string(): void
+    {
+        $this->actingAs($this->admin);
+
+        Livewire::withQueryParams([
+            'siswa_id' => $this->siswa->id,
+            'status' => 'belum_lunas',
+            'q' => 'Agustus',
+        ])->test(StatusTagihanPerSiswa2::class)
+            ->assertSet('selectedSiswaId', $this->siswa->id)
+            ->assertSet('status_filter', 'belum_lunas')
+            ->assertSet('cari_pos', 'Agustus')
             ->assertSee('SPP Bulan Agustus 2026')
             ->assertDontSee('SPP Bulan Juli 2026');
     }
