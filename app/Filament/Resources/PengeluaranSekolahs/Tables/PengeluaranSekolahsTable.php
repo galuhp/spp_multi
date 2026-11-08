@@ -4,10 +4,13 @@ namespace App\Filament\Resources\PengeluaranSekolahs\Tables;
 
 use App\Models\PengeluaranSekolah;
 use App\Models\TahunAjaran;
+use App\Support\Pengeluaran\PengeluaranService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
@@ -87,6 +90,14 @@ class PengeluaranSekolahsTable
                     ->label('Tahun Ajaran')
                     ->size('xs')
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('void_at')
+                    ->label('Status')
+                    ->badge()
+                    ->size('sm')
+                    ->formatStateUsing(fn ($state): string => $state ? 'Batal' : 'Valid')
+                    ->color(fn ($state): string => $state ? 'danger' : 'success')
+                    ->toggleable(),
             ])
             ->defaultSort('tanggal', 'desc')
             ->filters([
@@ -101,6 +112,20 @@ class PengeluaranSekolahsTable
                 SelectFilter::make('tahun_ajaran_id')
                     ->label('Tahun Ajaran')
                     ->relationship('tahunAjaran', 'nama'),
+
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'valid' => 'Valid',
+                        'batal' => 'Batal',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'batal' => $query->whereNotNull('void_at'),
+                            'valid' => $query->whereNull('void_at'),
+                            default => $query,
+                        };
+                    }),
 
                 Filter::make('periode')
                     ->form([
@@ -117,7 +142,7 @@ class PengeluaranSekolahsTable
                             ->when($data['sampai'] ?? null, fn (Builder $q, $date) => $q->whereDate('tanggal', '<=', $date));
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('cetak')
                     ->label('Cetak Bukti')
                     ->icon(Heroicon::OutlinedPrinter)
@@ -125,8 +150,39 @@ class PengeluaranSekolahsTable
                     ->url(fn (PengeluaranSekolah $record): string => route('pengeluaran.cetak', $record->id))
                     ->openUrlInNewTab(),
 
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->visible(fn (PengeluaranSekolah $record): bool => ! $record->isVoid()),
+
+                Action::make('batal')
+                    ->label('Batal')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->modalHeading('Batalkan pengeluaran?')
+                    ->modalDescription('Data pengeluaran tetap tersimpan sebagai riwayat pembatalan.')
+                    ->visible(fn (PengeluaranSekolah $record): bool => ! $record->isVoid()
+                        && (auth()->user()?->isAdmin() ?? false))
+                    ->form([
+                        Textarea::make('alasan')
+                            ->label('Alasan pembatalan')
+                            ->required()
+                            ->maxLength(500),
+                    ])
+                    ->action(function (PengeluaranSekolah $record, array $data): void {
+                        app(PengeluaranService::class)->batalkan(
+                            $record,
+                            (int) auth()->id(),
+                            $data['alasan'],
+                        );
+
+                        Notification::make()
+                            ->title('Pengeluaran dibatalkan')
+                            ->body('Riwayat dan nomor bukti tetap tersimpan.')
+                            ->success()
+                            ->send();
+                    }),
+
+                DeleteAction::make()
+                    ->visible(fn (PengeluaranSekolah $record): bool => ! $record->isVoid()),
             ]);
     }
 }

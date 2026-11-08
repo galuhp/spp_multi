@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'bukti_transaksi',
     'user_id',
     'tahun_ajaran_id',
+    'void_at',
+    'void_oleh',
+    'void_alasan',
 ])]
 class PengeluaranSekolah extends Model
 {
@@ -73,6 +77,7 @@ class PengeluaranSekolah extends Model
         return [
             'tanggal' => 'date',
             'nominal' => 'integer',
+            'void_at' => 'datetime',
         ];
     }
 
@@ -124,6 +129,27 @@ class PengeluaranSekolah extends Model
     public function tahunAjaran(): BelongsTo
     {
         return $this->belongsTo(TahunAjaran::class);
+    }
+
+    /**
+     * User who cancelled this expenditure.
+     */
+    public function voidOleh(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'void_oleh');
+    }
+
+    /**
+     * Only expenditures that have not been cancelled.
+     */
+    public function scopeTidakBatal(Builder $query): Builder
+    {
+        return $query->whereNull('void_at');
+    }
+
+    public function isVoid(): bool
+    {
+        return $this->void_at !== null;
     }
 
     public function labelKategori(): string

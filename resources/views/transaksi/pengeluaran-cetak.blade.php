@@ -59,6 +59,18 @@
             <p class="text-[11px] text-zinc-600">Tahun Pelajaran: {{ $pengeluaran->tahunAjaran?->nama ?? '-' }}</p>
         </div>
 
+        @if ($pengeluaran->isVoid())
+            <div class="mb-4 rounded border border-rose-300 bg-rose-50 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-rose-700">
+                Dibatalkan
+                @if ($pengeluaran->void_at)
+                    &bull; {{ $pengeluaran->void_at->translatedFormat('d F Y H:i') }}
+                @endif
+                @if ($pengeluaran->void_alasan)
+                    <div class="mt-1 font-normal normal-case tracking-normal text-rose-600">Alasan: {{ $pengeluaran->void_alasan }}</div>
+                @endif
+            </div>
+        @endif
+
         <!-- Rincian -->
         <table class="w-full text-xs border-collapse mb-5">
             <tbody>

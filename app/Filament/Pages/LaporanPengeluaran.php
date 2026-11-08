@@ -100,6 +100,7 @@ class LaporanPengeluaran extends Page
     public function getFilteredPengeluaransProperty(): Collection
     {
         return PengeluaranSekolah::with(['user', 'tahunAjaran'])
+            ->whereNull('void_at')
             ->when($this->tgl_awal, fn ($q, $tgl) => $q->whereDate('tanggal', '>=', $tgl))
             ->when($this->tgl_akhir, fn ($q, $tgl) => $q->whereDate('tanggal', '<=', $tgl))
             ->when($this->kategori, fn ($q, $k) => $q->where('kategori', $k))

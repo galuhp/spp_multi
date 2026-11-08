@@ -39,6 +39,7 @@ class PengeluaranController extends Controller
         $tahunAjaranId = $request->query('tahun_ajaran_id');
 
         $pengeluarans = PengeluaranSekolah::with(['user', 'tahunAjaran'])
+            ->whereNull('void_at')
             ->when($tglAwal, fn ($q, $tgl) => $q->whereDate('tanggal', '>=', $tgl))
             ->when($tglAkhir, fn ($q, $tgl) => $q->whereDate('tanggal', '<=', $tgl))
             ->when($kategori, fn ($q, $k) => $q->where('kategori', $k))
