@@ -20,13 +20,7 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3">
-                            <button type="button" wire:click="hitungUlangData" wire:loading.attr="disabled"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-xs hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/70">
-                                <x-filament::icon icon="heroicon-o-arrow-path" class="size-4" wire:loading.class="animate-spin" />
-                                <span>Hitung Ulang &amp; Sinkronkan Data</span>
-                            </button>
-
-                            <div class="flex flex-wrap items-center gap-4 text-sm text-slate-700 dark:text-gray-300 border-l border-slate-200 pl-3 dark:border-gray-700">
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-slate-700 dark:text-gray-300">
                                 <label class="flex cursor-pointer items-center gap-2">
                                     <input type="radio" wire:model.live="cara_pilih" value="cari"
                                         class="size-4 accent-primary-600">
