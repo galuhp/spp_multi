@@ -22,7 +22,7 @@ class TagihanSiswa extends Page
 
     protected static UnitEnum|string|null $navigationGroup = 'Portal Siswa';
 
-    protected static ?string $navigationLabel = 'Status Tagihan';
+    protected static ?string $navigationLabel = 'Status Tagihan per siswa';
 
     protected static ?string $title = 'Matriks Tagihan & Status Pembayaran';
 
