@@ -125,7 +125,10 @@
                             <td class="py-1.5 px-2 border-r border-zinc-200 font-mono whitespace-nowrap">{{ $item->siswa?->nisn ?? '-' }}</td>
                             <td class="py-1.5 px-2 border-r border-zinc-200 whitespace-nowrap">{{ $item->siswa?->kelas?->nama_kelas ?? '-' }}</td>
                             <td class="py-1.5 px-2 border-r border-zinc-200">
-                                {{ $item->namaPos() }}
+                                <div>{{ $item->namaPos() }}</div>
+                                @if($sub = $item->subsidi())
+                                    <div class="text-[9px] text-zinc-500 italic font-normal">* Diskon {{ $sub->persentase }}%</div>
+                                @endif
                             </td>
                             <td class="py-1.5 px-2 border-r border-zinc-200 whitespace-nowrap">
                                 @if($item->gabungan_id)

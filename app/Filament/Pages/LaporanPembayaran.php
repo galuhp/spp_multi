@@ -89,7 +89,7 @@ class LaporanPembayaran extends Page
 
     public function getFilteredPembayaransProperty(): Collection
     {
-        return Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp'])
+        return Pembayaran::with(['siswa.kelas.jurusan', 'siswa.subsidies', 'user', 'spp'])
             ->whereNull('void_at')
             ->when($this->tgl_awal, fn ($q, $tgl) => $q->whereDate('tgl_bayar', '>=', $tgl))
             ->when($this->tgl_akhir, fn ($q, $tgl) => $q->whereDate('tgl_bayar', '<=', $tgl))

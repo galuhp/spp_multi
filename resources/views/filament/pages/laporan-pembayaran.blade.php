@@ -117,9 +117,16 @@
                                 <div class="text-xs text-gray-500">NISN: {{ $p->siswa?->nisn }} &bull; {{ $p->siswa?->kelas?->nama_kelas }}</div>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
-                                    {{ $p->labelKategori() }}
-                                </span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
+                                        {{ $p->labelKategori() }}
+                                    </span>
+                                    @if($sub = $p->subsidi())
+                                        <span class="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-700/50">
+                                            Diskon {{ $sub->persentase }}%
+                                        </span>
+                                    @endif
+                                </div>
                                 <div class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-0.5">
                                     {{ $p->namaPos() }}
                                 </div>

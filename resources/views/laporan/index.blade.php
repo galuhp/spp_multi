@@ -150,6 +150,11 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $item->spp?->badgeClass() }}">
                                         {{ $item->labelKategori() }}
                                     </span>
+                                    @if($sub = $item->subsidi())
+                                        <span class="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
+                                            Diskon {{ $sub->persentase }}%
+                                        </span>
+                                    @endif
                                     <span>{{ $item->namaPos() }}</span>
                                 </span>
                             </td>

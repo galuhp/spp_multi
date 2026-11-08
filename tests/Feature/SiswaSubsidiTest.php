@@ -292,6 +292,13 @@ class SiswaSubsidiTest extends TestCase
 
         $this->assertNotNull($pembayaran->subsidi());
         $this->assertSame(40, $pembayaran->subsidi()->persentase);
+
+        $response = $this->get(route('laporan.cetak', [
+            'tgl_awal' => now()->toDateString(),
+            'tgl_akhir' => now()->toDateString(),
+        ]));
+        $response->assertOk();
+        $response->assertSee('Diskon 40%');
     }
 }
 

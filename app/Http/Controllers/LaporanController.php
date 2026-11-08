@@ -28,7 +28,7 @@ class LaporanController extends Controller
         $metode = $request->query('metode_pembayaran');
         $kategori = $request->query('kategori');
 
-        $pembayarans = Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp', 'gabungan'])->whereNull('void_at')
+        $pembayarans = Pembayaran::with(['siswa.kelas.jurusan', 'siswa.subsidies', 'user', 'spp', 'gabungan'])->whereNull('void_at')
             ->when($tglAwal, function ($query, $tgl) {
                 return $query->whereDate('tgl_bayar', '>=', $tgl);
             })
@@ -82,7 +82,7 @@ class LaporanController extends Controller
         $metode = $request->query('metode_pembayaran');
         $kategori = $request->query('kategori');
 
-        $pembayarans = Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp', 'gabungan'])->whereNull('void_at')
+        $pembayarans = Pembayaran::with(['siswa.kelas.jurusan', 'siswa.subsidies', 'user', 'spp', 'gabungan'])->whereNull('void_at')
             ->when($tglAwal, function ($query, $tgl) {
                 return $query->whereDate('tgl_bayar', '>=', $tgl);
             })
