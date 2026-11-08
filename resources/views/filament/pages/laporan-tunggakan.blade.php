@@ -8,7 +8,6 @@
         $ringkasan = $laporan['ringkasan'];
         $perKelas = $laporan['per_kelas'];
         $perKategoriNonSpp = $laporan['per_kategori_non_spp'];
-        $siswa = $laporan['siswa'];
         $tahunAjaran = $laporan['tahun_ajaran'];
         $bulan = collect($laporan['bulan']);
     @endphp
@@ -270,110 +269,4 @@
         </div>
     @endif
 
-    <!-- Detail per Siswa -->
-    <div class="fi-section overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-        <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-            <h3 class="text-sm font-semibold text-gray-950 dark:text-white">Detail Tunggakan per Siswa</h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-                <thead class="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-700 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
-                    <tr>
-                        <th class="px-4 py-3.5">NISN</th>
-                        <th class="px-4 py-3.5">Nama Siswa</th>
-                        <th class="px-4 py-3.5">Kelas</th>
-                        <th class="px-4 py-3.5 text-right">Tarif SPP / Bulan</th>
-                        <th class="px-4 py-3.5 text-right">Tagihan</th>
-                        <th class="px-4 py-3.5 text-right">Dibayar</th>
-                        <th class="px-4 py-3.5 text-right">Tunggakan SPP</th>
-                        <th class="px-4 py-3.5 text-right">Tunggakan Non-SPP</th>
-                        <th class="px-4 py-3.5 text-right">Total Tunggakan</th>
-                        <th class="px-4 py-3.5">Bulan SPP Tertunggak</th>
-                        <th class="px-4 py-3.5">Pos Non-SPP Tertunggak</th>
-                        <th class="px-4 py-3.5 text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                    @forelse($siswa as $baris)
-                        @php
-                            $statusLabel = match ($baris['status']) {
-                                'menunggak' => 'Menunggak',
-                                'lunas' => 'Lunas',
-                                'tanpa_tarif' => 'Tanpa Tarif',
-                                default => 'Belum Jatuh Tempo',
-                            };
-                            $statusClass = match ($baris['status']) {
-                                'menunggak' => 'border border-rose-200/80 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/50 dark:text-rose-300',
-                                'lunas' => 'border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/50 dark:text-emerald-300',
-                                'tanpa_tarif' => 'border border-amber-200/80 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-300',
-                                default => 'border border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
-                            };
-                        @endphp
-                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
-                            <td class="px-4 py-3 font-mono text-xs">{{ $baris['siswa']->nisn ?: '-' }}</td>
-                            <td class="px-4 py-3">
-                                <div class="font-medium text-gray-900 dark:text-white">{{ $baris['siswa']->nama }}</div>
-                                <div class="text-xs text-gray-500">NIS: {{ $baris['siswa']->nis ?: '-' }}</div>
-                            </td>
-                            <td class="px-4 py-3 text-xs">
-                                {{ $baris['kelas']->nama_kelas }}
-                                @if($baris['kelas']->jurusan?->kode)
-                                    <span class="text-gray-500">({{ $baris['kelas']->jurusan->kode }})</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                @if($baris['nominal'] > 0)
-                                    Rp {{ number_format($baris['nominal'], 0, ',', '.') }}
-                                @else
-                                    <span class="text-xs text-amber-600 dark:text-amber-400">Belum ada tarif</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right">Rp {{ number_format($baris['tagihan'], 0, ',', '.') }}</td>
-                            <td class="px-4 py-3 text-right">Rp {{ number_format($baris['dibayar'], 0, ',', '.') }}</td>
-                            <td class="px-4 py-3 text-right text-rose-600 dark:text-rose-400">
-                                Rp {{ number_format($baris['tunggakan_spp'], 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-3 text-right text-amber-600 dark:text-amber-400">
-                                Rp {{ number_format($baris['tunggakan_non_spp'], 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-3 text-right font-semibold text-rose-600 dark:text-rose-400">
-                                Rp {{ number_format($baris['tunggakan'], 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-3 text-xs">
-                                @if($baris['bulan_tertunggak'] === [])
-                                    <span class="text-gray-400">-</span>
-                                @else
-                                    {{ implode(', ', $baris['bulan_tertunggak']) }}
-                                    <span class="ml-1 inline-flex items-center rounded-md border border-rose-200/80 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/50 dark:text-rose-300">
-                                        {{ $baris['jumlah_bulan_tertunggak'] }} bulan
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-xs">
-                                @if($baris['pos_non_spp_tertunggak'] === [])
-                                    <span class="text-gray-400">-</span>
-                                @else
-                                    {{ implode(', ', $baris['pos_non_spp_tertunggak']) }}
-                                    <span class="ml-1 inline-flex items-center rounded-md border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-300">
-                                        {{ $baris['jumlah_pos_non_spp_tertunggak'] }} pos
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                                <span class="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold {{ $statusClass }}">
-                                    {{ $statusLabel }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="12" class="px-4 py-8 text-center text-sm text-gray-500">
-                                Tidak ada data siswa yang sesuai dengan filter yang dipilih.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
 </x-filament-panels::page>

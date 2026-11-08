@@ -270,7 +270,6 @@ class LaporanTunggakanTest extends TestCase
             ->get($url)
             ->assertOk()
             ->assertSee('Laporan Tunggakan SPP')
-            ->assertSee($this->siswa->nama)
             ->assertSee('Rp 900.000');
 
         $this->actingAs($this->petugas)
