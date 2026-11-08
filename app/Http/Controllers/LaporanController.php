@@ -189,7 +189,11 @@ class LaporanController extends Controller
 
         abort_if(! $tahunAjaran, 404, 'Tahun ajaran tidak ditemukan.');
 
-        return view('laporan.kartu-cetak', [
+        $view = $request->query('layout') === 'landscape'
+            ? 'laporan.kartu-cetak-landscape'
+            : 'laporan.kartu-cetak';
+
+        return view($view, [
             'kartu' => $service->kartuPembayaran($siswa, $tahunAjaran),
             'rincian' => $service->rincianTagihan($siswa, $tahunAjaran),
         ]);

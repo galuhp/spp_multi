@@ -153,53 +153,7 @@ class LaporanSppService
             ->map(fn (array $periode): string => $periode['bulan'].'|'.$periode['tahun'])
             ->all();
 
-        $entries = collect();
-        $urutan = 0;
-
-        if ($nominalSpp > 0) {
-            foreach (Pembayaran::bulanTahunAjaran($this->tahunMulai($tahunAjaran)) as $periode) {
-                $entries->push([
-                    'tanggal' => Carbon::create($periode['tahun'], $this->nomorBulan($periode['bulan']), 1)->startOfDay(),
-                    'tipe' => 'tagihan_spp',
-                    'prioritas' => 0,
-                    'urutan' => $urutan++,
-                    'uraian' => 'Tagihan SPP '.$periode['bulan'].' '.$periode['tahun'],
-                    'referensi' => null,
-                    'debit' => $nominalSpp,
-                    'kredit' => 0,
-                    'status' => in_array($periode['bulan'].'|'.$periode['tahun'], $kunciJatuhTempo, true)
-                        ? 'jatuh_tempo'
-                        : 'belum_jatuh_tempo',
-                    'meta' => ['bulan' => $periode['bulan'], 'tahun' => $periode['tahun']],
-                ]);
-            }
-        }
-
         $tarifNonSpp = $this->tarifNonSppUntukKelas($kelas, $tahunAjaran);
-        $tanggalNonSpp = $tahunAjaran->tanggal_mulai?->copy()->startOfDay()
-            ?? Carbon::create($this->tahunMulai($tahunAjaran), 7, 1)->startOfDay();
-
-        foreach ($tarifNonSpp as $tarifNon) {
-            $nominalNonSpp = (int) $tarifNon->nominal;
-
-            if ($nominalNonSpp <= 0) {
-                continue;
-            }
-
-            $entries->push([
-                'tanggal' => $tanggalNonSpp,
-                'tipe' => 'tagihan_non_spp',
-                'prioritas' => 0,
-                'urutan' => $urutan++,
-                'uraian' => 'Tagihan '.($tarifNon->nama ?: $tarifNon->kategori),
-                'referensi' => null,
-                'debit' => $nominalNonSpp,
-                'kredit' => 0,
-                'status' => 'jatuh_tempo',
-                'meta' => ['tarif_id' => $tarifNon->id, 'kategori' => $tarifNon->kategori],
-            ]);
-        }
-
         $tarifIds = array_values(array_unique(array_filter(array_merge(
             $tarif?->id ? [$tarif->id] : [],
             $tarifNonSpp->pluck('id')->all(),
@@ -219,6 +173,78 @@ class LaporanSppService
             ->orderBy('id')
             ->get();
 
+        $entries = collect();
+        $urutan = 0;
+
+        if ($nominalSpp > 0) {
+            $sppTarifIds = array_values(array_unique(array_filter(array_merge(
+                $tarif?->id ? [$tarif->id] : [],
+                Spp::query()
+                    ->where('kategori', Spp::KATEGORI_SPP)
+                    ->where('tahun_ajaran', $tahunAjaran->nama)
+                    ->pluck('id')
+                    ->all(),
+            ))));
+
+            foreach (Pembayaran::bulanTahunAjaran($this->tahunMulai($tahunAjaran)) as $periode) {
+                $bayarBulan = $pembayarans
+                    ->whereIn('spp_id', $sppTarifIds)
+                    ->where('bulan_dibayar', $periode['bulan']);
+
+                $noKuitansi = $bayarBulan->pluck('kode_transaksi')->filter()->unique()->join(', ');
+
+                $entries->push([
+                    'tanggal' => Carbon::create($periode['tahun'], $this->nomorBulan($periode['bulan']), 1)->startOfDay(),
+                    'tipe' => 'tagihan_spp',
+                    'prioritas' => 0,
+                    'urutan' => $urutan++,
+                    'uraian' => 'Tagihan SPP '.$periode['bulan'].' '.$periode['tahun'],
+                    'referensi' => $noKuitansi ?: null,
+                    'debit' => $nominalSpp,
+                    'kredit' => 0,
+                    'status' => in_array($periode['bulan'].'|'.$periode['tahun'], $kunciJatuhTempo, true)
+                        ? 'jatuh_tempo'
+                        : 'belum_jatuh_tempo',
+                    'meta' => [
+                        'bulan' => $periode['bulan'],
+                        'tahun' => $periode['tahun'],
+                        'no_kuitansi' => $noKuitansi ?: null,
+                    ],
+                ]);
+            }
+        }
+
+        $tanggalNonSpp = $tahunAjaran->tanggal_mulai?->copy()->startOfDay()
+            ?? Carbon::create($this->tahunMulai($tahunAjaran), 7, 1)->startOfDay();
+
+        foreach ($tarifNonSpp as $tarifNon) {
+            $nominalNonSpp = (int) $tarifNon->nominal;
+
+            if ($nominalNonSpp <= 0) {
+                continue;
+            }
+
+            $bayarNon = $pembayarans->where('spp_id', $tarifNon->id);
+            $noKuitansiNon = $bayarNon->pluck('kode_transaksi')->filter()->unique()->join(', ');
+
+            $entries->push([
+                'tanggal' => $tanggalNonSpp,
+                'tipe' => 'tagihan_non_spp',
+                'prioritas' => 0,
+                'urutan' => $urutan++,
+                'uraian' => 'Tagihan '.($tarifNon->nama ?: $tarifNon->kategori),
+                'referensi' => $noKuitansiNon ?: null,
+                'debit' => $nominalNonSpp,
+                'kredit' => 0,
+                'status' => 'jatuh_tempo',
+                'meta' => [
+                    'tarif_id' => $tarifNon->id,
+                    'kategori' => $tarifNon->kategori,
+                    'no_kuitansi' => $noKuitansiNon ?: null,
+                ],
+            ]);
+        }
+
         foreach ($pembayarans as $pembayaran) {
             $entries->push([
                 'tanggal' => $pembayaran->tgl_bayar->copy()->startOfDay(),
@@ -234,6 +260,7 @@ class LaporanSppService
                     'metode' => $pembayaran->metode_pembayaran,
                     'petugas' => $pembayaran->user?->name,
                     'kategori' => $pembayaran->spp?->kategori,
+                    'no_kuitansi' => $pembayaran->kode_transaksi,
                 ],
             ]);
         }
@@ -429,6 +456,8 @@ class LaporanSppService
             $tanggalBayar .= ' ('.$pembayarans->count().'x bayar)';
         }
 
+        $noKuitansi = $pembayarans->pluck('kode_transaksi')->filter()->unique()->join(', ');
+
         return [
             'pos_tarif' => $pos,
             'kategori' => $kategori,
@@ -439,6 +468,8 @@ class LaporanSppService
             'status' => $status,
             'ditanggung' => $ditanggung,
             'tanggal_bayar' => $tanggalBayar,
+            'referensi' => $noKuitansi ?: null,
+            'no_kuitansi' => $noKuitansi ?: null,
         ];
     }
 

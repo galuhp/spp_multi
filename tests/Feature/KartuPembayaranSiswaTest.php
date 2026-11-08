@@ -189,7 +189,7 @@ class KartuPembayaranSiswaTest extends TestCase
 
     public function test_cetak_kartu_pembayaran_menampilkan_rincian_tagihan(): void
     {
-        $this->bayar($this->siswa, 'Juli', 250000);
+        $bayarJuli = $this->bayar($this->siswa, 'Juli', 250000);
         $this->bayar($this->siswa, 'Agustus', 100000);
         $this->bayar($this->siswa, 'September', 250000, void: true);
 
@@ -203,7 +203,31 @@ class KartuPembayaranSiswaTest extends TestCase
             ->assertSee($this->siswa->nama)
             ->assertSee('RINCIAN TAGIHAN')
             ->assertSee('Pos Tarif')
-            ->assertSee('Transaksi Dibatalkan');
+            ->assertSee('No. Kuitansi')
+            ->assertSee($bayarJuli->kode_transaksi)
+            ->assertSee('Transaksi Dibatalkan')
+            ->assertSee('Mode Landscape')
+            ->assertDontSee('LEMBAR PENGESAHAN')
+            ->assertDontSee('Tarif SPP');
+    }
+
+    public function test_cetak_kartu_pembayaran_landscape_dapat_diakses_via_parameter_layout(): void
+    {
+        $bayarJuli = $this->bayar($this->siswa, 'Juli', 250000);
+
+        $this->actingAs($this->petugas)
+            ->get(route('laporan.kartu.cetak', [
+                'tahun_ajaran_id' => $this->tahunAjaran->id,
+                'siswa_id' => $this->siswa->id,
+                'layout' => 'landscape',
+            ]))
+            ->assertOk()
+            ->assertSee('KARTU PEMBAYARAN SISWA')
+            ->assertSee('Mode Cetak Landscape')
+            ->assertSee('A4 landscape')
+            ->assertSee('Mode Portrait')
+            ->assertSee('LEMBAR PENGESAHAN')
+            ->assertSee($bayarJuli->kode_transaksi);
     }
 
     public function test_siswa_tidak_dapat_mengakses_kartu_pembayaran(): void
