@@ -207,17 +207,55 @@ class Pembayaran extends Model
         $nama = trim((string) ($this->spp?->nama ?? ''));
 
         if ($this->bulan_dibayar) {
-            $isSppBaku = strcasecmp($kategori, 'SPP') === 0
-                && ($nama === '' || strcasecmp($nama, 'SPP') === 0 || strcasecmp($nama, 'SPP Bulanan') === 0 || strcasecmp($nama, 'Biaya Sekolah per bulan') === 0);
+            $prefix = $this->isTarifSppBaku($kategori, $nama) ? 'SPP' : ($nama !== '' ? $nama : $kategori);
 
-            $prefix = $isSppBaku ? 'SPP' : ($nama !== '' ? $nama : $kategori);
+            $prefixSudahMenyebutBulan = str_contains(strtolower($prefix), 'per bulan')
+                || str_contains(strtolower($prefix), 'bulanan');
 
-            return "{$prefix} Bulan {$this->bulan_dibayar} {$this->tahun_dibayar}";
+            $periode = $prefixSudahMenyebutBulan
+                ? "{$this->bulan_dibayar} {$this->tahun_dibayar}"
+                : "Bulan {$this->bulan_dibayar} {$this->tahun_dibayar}";
+
+            return trim("{$prefix} {$periode}");
         }
 
-        $label = $nama !== '' ? $nama : "{$kategori} TA {$this->spp?->tahun_ajaran}";
+        return $nama !== '' ? $nama : "{$kategori} TA {$this->spp?->tahun_ajaran}";
+    }
 
-        return $label;
+    /**
+     * Get display label for the tariff category badge.
+     *
+     * Tarif bulanan seperti "Tabungan per bulan" tetap berkategori SPP di database,
+     * sehingga badge harus memakai nama tarif agar tidak tertulis "SPP".
+     */
+    public function labelKategori(): string
+    {
+        $kategori = $this->spp?->kategori ?? 'SPP';
+        $nama = trim((string) ($this->spp?->nama ?? ''));
+
+        if ($nama !== '' && ! $this->isTarifSppBaku($kategori, $nama)) {
+            return $nama;
+        }
+
+        return $kategori;
+    }
+
+    /**
+     * Determine whether the tariff is a generic SPP tariff.
+     */
+    private function isTarifSppBaku(string $kategori, string $nama): bool
+    {
+        if (strcasecmp($kategori, 'SPP') !== 0) {
+            return false;
+        }
+
+        return in_array(strtolower($nama), [
+            '',
+            'spp',
+            'spp bulanan',
+            'biaya sekolah',
+            'biaya sekolah per bulan',
+        ], true);
     }
 
     /**

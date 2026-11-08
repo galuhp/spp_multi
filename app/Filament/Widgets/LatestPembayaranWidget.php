@@ -55,7 +55,7 @@ class LatestPembayaranWidget extends TableWidget
                     ->searchable(),
                 TextColumn::make('spp.kategori')
                     ->label('Kategori')
-                    ->getStateUsing(fn (Pembayaran $record): string => $record->spp?->nama ?: ($record->spp?->kategori ?? 'SPP'))
+                    ->getStateUsing(fn (Pembayaran $record): string => $record->labelKategori())
                     ->badge()
                     ->color('gray'),
                 TextColumn::make('bulan_dibayar')

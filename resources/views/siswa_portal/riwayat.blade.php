@@ -46,7 +46,7 @@
                             <td class="py-3.5 px-4">
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border {{ $item->spp?->badgeClass() }}">
-                                        {{ $item->spp?->kategori ?? 'SPP' }}
+                                        {{ $item->labelKategori() }}
                                     </span>
                                     <span class="text-xs font-semibold text-zinc-900">
                                         {{ $item->namaPos() }}

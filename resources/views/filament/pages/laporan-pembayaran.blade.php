@@ -118,7 +118,7 @@
                             </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
-                                    {{ $p->spp?->kategori ?? 'SPP' }}
+                                    {{ $p->labelKategori() }}
                                 </span>
                                 <div class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-0.5">
                                     {{ $p->namaPos() }}

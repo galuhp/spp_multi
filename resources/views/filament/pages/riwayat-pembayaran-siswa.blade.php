@@ -77,7 +77,7 @@
                                 <x-ui.table.cell>
                                     <div class="flex flex-wrap items-center gap-1.5">
                                         <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold {{ $item->spp?->badgeClass() }}">
-                                            {{ $item->spp?->kategori ?? 'SPP' }}
+                                            {{ $item->labelKategori() }}
                                         </span>
                                         <span class="text-xs font-semibold text-slate-900 dark:text-white">{{ $item->namaPos() }}</span>
                                     </div>
