@@ -299,6 +299,11 @@ class SiswaSubsidiTest extends TestCase
         ]));
         $response->assertOk();
         $response->assertSee('Diskon 40%');
+
+        $cetakResponse = $this->get(route('pembayaran.cetak', $pembayaran));
+        $cetakResponse->assertOk();
+        $cetakResponse->assertSee('Waktu Transaksi:');
+        $cetakResponse->assertSee('Potongan subsidi/diskon 40%');
     }
 }
 

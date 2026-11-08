@@ -40,6 +40,9 @@
         </div>
         <div class="space-y-1 text-right">
             <div><span class="text-zinc-500">Tanggal Bayar:</span> <strong class="text-zinc-800">{{ $pembayaran->tgl_bayar->translatedFormat('d F Y') }}</strong></div>
+            @if($pembayaran->created_at)
+                <div><span class="text-zinc-500">Waktu Transaksi:</span> <span class="font-mono font-medium text-zinc-800">{{ $pembayaran->created_at->format('H:i:s') }} WIB</span></div>
+            @endif
             <div><span class="text-zinc-500">Metode:</span> <span class="text-zinc-800">{{ $pembayaran->metode_pembayaran }}</span></div>
             <div><span class="text-zinc-500">Petugas Kasir:</span> <span class="text-zinc-800">{{ $pembayaran->user?->name }}</span></div>
         </div>
@@ -109,6 +112,6 @@
     </div>
 
     <p class="text-center text-[10px] text-zinc-500 mt-6 pt-3 border-t border-dashed border-zinc-200">
-        * Kuitansi ini sah diterbitkan oleh sistem sekolah. Orang tua dapat memindai (scan) QR Code di atas menggunakan kamera HP untuk melihat bukti pembayaran digital resmi.
+        * Kuitansi ini sah diterbitkan oleh sistem sekolah{{ $pembayaran->created_at ? ' pada ' . $pembayaran->created_at->translatedFormat('d F Y H:i:s') . ' WIB' : '' }}. Orang tua dapat memindai (scan) QR Code di atas menggunakan kamera HP untuk melihat bukti pembayaran digital resmi.
     </p>
 </div>
