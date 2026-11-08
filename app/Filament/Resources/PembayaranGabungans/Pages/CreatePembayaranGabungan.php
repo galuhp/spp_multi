@@ -45,6 +45,8 @@ class CreatePembayaranGabungan extends CreateRecord
      */
     public array $non_spp_ids = [];
 
+    public array $bulan_non_spp = [];
+
     public bool $modal = false;
 
     public bool $menyimpan = false;
@@ -249,6 +251,88 @@ class CreatePembayaranGabungan extends CreateRecord
      *
      * @return Collection<int, Spp>
      */
+    /**
+     * Non-SPP monthly tariffs (e.g. Tabungan per bulan) applicable to the
+     * selected class, grouped with their open months for the selected students.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getNonSppBulananGroupsProperty(): array
+    {
+        if (! $this->kelas_id || $this->siswa_ids === []) {
+            return [];
+        }
+
+        $tarifs = $this->nonSppOptions
+            ->where('tipe', Spp::TIPE_BULANAN)
+            ->values();
+
+        if ($tarifs->isEmpty()) {
+            return [];
+        }
+
+        $service = app(PembayaranService::class);
+        $info = $this->infoTahunAjaran;
+        $tahunMulai = $info['tahun_mulai'];
+
+        $groups = [];
+
+        foreach ($tarifs as $tarif) {
+            $bulanTerbuka = [];
+
+            foreach ($this->siswaTerpilih() as $siswa) {
+                foreach ($service->tagihanTerbuka($siswa) as $item) {
+                    if (($item['tipe'] ?? null) !== 'non_spp') {
+                        continue;
+                    }
+
+                    if ((int) ($item['spp_id'] ?? 0) !== (int) $tarif->id) {
+                        continue;
+                    }
+
+                    if (! empty($item['bulan']) && (int) ($item['sisa'] ?? 0) > 0) {
+                        $bulanTerbuka[(string) $item['bulan']] = true;
+                    }
+                }
+
+                if (count($bulanTerbuka) === count(Pembayaran::TAHUN_AJARAN_BULAN_LIST)) {
+                    break;
+                }
+            }
+
+            $tersedia = array_values(array_filter(
+                Pembayaran::TAHUN_AJARAN_BULAN_LIST,
+                static fn (string $namaBulan): bool => isset($bulanTerbuka[$namaBulan]),
+            ));
+
+            if ($tersedia === []) {
+                continue;
+            }
+
+            $grouped = [];
+
+            foreach ($tersedia as $namaBulan) {
+                $tahun = Pembayaran::tahunUntukBulan($namaBulan, $tahunMulai);
+                $grouped[$tahun][] = $namaBulan;
+            }
+
+            $groups[] = [
+                'id' => (int) $tarif->id,
+                'nama' => $tarif->nama ?: $tarif->kategori,
+                'nominal' => (int) $tarif->nominal,
+                'bulan_options' => $tersedia,
+                'grouped' => $grouped,
+            ];
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Non-SPP tariffs applicable to the selected class.
+     *
+     * @return Collection<int, Spp>
+     */
     public function getNonSppOptionsProperty(): Collection
     {
         if (! $this->kelas_id) {
@@ -363,6 +447,11 @@ class CreatePembayaranGabungan extends CreateRecord
         $this->hitungTotal();
     }
 
+    public function updatedBulanNonSpp(): void
+    {
+        $this->hitungTotal();
+    }
+
     public function pilihSemua(): void
     {
         $this->siswa_ids = $this->siswa
@@ -447,8 +536,9 @@ class CreatePembayaranGabungan extends CreateRecord
     {
         $bulan = array_values(array_unique($this->bulan));
         $nonSppIds = array_values(array_unique(array_map('intval', $this->non_spp_ids)));
+        $bulanNonSpp = array_values(array_unique($this->bulan_non_spp));
 
-        if (($bulan === [] && $nonSppIds === []) || $this->siswa_ids === []) {
+        if (($bulan === [] && $nonSppIds === [] && $bulanNonSpp === []) || $this->siswa_ids === []) {
             $this->totalEstimasi = 0;
 
             return;
@@ -477,6 +567,18 @@ class CreatePembayaranGabungan extends CreateRecord
                     $total += (int) $item['sisa'];
                 }
             }
+
+            foreach ($bulanNonSpp as $kunci) {
+                [$sppIdStr, $namaBulan] = array_pad(explode('|', $kunci, 2), 2, null);
+                $sppId = (int) $sppIdStr;
+
+                $item = $perPos->first(fn (array $i): bool => (int) ($i['spp_id'] ?? 0) === $sppId
+                    && ($i['bulan'] ?? null) === $namaBulan);
+
+                if ($item) {
+                    $total += (int) $item['sisa'];
+                }
+            }
         }
 
         $this->totalEstimasi = $total;
@@ -491,7 +593,8 @@ class CreatePembayaranGabungan extends CreateRecord
         $this->galat = null;
         $bulan = array_values(array_unique($this->bulan));
         $nonSppIds = array_values(array_unique(array_map('intval', $this->non_spp_ids)));
-        $targetCount = count($bulan) + count($nonSppIds);
+        $bulanNonSpp = array_values(array_unique($this->bulan_non_spp));
+        $targetCount = count($bulan) + count($nonSppIds) + count($bulanNonSpp);
 
         if ($this->kelas_id === null) {
             $this->galat = 'Pilih kelas terlebih dahulu.';
@@ -524,7 +627,7 @@ class CreatePembayaranGabungan extends CreateRecord
             foreach ($siswaList as $siswa) {
                 $terbuka = collect($service->tagihanTerbuka($siswa));
                 $perBulan = $terbuka->where('tipe', 'spp')->keyBy('bulan');
-                $perPos = $terbuka->where('tipe', 'non_spp')->keyBy('spp_id');
+                $perPos = $terbuka->where('tipe', 'non_spp');
                 $alokasi = [];
 
                 foreach ($bulan as $namaBulan) {
@@ -542,7 +645,25 @@ class CreatePembayaranGabungan extends CreateRecord
                 }
 
                 foreach ($nonSppIds as $sppId) {
-                    $item = $perPos->get($sppId);
+                    $item = $perPos->firstWhere('spp_id', $sppId);
+
+                    if (! $item) {
+                        continue;
+                    }
+
+                    $alokasi[] = [
+                        'tagihan' => $item['key'],
+                        'nominal' => (int) $item['sisa'],
+                    ];
+                    $total += (int) $item['sisa'];
+                }
+
+                foreach ($bulanNonSpp as $kunci) {
+                    [$sppIdStr, $namaBulan] = array_pad(explode('|', $kunci, 2), 2, null);
+                    $sppId = (int) $sppIdStr;
+
+                    $item = $perPos->first(fn (array $i): bool => (int) ($i['spp_id'] ?? 0) === $sppId
+                        && ($i['bulan'] ?? null) === $namaBulan);
 
                     if (! $item) {
                         continue;
