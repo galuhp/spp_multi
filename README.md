@@ -17,6 +17,7 @@ Aplikasi web manajemen pembayaran SPP (Sumbangan Pembinaan Pendidikan) dan biaya
 | **Tanggungan Pemerintah / Beasiswa** | Penandaan siswa penerima bantuan pemerintah (SPP penuh atau pos biaya tertentu) beserta periode berlaku & proteksi tagihan otomatis |
 | **Laporan & Buku Besar Siswa** | Laporan Penerimaan (Pemasukan) dengan **badge & keterangan diskon**, **Laporan & Rekapitulasi Pengeluaran Sekolah**, Laporan Tunggakan & **Cetak Tunggakan per Kelas** (lembar distribusi Wali Kelas ber-page-break yang akurat terhadap subsidi & tanggal masuk), Rekap Potensi vs Realisasi, Kartu Pembayaran Siswa (*Student Ledger*), dan Laporan Siswa Ditanggung Pemerintah |
 | **Portal Mandiri Siswa** | Siswa/orang tua memantau kartu SPP 12 bulan, deteksi tunggakan tahun ajaran sebelumnya, rincian biaya non-SPP, riwayat transaksi beserta waktu input, dan mencetak ulang kuitansi |
+| **Buku Panduan & SOP Operasional** | Panduan penggunaan sistem lengkap berbasis Markdown interaktif di panel admin (9 Bab SOP), daftar isi cerdas (*smart TOC*), filter topik, tombol **Cetak Panduan** (format buku standar), serta fitur unduh berkas `.md` |
 | **Pengguna, Role & Lisensi Paket** | Empat peran (`admin`, `petugas`, `wali_kelas`, `siswa`), Login Google OAuth, matriks izin modul (`role_permissions`), Log Aktivitas, serta sistem **Segmentasi Paket `basic` & `pro`** |
 
 ## Hak Akses
@@ -32,6 +33,7 @@ Aplikasi web manajemen pembayaran SPP (Sumbangan Pembinaan Pendidikan) dan biaya
 | Laporan & Rekapitulasi Umum (Pemasukan, Pengeluaran, Potensi) | ✓ | ✓ | ✗ | ✗ |
 | **Laporan Tunggakan (View Only Kelas Binaan)** | ✓ | ✓ | **✓ (View Only)** | ✗ |
 | Tagihan & Riwayat Pribadi (Portal Siswa) | ✗ | ✗ | ✗ | ✓ |
+| **Buku Panduan Penggunaan & SOP** | ✓ | ✓ | ✓ | ✓ |
 
 *\*Hak akses tiap modul dapat dikustomisasi secara dinamis melalui menu **Manajemen Role** (`role_permissions`).*
 

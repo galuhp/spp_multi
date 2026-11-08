@@ -52,6 +52,16 @@ Route::middleware('auth')->group(function () {
     Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
     Route::put('/profil/password', [ProfilController::class, 'updatePassword'])->name('profil.password');
 
+    // Unduh Dokumen Buku Panduan Penggunaan
+    Route::get('/panduan/unduh', function () {
+        $path = base_path('docs/PANDUAN_PENGGUNAAN.md');
+        abort_unless(file_exists($path), 404);
+
+        return response()->download($path, 'Buku-Panduan-E-SPP.md', [
+            'Content-Type' => 'text/markdown; charset=UTF-8',
+        ]);
+    })->name('panduan.unduh');
+
     // Admin & Petugas (Staff) Routes
     Route::middleware('role:admin,petugas')->group(function () {
         // Data Master Siswa
