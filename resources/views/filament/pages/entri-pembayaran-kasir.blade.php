@@ -247,7 +247,7 @@
                 {{-- Payment modal --}}
                 <div :class="bayar ? '' : 'hidden'" x-cloak @click.self="bayar = false"
                     class="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/60 p-4 sm:items-center">
-                    <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900">
+                    <div class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900">
                         <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
                             <div class="min-w-0">
                                 <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Konfirmasi Pembayaran</h3>
@@ -266,9 +266,18 @@
                                     <span class="text-gray-500 dark:text-gray-400">Total dibayar</span>
                                     <span class="text-lg font-bold text-gray-950 dark:text-white" x-text="rp(total)"></span>
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    <span x-text="selected.length"></span> tagihan bulanan &bull; <span x-text="selectedLain.length"></span> biaya sekali bayar
-                                </p>
+
+                                <div class="mt-2 max-h-56 space-y-2.5 overflow-y-auto border-t border-gray-200 pt-2.5 dark:border-gray-700">
+                                    <template x-for="rincian in rincianItems" :key="rincian.key">
+                                        <div class="flex items-start justify-between gap-3 text-xs">
+                                            <div class="min-w-0">
+                                                <p class="font-semibold text-gray-900 dark:text-white" x-text="rincian.pos"></p>
+                                                <p class="text-gray-500 dark:text-gray-400" x-text="rincian.detail"></p>
+                                            </div>
+                                            <p class="shrink-0 font-semibold text-gray-900 dark:text-white tabular-nums" x-text="rp(rincian.nilai)"></p>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
 
                             <div>
@@ -456,6 +465,34 @@
                             };
                         })
                         .filter(Boolean);
+                },
+
+                get rincianItems() {
+                    const items = [];
+
+                    this.monthlyGroups.forEach((grp) => {
+                        grp.months
+                            .filter((m) => this.selected.includes(m.key))
+                            .forEach((m) => {
+                                items.push({
+                                    key: m.key,
+                                    pos: grp.nama,
+                                    detail: m.bulan + ' ' + m.tahun,
+                                    nilai: Number(m.nominal || 0),
+                                });
+                            });
+                    });
+
+                    this.selectedLainItems.forEach((x) => {
+                        items.push({
+                            key: x.key,
+                            pos: x.nama,
+                            detail: 'Biaya sekali bayar • ' + x.deskripsi,
+                            nilai: Number(x.sisa || 0),
+                        });
+                    });
+
+                    return items;
                 },
 
                 get totalSpp() {

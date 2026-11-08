@@ -77,6 +77,7 @@ class SppForm
                         modifyRuleUsing: function (Unique $rule, Get $get): Unique {
                             $kategori = $get('kategori');
                             $tingkat = $get('tingkat');
+                            $nama = trim((string) ($get('nama') ?? ''));
 
                             if ($kategori !== Spp::KATEGORI_SPP && blank($tingkat)) {
                                 return $rule->where('kategori', '__non_spp__');
@@ -84,6 +85,7 @@ class SppForm
 
                             return $rule
                                 ->where('kategori', $kategori)
+                                ->where('nama', $nama)
                                 ->where('tahun_ajaran', $get('tahun_ajaran'));
                         },
                     )

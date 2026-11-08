@@ -121,13 +121,12 @@
                                 <span class="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
                                     {{ $p->spp?->kategori ?? 'SPP' }}
                                 </span>
-                                <div class="text-xs text-gray-500 mt-0.5">
-                                    @if($p->spp?->isSppBulanan())
-                                        Bulan {{ $p->bulan_dibayar }} {{ $p->tahun_dibayar }}
-                                    @else
-                                        {{ $p->catatan ?: ($p->spp?->nama_tarif ?? 'Biaya Pendidikan') }}
-                                    @endif
+                                <div class="text-xs text-gray-600 dark:text-gray-300 font-medium mt-0.5">
+                                    {{ $p->namaPos() }}
                                 </div>
+                                @if($p->catatan)
+                                    <div class="text-[11px] text-gray-400 mt-0.5">{{ $p->catatan }}</div>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-xs">
                                 {{ $p->metode_pembayaran }}

@@ -263,13 +263,18 @@ class TagihanSiswa extends Page
             $tingkat ? (Spp::TINGKAT_LIST[$tingkat] ?? null) : null,
         ])));
 
-        $nonSppTarifs = Spp::where('kategori', '!=', Spp::KATEGORI_SPP)
+        $nonSppTarifs = Spp::query()
+            ->where(function ($q): void {
+                $q->where('kategori', '!=', Spp::KATEGORI_SPP)
+                    ->orWhere('tipe', Spp::TIPE_BULANAN);
+            })
+            ->when($siswa->spp_id, fn ($q, $sppId) => $q->where('id', '!=', $sppId))
             ->where(function ($q) use ($tahunMulai, $activeTahunAjaran) {
                 $q->whereIn('tahun', [$tahunMulai, $tahunMulai + 1])
                     ->orWhere('tahun_ajaran', $activeTahunAjaran);
             })
             ->where(function ($q) use ($variasiTingkat): void {
-                $q->whereNull('tingkat');
+                $q->whereNull('tingkat')->orWhere('tingkat', '');
 
                 if ($variasiTingkat !== []) {
                     $q->orWhereIn('tingkat', $variasiTingkat);

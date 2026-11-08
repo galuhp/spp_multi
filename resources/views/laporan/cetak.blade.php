@@ -125,7 +125,7 @@
                             <td class="py-1.5 px-2 border-r border-zinc-200 font-mono whitespace-nowrap">{{ $item->siswa?->nisn ?? '-' }}</td>
                             <td class="py-1.5 px-2 border-r border-zinc-200 whitespace-nowrap">{{ $item->siswa?->kelas?->nama_kelas ?? '-' }}</td>
                             <td class="py-1.5 px-2 border-r border-zinc-200">
-                                <strong>{{ $item->spp?->kategori ?? 'SPP' }}</strong> &bull; {{ $item->namaPos() }}
+                                {{ $item->namaPos() }}
                             </td>
                             <td class="py-1.5 px-2 border-r border-zinc-200 whitespace-nowrap">
                                 @if($item->gabungan_id)

@@ -760,7 +760,7 @@ class ProsesKelasService
         $dibayarSppPerBulanTahun = $pembayarans
             ->whereNotNull('bulan_dibayar')
             ->whereNotNull('tahun_dibayar')
-            ->groupBy(fn (Pembayaran $p): string => $p->bulan_dibayar.'|'.$p->tahun_dibayar)
+            ->groupBy(fn (Pembayaran $p): string => $p->spp_id.'|'.$p->bulan_dibayar.'|'.$p->tahun_dibayar)
             ->map(fn ($rows): int => (int) $rows->sum('jumlah_bayar'));
 
         $dibayarNonSpp = $pembayarans
@@ -818,7 +818,7 @@ class ProsesKelasService
                     if ($tanggunganService->isSppDitanggung($siswa, $spp, $bln, $thnLvl)) {
                         continue;
                     }
-                    $dibayar = (int) ($dibayarSppPerBulanTahun->get($bln.'|'.$thnLvl) ?? ($dibayarSppPerBulan->get($spp->id.'|'.$bln) ?? 0));
+                    $dibayar = (int) ($dibayarSppPerBulanTahun->get($spp->id.'|'.$bln.'|'.$thnLvl) ?? ($dibayarSppPerBulan->get($spp->id.'|'.$bln) ?? 0));
                     $sisa = max(0, $nominal - $dibayar);
                     if ($sisa > 0) {
                         $label = "{$bln} (Kelas ".Spp::labelTingkat($tingkat).')';

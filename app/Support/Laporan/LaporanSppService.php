@@ -656,7 +656,9 @@ class LaporanSppService
 
                     $tagihanSppCur += $nominal;
 
-                    $kunci = $siswa->id.'|'.$periode['bulan'].'|'.$periode['tahun'];
+                    $kunci = $tarif
+                        ? $siswa->id.'|'.$tarif->id.'|'.$periode['bulan'].'|'.$periode['tahun']
+                        : $siswa->id.'|'.$periode['bulan'].'|'.$periode['tahun'];
                     $jumlahBayar = (int) ($pembayaranPerBulan[$kunci] ?? 0);
 
                     $dibayarSppCur += min($jumlahBayar, $nominal);
@@ -881,10 +883,13 @@ class LaporanSppService
         $tahunMulai = $this->tahunMulai($tahunAjaran);
 
         $tarifList = Spp::query()
-            ->where('kategori', '!=', Spp::KATEGORI_SPP)
+            ->where(function ($query): void {
+                $query->where('kategori', '!=', Spp::KATEGORI_SPP)
+                    ->orWhere('tipe', Spp::TIPE_BULANAN);
+            })
             ->where(function ($query) use ($tahunAjaran, $tahunMulai): void {
                 $query->where('tahun_ajaran', $tahunAjaran->nama)
-                    ->orWhere('tahun', $tahunMulai);
+                    ->orWhereIn('tahun', [$tahunMulai, $tahunMulai + 1]);
             })
             ->orderBy('kategori')
             ->orderBy('nama')
@@ -924,9 +929,14 @@ class LaporanSppService
             }
 
             $tingkat = Spp::normalisasiTingkat($kelas->tingkat);
+            $sppUtama = $this->tarifUntukSiswa($siswa, $kelas, $tahunAjaran);
             $pos = [];
 
             foreach ($tarifList as $tarif) {
+                if ($sppUtama && (int) $tarif->id === (int) $sppUtama->id) {
+                    continue;
+                }
+
                 $tingkatTarif = Spp::normalisasiTingkat($tarif->tingkat);
 
                 if (filled($tarif->tingkat) && $tingkatTarif !== $tingkat) {
@@ -1028,7 +1038,7 @@ class LaporanSppService
             ->whereIn('spp_id', $tarifIds)
             ->whereIn('tahun_dibayar', [$tahunMulai, $tahunMulai + 1])
             ->whereNull('void_at')
-            ->get(['siswa_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar']);
+            ->get(['siswa_id', 'spp_id', 'bulan_dibayar', 'tahun_dibayar', 'jumlah_bayar']);
 
         $hasil = [];
 
@@ -1037,8 +1047,11 @@ class LaporanSppService
                 continue;
             }
 
-            $kunci = $pembayaran->siswa_id.'|'.$pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar;
+            $kunci = $pembayaran->siswa_id.'|'.$pembayaran->spp_id.'|'.$pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar;
             $hasil[$kunci] = ($hasil[$kunci] ?? 0) + (int) $pembayaran->jumlah_bayar;
+
+            $kunciLegacy = $pembayaran->siswa_id.'|'.$pembayaran->bulan_dibayar.'|'.$pembayaran->tahun_dibayar;
+            $hasil[$kunciLegacy] = ($hasil[$kunciLegacy] ?? 0) + (int) $pembayaran->jumlah_bayar;
         }
 
         return $hasil;

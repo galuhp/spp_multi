@@ -55,6 +55,7 @@ class LatestPembayaranWidget extends TableWidget
                     ->searchable(),
                 TextColumn::make('spp.kategori')
                     ->label('Kategori')
+                    ->getStateUsing(fn (Pembayaran $record): string => $record->spp?->nama ?: ($record->spp?->kategori ?? 'SPP'))
                     ->badge()
                     ->color('gray'),
                 TextColumn::make('bulan_dibayar')
@@ -64,7 +65,7 @@ class LatestPembayaranWidget extends TableWidget
                             return $record->bulan_dibayar.' '.$record->tahun_dibayar;
                         }
 
-                        return $record->catatan ?: ($record->spp?->nama_tarif ?? 'Biaya Pendidikan');
+                        return $record->catatan ?: ($record->spp?->nama ?: ($record->spp?->kategori ?? 'Biaya Pendidikan'));
                     }),
                 TextColumn::make('jumlah_bayar')
                     ->label('Jumlah')
