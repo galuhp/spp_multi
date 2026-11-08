@@ -130,11 +130,11 @@
         </table>
 
         @if($voidPayments->isNotEmpty())
-            <h3 class="mb-1.5 text-[11px] font-bold uppercase">Transaksi Void (Tidak Dihitung)</h3>
+            <h3 class="mb-1.5 text-[11px] font-bold uppercase">Transaksi Dibatalkan (Tidak Dihitung)</h3>
             <table class="w-full text-left border-collapse text-[9px] border border-zinc-300">
                 <thead>
                     <tr class="bg-zinc-100 border-b border-zinc-300 font-bold uppercase text-zinc-800">
-                        <th class="py-1.5 px-2 border-r border-zinc-300">Tanggal Void</th>
+                        <th class="py-1.5 px-2 border-r border-zinc-300">Tanggal Batal</th>
                         <th class="py-1.5 px-2 border-r border-zinc-300">Kode</th>
                         <th class="py-1.5 px-2 border-r border-zinc-300">Uraian</th>
                         <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Jumlah</th>

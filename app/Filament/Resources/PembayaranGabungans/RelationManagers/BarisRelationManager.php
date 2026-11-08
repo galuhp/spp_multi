@@ -209,7 +209,7 @@ class BarisRelationManager extends RelationManager
                         $service->perbaruiBaris($record, (int) $record->jumlah, $record->referensi, $alokasi);
                     }),
                 Action::make('voidBaris')
-                    ->label('Void')
+                    ->label('Batal')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn (PembayaranGabunganBaris $record): bool => $this->getOwnerRecord()->isPosted()
@@ -217,7 +217,7 @@ class BarisRelationManager extends RelationManager
                         && (auth()->user()?->isAdmin() ?? false))
                     ->form([
                         Textarea::make('alasan')
-                            ->label('Alasan void')
+                            ->label('Alasan pembatalan')
                             ->required()
                             ->maxLength(500),
                     ])

@@ -66,13 +66,13 @@ class EditPembayaranGabungan extends EditRecord
                 ->action(fn () => $this->posting()),
 
             Action::make('void')
-                ->label('Void Gabungan')
+                ->label('Batal Gabungan')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->visible(fn (): bool => $this->record->isPosted() && (auth()->user()?->isAdmin() ?? false))
                 ->form([
                     Textarea::make('alasan')
-                        ->label('Alasan void')
+                        ->label('Alasan pembatalan')
                         ->required()
                         ->maxLength(500),
                 ])
@@ -175,8 +175,8 @@ class EditPembayaranGabungan extends EditRecord
             $this->record->refresh();
 
             Notification::make()
-                ->title('Gabungan di-void')
-                ->body('Pembayaran terkait ditandai void. Nomor kuitansi tetap tersimpan.')
+                ->title('Gabungan dibatalkan')
+                ->body('Pembayaran terkait dibatalkan. Nomor kuitansi tetap tersimpan.')
                 ->success()
                 ->send();
 
@@ -186,7 +186,7 @@ class EditPembayaranGabungan extends EditRecord
         }
 
         Notification::make()
-            ->title('Void gagal')
+            ->title('Pembatalan gagal')
             ->body($hasil['pesan'])
             ->danger()
             ->send();

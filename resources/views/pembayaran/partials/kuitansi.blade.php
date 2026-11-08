@@ -24,7 +24,7 @@
 
     @if($pembayaran->isVoid())
         <div class="my-4 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-800">
-            <strong class="uppercase">Transaksi dibatalkan (VOID)</strong>
+            <strong class="uppercase">Transaksi Dibatalkan</strong>
             @if($pembayaran->void_alasan)
                 <div class="mt-1">Alasan: {{ $pembayaran->void_alasan }}</div>
             @endif

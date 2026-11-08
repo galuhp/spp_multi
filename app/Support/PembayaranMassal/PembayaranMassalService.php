@@ -291,7 +291,7 @@ class PembayaranMassalService
         $gabungan->refresh();
 
         if (! $gabungan->isPosted()) {
-            return ['berhasil' => false, 'pesan' => 'Hanya gabungan yang sudah diposting yang dapat di-void.'];
+            return ['berhasil' => false, 'pesan' => 'Hanya gabungan yang sudah diposting yang dapat dibatalkan.'];
         }
 
         DB::transaction(function () use ($gabungan, $userId, $alasan): void {
@@ -324,7 +324,7 @@ class PembayaranMassalService
 
             LogAktivitas::catat(
                 'pembayaran_gabungan.void',
-                "Pembayaran gabungan {$terkunci->kode} di-void. Alasan: {$alasan}",
+                "Pembayaran gabungan {$terkunci->kode} dibatalkan. Alasan: {$alasan}",
                 $terkunci,
                 [
                     'gabungan_id' => $terkunci->id,
@@ -347,11 +347,11 @@ class PembayaranMassalService
         $gabungan = $baris->gabungan()->first();
 
         if (! $gabungan?->isPosted()) {
-            return ['berhasil' => false, 'pesan' => 'Baris hanya dapat di-void dari gabungan yang sudah diposting.'];
+            return ['berhasil' => false, 'pesan' => 'Baris hanya dapat dibatalkan dari gabungan yang sudah diposting.'];
         }
 
         if ($baris->isVoid()) {
-            return ['berhasil' => false, 'pesan' => 'Baris ini sudah di-void.'];
+            return ['berhasil' => false, 'pesan' => 'Baris ini sudah dibatalkan.'];
         }
 
         DB::transaction(function () use ($baris, $userId, $alasan): void {
@@ -372,7 +372,7 @@ class PembayaranMassalService
 
             LogAktivitas::catat(
                 'pembayaran_gabungan.baris_void',
-                "Baris pembayaran gabungan {$baris->gabungan->kode} untuk {$baris->siswa?->nama} di-void. Alasan: {$alasan}",
+                "Baris pembayaran gabungan {$baris->gabungan->kode} untuk {$baris->siswa?->nama} dibatalkan. Alasan: {$alasan}",
                 $baris,
                 ['gabungan_id' => $baris->gabungan_id, 'baris_id' => $baris->id, 'alasan' => $alasan]
             );
@@ -426,7 +426,7 @@ class PembayaranMassalService
     protected function pastikanAdmin(): void
     {
         if (! auth()->user()?->isAdmin()) {
-            throw new \RuntimeException('Hanya Administrator yang dapat melakukan void.');
+            throw new \RuntimeException('Hanya Administrator yang dapat melakukan pembatalan.');
         }
     }
 }

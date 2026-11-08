@@ -230,7 +230,7 @@
             <!-- Transaksi Void -->
             <div class="fi-section overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
                 <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-                    <h3 class="text-sm font-semibold text-gray-950 dark:text-white">Transaksi Dibatalkan (Void)</h3>
+                    <h3 class="text-sm font-semibold text-gray-950 dark:text-white">Transaksi Dibatalkan</h3>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Tidak dihitung dalam saldo kartu. Ditampilkan untuk keperluan audit.
                     </p>
@@ -239,7 +239,7 @@
                     <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
                         <thead class="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-700 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
                             <tr>
-                                <th class="px-4 py-3.5">Tanggal Void</th>
+                                <th class="px-4 py-3.5">Tanggal Batal</th>
                                 <th class="px-4 py-3.5">Kode</th>
                                 <th class="px-4 py-3.5">Uraian</th>
                                 <th class="px-4 py-3.5 text-right">Jumlah</th>

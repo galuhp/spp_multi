@@ -84,7 +84,7 @@ class PembayaransTable
                     ->label('Status')
                     ->badge()
                     ->size('sm')
-                    ->formatStateUsing(fn ($state): string => $state ? 'Void' : 'Valid')
+                    ->formatStateUsing(fn ($state): string => $state ? 'Batal' : 'Valid')
                     ->color(fn ($state): string => $state ? 'danger' : 'success')
                     ->toggleable(),
             ])
@@ -135,7 +135,7 @@ class PembayaransTable
                     ->openUrlInNewTab(),
 
                 Action::make('void')
-                    ->label('Void')
+                    ->label('Batal')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->outlined()
@@ -146,7 +146,7 @@ class PembayaransTable
                         && (auth()->user()?->isAdmin() ?? false))
                     ->form([
                         Textarea::make('alasan')
-                            ->label('Alasan void')
+                            ->label('Alasan pembatalan')
                             ->required()
                             ->maxLength(500),
                     ])
@@ -158,7 +158,7 @@ class PembayaransTable
                         );
 
                         Notification::make()
-                            ->title('Transaksi di-void')
+                            ->title('Transaksi dibatalkan')
                             ->body('Riwayat dan nomor kuitansi tetap tersimpan.')
                             ->success()
                             ->send();

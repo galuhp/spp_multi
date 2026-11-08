@@ -426,6 +426,6 @@ class PembayaranController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('pembayaran.index')->with('success', 'Transaksi pembayaran berhasil di-void. Riwayat dan nomor kuitansi tetap tersimpan.');
+        return redirect()->route('pembayaran.index')->with('success', 'Transaksi pembayaran berhasil dibatalkan. Riwayat dan nomor kuitansi tetap tersimpan.');
     }
 }

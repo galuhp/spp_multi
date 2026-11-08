@@ -91,7 +91,7 @@ class PembayaranGabunganForm
 
                 Placeholder::make('status_info')
                     ->label('Status')
-                    ->content(fn (?PembayaranGabungan $record): string => $record?->status ?? 'draft')
+                    ->content(fn (?PembayaranGabungan $record): string => PembayaranGabungan::statusOptions()[$record?->status ?? PembayaranGabungan::STATUS_DRAFT] ?? (string) $record?->status)
                     ->visible(fn (?PembayaranGabungan $record): bool => $record !== null),
             ]);
     }

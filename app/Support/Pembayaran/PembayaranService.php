@@ -534,7 +534,7 @@ class PembayaranService
                     ->firstOrFail();
 
                 if ($terkunci->gabungan_baris_id !== null) {
-                    throw new \RuntimeException('Pembayaran gabungan harus di-void melalui menu History Pembayaran Gabungan.');
+                    throw new \RuntimeException('Pembayaran gabungan harus dibatalkan melalui menu History Pembayaran Gabungan.');
                 }
 
                 if ($terkunci->isVoid()) {

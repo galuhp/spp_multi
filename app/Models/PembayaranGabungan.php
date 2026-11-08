@@ -106,7 +106,7 @@ class PembayaranGabungan extends Model
             self::STATUS_DRAFT => 'Draft',
             self::STATUS_MEMPROSES => 'Memproses',
             self::STATUS_DIPOSTING => 'Diposting',
-            self::STATUS_VOID => 'Void',
+            self::STATUS_VOID => 'Batal',
         ];
     }
 

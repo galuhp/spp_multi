@@ -186,7 +186,7 @@
                         </h2>
                         <p class="text-xs sm:text-sm text-zinc-600 mt-2 leading-relaxed">
                             @if($void ?? false)
-                                Kode transaksi <span class="font-mono font-bold text-zinc-900">{{ $kode }}</span> tercatat di sistem, tetapi transaksinya telah di-void.
+                                Kode transaksi <span class="font-mono font-bold text-zinc-900">{{ $kode }}</span> tercatat di sistem, tetapi transaksinya telah dibatalkan.
                                 @if(filled($alasan ?? null))
                                     Alasan: <strong>{{ $alasan }}</strong>.
                                 @endif
