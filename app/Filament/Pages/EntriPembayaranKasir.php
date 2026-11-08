@@ -28,7 +28,7 @@ class EntriPembayaranKasir extends Page
 
     protected static ?string $title = 'Entry Pembayaran';
 
-    protected static ?string $slug = 'entry-pembayaran-2';
+    protected static ?string $slug = 'entry-pembayaran';
 
     protected static ?int $navigationSort = 0;
 
