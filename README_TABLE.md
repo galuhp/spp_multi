@@ -26,6 +26,7 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | 18 | `role_permissions` | Matriks hak akses menu per role (dashboard, transaksi SPP, portal siswa, kesiswaan, master data, pengaturan akses) |
 | 19 | `log_aktivitas` | Log/audit trail aktivitas pengguna: aksi, subjek yang diubah, deskripsi, data tambahan, dan IP address |
 | 20 | `pengeluaran_sekolahs` | Transaksi pengeluaran operasional dan belanja kas sekolah (nomor bukti otomatis `EXP-...`, tanggal, kategori, keperluan, nominal, penerima, metode, bukti nota, petugas, tahun ajaran) |
+| 21 | `siswa_subsidies` | Pengaturan subsidi dan potongan tarif per siswa dalam persen (1–100%), cakupan tagihan (`spp`, `pos`, `semua`), jenis bantuan, nomor SK, masa aktif, dan pembuat data |
 
 ## Tabel Framework (bawaan Laravel)
 
@@ -38,7 +39,7 @@ Berikut daftar seluruh tabel database aplikasi SPP beserta kegunaannya. Rincian 
 | `failed_jobs` | Pekerjaan antrean yang gagal dieksekusi |
 | `migrations` | Catatan migrasi database yang sudah dijalankan |
 
-Total saat ini: **20 tabel aplikasi + 6 tabel framework = 26 tabel**.
+Total saat ini: **21 tabel aplikasi + 6 tabel framework = 27 tabel**.
 
 ---
 
