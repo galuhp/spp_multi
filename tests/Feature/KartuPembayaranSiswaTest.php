@@ -226,7 +226,7 @@ class KartuPembayaranSiswaTest extends TestCase
             ->assertSee('Mode Cetak Landscape')
             ->assertSee('A4 landscape')
             ->assertSee('Mode Portrait')
-            ->assertSee('LEMBAR PENGESAHAN')
+            ->assertDontSee('LEMBAR PENGESAHAN')
             ->assertSee($bayarJuli->kode_transaksi);
     }
 

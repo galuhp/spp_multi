@@ -45,7 +45,7 @@
         $totalRincian = $rincian;
         $perHalaman = 20;
         $halamanData = $items === [] ? collect([collect()]) : collect($items)->chunk($perHalaman);
-        $totalHalaman = 1 + $halamanData->count() + 1;
+        $totalHalaman = 1 + $halamanData->count();
     @endphp
 
     <div class="no-print max-w-5xl mx-auto mb-4 flex items-center justify-between gap-4">
@@ -276,60 +276,5 @@
         </section>
     @endforeach
 
-    <!-- Section 3: Lembar Pengesahan -->
-    <section class="report-page max-w-5xl mx-auto mb-6 bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-zinc-200">
-        <div class="mb-3 flex items-center gap-3 border-b border-zinc-400 pb-2">
-            @if ($sekolah->logoUrl())
-                <img src="{{ $sekolah->logoUrl() }}" alt="Logo {{ $sekolah->nama_sekolah }}" class="h-9 w-9 shrink-0 object-contain">
-            @endif
-            <div class="min-w-0">
-                <h1 class="text-sm font-bold uppercase leading-tight tracking-wide">
-                    {{ $sekolah->nama_sekolah }}{{ $sekolah->kota ? ' — ' . strtoupper($sekolah->kota) : '' }}
-                </h1>
-                <p class="text-[10px] leading-tight text-zinc-600">
-                    {{ $sekolah->alamatLengkap() }} &bull; Telp. {{ $sekolah->no_telp }} &bull; Email: {{ $sekolah->email }}
-                </p>
-            </div>
-        </div>
-
-        <div class="text-center">
-            <h2 class="text-sm font-bold uppercase underline">LEMBAR PENGESAHAN</h2>
-            <p class="mt-0.5 text-[10px] text-zinc-700">
-                Kartu Pembayaran Siswa — {{ $siswa->nama }} — Tahun Ajaran {{ $tahunAjaran->nama }}
-            </p>
-        </div>
-
-        <div class="mx-auto mt-20 grid max-w-3xl grid-cols-3 gap-8 text-center text-xs">
-            <div>
-                <p class="text-zinc-600 mb-20">
-                    Mengetahui,<br>
-                    <strong>Kepala Sekolah</strong>
-                </p>
-                <p class="font-bold underline text-sm">{{ $sekolah->nama_kepala_sekolah }}</p>
-                <p class="text-[11px] text-zinc-500">NIP. {{ $sekolah->nip_kepala_sekolah ?? '-' }}</p>
-            </div>
-            <div>
-                <p class="text-zinc-600 mb-20">
-                    {{ $sekolah->kota ?? 'Bandung' }}, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
-                    <strong>Bendahara / Petugas</strong>
-                </p>
-                <p class="font-bold underline text-sm">{{ auth()->user()->name }}</p>
-                <p class="text-[11px] text-zinc-500">NIP / ID: {{ auth()->user()->username }}</p>
-            </div>
-            <div>
-                <p class="text-zinc-600 mb-20">
-                    Mengetahui,<br>
-                    <strong>Orang Tua / Wali</strong>
-                </p>
-                <p class="font-bold underline text-sm">&nbsp;</p>
-                <p class="text-[11px] text-zinc-500">&nbsp;</p>
-            </div>
-        </div>
-
-        <div class="mt-16 flex items-center justify-between border-t border-zinc-200 pt-1.5 text-[9px] text-zinc-500">
-            <span>{{ $sekolah->nama_sekolah }} — Kartu Pembayaran Siswa</span>
-            <span>Halaman {{ $totalHalaman }} dari {{ $totalHalaman }}</span>
-        </div>
-    </section>
 </body>
 </html>

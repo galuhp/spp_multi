@@ -76,7 +76,7 @@
             <p class="mt-0.5 text-[10px] text-zinc-700">Tahun Ajaran <strong>{{ $tahunAjaran->nama }}</strong></p>
         </div>
 
-        <!-- Identitas Siswa (Tanpa Tarif SPP) -->
+        <!-- Identitas Siswa -->
         <table class="mb-3 w-full border-collapse text-[10px] border border-zinc-300">
             <tbody>
                 <tr>
