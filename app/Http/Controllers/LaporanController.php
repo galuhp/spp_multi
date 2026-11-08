@@ -191,6 +191,7 @@ class LaporanController extends Controller
 
         return view('laporan.kartu-cetak', [
             'kartu' => $service->kartuPembayaran($siswa, $tahunAjaran),
+            'rincian' => $service->rincianTagihan($siswa, $tahunAjaran),
         ]);
     }
 

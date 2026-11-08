@@ -299,6 +299,150 @@ class LaporanSppService
     }
 
     /**
+     * Build a per-fee breakdown for one student and academic year.
+     *
+     * Unlike the ledger, each row represents one tariff position (SPP month or
+     * non-SPP fee) with the total paid and remaining balance for that position.
+     *
+     * @return array{
+     *     items: array<int, array<string, mixed>>,
+     *     total_nominal: int,
+     *     total_dibayar: int,
+     *     total_sisa: int,
+     *     total_ditanggung: int
+     * }
+     */
+    public function rincianTagihan(Siswa $siswa, TahunAjaran $tahunAjaran): array
+    {
+        $siswa->loadMissing(['kelas.jurusan', 'spp']);
+
+        $kelas = $this->kelasSiswa($siswa, $tahunAjaran);
+        $tarif = $kelas ? $this->tarifUntukSiswa($siswa, $kelas, $tahunAjaran) : null;
+        $nominalSpp = (int) ($tarif?->nominal ?? 0);
+        $tahunMulai = $this->tahunMulai($tahunAjaran);
+        $tanggungan = app(TanggunganPemerintahService::class);
+
+        $pembayarans = Pembayaran::query()
+            ->where('siswa_id', $siswa->id)
+            ->whereNull('void_at')
+            ->get();
+
+        $items = [];
+
+        if ($tarif && $nominalSpp > 0) {
+            foreach (Pembayaran::bulanTahunAjaran($tahunMulai) as $periode) {
+                $pembayaranBulan = $pembayarans
+                    ->where('spp_id', $tarif->id)
+                    ->where('bulan_dibayar', $periode['bulan'])
+                    ->filter(fn (Pembayaran $pembayaran): bool => $pembayaran->tahun_dibayar === null
+                        || ((int) $pembayaran->tahun_dibayar >= $tahunMulai && (int) $pembayaran->tahun_dibayar <= $tahunMulai + 1));
+
+                $dibayar = (int) $pembayaranBulan->sum('jumlah_bayar');
+                $ditanggung = $tanggungan->isSppDitanggung($siswa, $tarif, $periode['bulan'], $periode['tahun']);
+                $sisa = $ditanggung ? 0 : max(0, $nominalSpp - $dibayar);
+
+                $items[] = $this->barisRincianTagihan(
+                    pos: 'SPP Bulan '.$periode['bulan'].' '.$periode['tahun'],
+                    kategori: $tarif->kategori,
+                    tipe: 'Bulanan',
+                    nominal: $nominalSpp,
+                    dibayar: $dibayar,
+                    sisa: $sisa,
+                    ditanggung: $ditanggung,
+                    pembayarans: $pembayaranBulan,
+                );
+            }
+        }
+
+        foreach ($this->tarifNonSppUntukKelas($kelas, $tahunAjaran) as $tarifNon) {
+            $nominal = (int) $tarifNon->nominal;
+
+            if ($nominal <= 0) {
+                continue;
+            }
+
+            $pembayaranPos = $pembayarans->where('spp_id', $tarifNon->id);
+            $dibayar = (int) $pembayaranPos->sum('jumlah_bayar');
+            $ditanggung = $tanggungan->isPosDitanggung($siswa, $tarifNon);
+            $sisa = $ditanggung ? 0 : max(0, $nominal - $dibayar);
+
+            $items[] = $this->barisRincianTagihan(
+                pos: $tarifNon->nama ?: $tarifNon->kategori,
+                kategori: $tarifNon->kategori,
+                tipe: $tarifNon->tipe ?? 'Sekali Bayar',
+                nominal: $nominal,
+                dibayar: $dibayar,
+                sisa: $sisa,
+                ditanggung: $ditanggung,
+                pembayarans: $pembayaranPos,
+            );
+        }
+
+        $totalNominal = 0;
+        $totalDibayar = 0;
+        $totalSisa = 0;
+        $totalDitanggung = 0;
+
+        foreach ($items as $item) {
+            if ($item['ditanggung']) {
+                $totalDitanggung += $item['nominal'];
+
+                continue;
+            }
+
+            $totalNominal += $item['nominal'];
+            $totalDibayar += $item['dibayar'];
+            $totalSisa += $item['sisa'];
+        }
+
+        return [
+            'items' => $items,
+            'total_nominal' => $totalNominal,
+            'total_dibayar' => $totalDibayar,
+            'total_sisa' => $totalSisa,
+            'total_ditanggung' => $totalDitanggung,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Pembayaran>  $pembayarans
+     * @return array<string, mixed>
+     */
+    private function barisRincianTagihan(
+        string $pos,
+        string $kategori,
+        string $tipe,
+        int $nominal,
+        int $dibayar,
+        int $sisa,
+        bool $ditanggung,
+        Collection $pembayarans,
+    ): array {
+        $status = $ditanggung
+            ? 'ditanggung'
+            : ($dibayar <= 0 ? 'belum' : ($sisa > 0 ? 'sebagian' : 'lunas'));
+
+        $terakhir = $pembayarans->sortByDesc('tgl_bayar')->first();
+        $tanggalBayar = $terakhir?->tgl_bayar?->format('d/m/Y');
+
+        if ($tanggalBayar && $pembayarans->count() > 1) {
+            $tanggalBayar .= ' ('.$pembayarans->count().'x bayar)';
+        }
+
+        return [
+            'pos_tarif' => $pos,
+            'kategori' => $kategori,
+            'tipe' => $tipe,
+            'nominal' => $nominal,
+            'dibayar' => $dibayar,
+            'sisa' => $sisa,
+            'status' => $status,
+            'ditanggung' => $ditanggung,
+            'tanggal_bayar' => $tanggalBayar,
+        ];
+    }
+
+    /**
      * Students mapped to their class for an academic year.
      *
      * @return Collection<int, array{siswa: Siswa, kelas: Kelas}>

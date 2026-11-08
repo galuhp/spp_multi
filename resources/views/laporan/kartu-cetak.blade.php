@@ -40,10 +40,11 @@
         $tarif = $kartu['tarif'];
         $tahunAjaran = $kartu['tahun_ajaran'];
         $ringkasan = $kartu['ringkasan'];
-        $entries = $kartu['entries'];
         $voidPayments = $kartu['void_payments'];
-        $perHalaman = 22;
-        $halamanData = $entries->isEmpty() ? collect([collect()]) : $entries->chunk($perHalaman);
+        $items = $rincian['items'];
+        $totalRincian = $rincian;
+        $perHalaman = 20;
+        $halamanData = $items === [] ? collect([collect()]) : collect($items)->chunk($perHalaman);
         $totalHalaman = 1 + $halamanData->count() + 1;
     @endphp
 
@@ -165,7 +166,7 @@
         </div>
     </section>
 
-    <!-- Buku Pembayaran -->
+    <!-- Rincian Tagihan per Pos Tarif -->
     @foreach ($halamanData as $halamanIndex => $barisHalaman)
         <section class="report-page max-w-4xl mx-auto mb-6 bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-zinc-200">
             <div class="mb-3 flex items-center gap-3 border-b border-zinc-400 pb-2">
@@ -183,7 +184,7 @@
             </div>
 
             <div class="mb-3 text-center">
-                <h2 class="text-sm font-bold uppercase underline">KARTU PEMBAYARAN SISWA — BUKU PEMBAYARAN</h2>
+                <h2 class="text-sm font-bold uppercase underline">KARTU PEMBAYARAN SISWA — RINCIAN TAGIHAN</h2>
                 <p class="mt-0.5 text-[10px] text-zinc-700">
                     {{ $siswa->nama }} &bull; {{ $kelas?->nama_kelas ?? '-' }} &bull; Tahun Ajaran {{ $tahunAjaran->nama }}
                 </p>
@@ -192,70 +193,71 @@
             <table class="w-full text-left border-collapse text-[9px] border border-zinc-300">
                 <thead>
                     <tr class="bg-zinc-100 border-b border-zinc-300 font-bold uppercase text-zinc-800">
-                        <th class="py-1.5 px-2 border-r border-zinc-300">Tanggal</th>
-                        <th class="py-1.5 px-2 border-r border-zinc-300">Uraian</th>
-                        <th class="py-1.5 px-2 border-r border-zinc-300">Referensi</th>
-                        <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Tagihan</th>
-                        <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Pembayaran</th>
-                        <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Saldo</th>
-                        <th class="py-1.5 px-2">Status</th>
+                        <th class="py-1.5 px-2 border-r border-zinc-300">Pos Tarif</th>
+                        <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Nominal Tagihan</th>
+                        <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Jumlah Terbayar</th>
+                        <th class="py-1.5 px-2 border-r border-zinc-300 text-right">Sisa Tagihan</th>
+                        <th class="py-1.5 px-2 border-r border-zinc-300">Tanggal Bayar</th>
+                        <th class="py-1.5 px-2 text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200">
-                    @forelse($barisHalaman as $entry)
+                    @forelse($barisHalaman as $item)
                         <tr>
-                            <td class="py-1.5 px-2 border-r border-zinc-200 whitespace-nowrap">{{ $entry['tanggal']->format('d/m/Y') }}</td>
                             <td class="py-1.5 px-2 border-r border-zinc-200">
-                                <div class="font-semibold">{{ $entry['uraian'] }}</div>
-                                @if(($entry['meta']['metode'] ?? null) || ($entry['meta']['petugas'] ?? null))
-                                    <div class="text-[8px] text-zinc-500">
-                                        {{ $entry['meta']['metode'] ?? '-' }}
-                                        @if($entry['meta']['petugas'] ?? null)
-                                            &bull; {{ $entry['meta']['petugas'] }}
-                                        @endif
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="py-1.5 px-2 border-r border-zinc-200 font-mono">{{ $entry['referensi'] ?: '-' }}</td>
-                            <td class="py-1.5 px-2 border-r border-zinc-200 text-right whitespace-nowrap">
-                                {{ $entry['debit'] > 0 ? 'Rp '.number_format($entry['debit'], 0, ',', '.') : '-' }}
+                                <div class="font-semibold">{{ $item['pos_tarif'] }}</div>
+                                <div class="text-[8px] text-zinc-500">
+                                    {{ $item['kategori'] }} &bull; {{ $item['tipe'] }}
+                                </div>
                             </td>
                             <td class="py-1.5 px-2 border-r border-zinc-200 text-right whitespace-nowrap">
-                                {{ $entry['kredit'] > 0 ? 'Rp '.number_format($entry['kredit'], 0, ',', '.') : '-' }}
+                                {{ 'Rp '.number_format($item['nominal'], 0, ',', '.') }}
                             </td>
-                            <td class="py-1.5 px-2 border-r border-zinc-200 text-right font-semibold whitespace-nowrap">
-                                {{ $entry['saldo'] < 0 ? '- ' : '' }}Rp {{ number_format(abs($entry['saldo']), 0, ',', '.') }}
+                            <td class="py-1.5 px-2 border-r border-zinc-200 text-right whitespace-nowrap text-emerald-700">
+                                {{ $item['dibayar'] > 0 ? 'Rp '.number_format($item['dibayar'], 0, ',', '.') : '-' }}
                             </td>
-                            <td class="py-1.5 px-2 whitespace-nowrap">
-                                @if($entry['tipe'] === 'pembayaran')
-                                    Valid
-                                @elseif($entry['status'] === 'jatuh_tempo')
-                                    Jatuh Tempo
+                            <td class="py-1.5 px-2 border-r border-zinc-200 text-right whitespace-nowrap {{ $item['sisa'] > 0 ? 'text-rose-700 font-semibold' : '' }}">
+                                {{ $item['sisa'] > 0 ? 'Rp '.number_format($item['sisa'], 0, ',', '.') : '-' }}
+                            </td>
+                            <td class="py-1.5 px-2 border-r border-zinc-200 whitespace-nowrap">
+                                {{ $item['tanggal_bayar'] ?: '-' }}
+                            </td>
+                            <td class="py-1.5 px-2 text-center whitespace-nowrap">
+                                @if($item['ditanggung'])
+                                    Ditanggung
+                                @elseif($item['status'] === 'lunas')
+                                    Lunas
+                                @elseif($item['status'] === 'sebagian')
+                                    Sebagian
                                 @else
-                                    Belum Jatuh Tempo
+                                    Belum Lunas
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-6 text-center text-zinc-400">Belum ada tagihan atau pembayaran pada tahun ajaran ini.</td>
+                            <td colspan="6" class="py-6 text-center text-zinc-400">Belum ada tagihan atau pembayaran pada tahun ajaran ini.</td>
                         </tr>
                     @endforelse
                 </tbody>
-                @if ($halamanIndex === $halamanData->count() - 1)
+                @if ($halamanIndex === $halamanData->count() - 1 && $items !== [])
                     <tfoot>
                         <tr class="border-t-2 border-black font-bold bg-zinc-50 text-[9px]">
-                            <td colspan="3" class="py-1.5 px-3 border-r border-zinc-300 text-right uppercase">Total:</td>
-                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap">{{ 'Rp '.number_format($ringkasan['total_tagihan'], 0, ',', '.') }}</td>
-                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap">{{ 'Rp '.number_format($ringkasan['total_dibayar'], 0, ',', '.') }}</td>
-                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap">
-                                {{ $ringkasan['saldo'] < 0 ? '- ' : '' }}Rp {{ number_format(abs($ringkasan['saldo']), 0, ',', '.') }}
-                            </td>
-                            <td></td>
+                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right uppercase">Total:</td>
+                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap">{{ 'Rp '.number_format($totalRincian['total_nominal'], 0, ',', '.') }}</td>
+                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap text-emerald-700">{{ 'Rp '.number_format($totalRincian['total_dibayar'], 0, ',', '.') }}</td>
+                            <td class="py-1.5 px-3 border-r border-zinc-300 text-right whitespace-nowrap text-rose-700">{{ 'Rp '.number_format($totalRincian['total_sisa'], 0, ',', '.') }}</td>
+                            <td colspan="2"></td>
                         </tr>
                     </tfoot>
                 @endif
             </table>
+
+            @if ($halamanIndex === $halamanData->count() - 1 && $totalRincian['total_ditanggung'] > 0)
+                <p class="mt-2 text-[9px] text-zinc-500">
+                    Ditanggung pemerintah: {{ 'Rp '.number_format($totalRincian['total_ditanggung'], 0, ',', '.') }} (tidak dihitung dalam total).
+                </p>
+            @endif
 
             <div class="mt-3 flex items-center justify-between border-t border-zinc-200 pt-1.5 text-[9px] text-zinc-500">
                 <span>{{ $sekolah->nama_sekolah }} — Kartu Pembayaran Siswa</span>
