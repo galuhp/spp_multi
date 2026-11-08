@@ -159,12 +159,12 @@
                         <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{{ $tagihan['countLunas'] }} pos lunas / ditanggung</span>
                     </div>
 
-                    <div class="rounded-xl border border-rose-200/80 bg-rose-50/50 p-4 dark:border-rose-500/30 dark:bg-rose-950/25">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">Sisa Tagihan</span>
-                        <div class="mt-1.5 text-2xl font-bold text-rose-700 dark:text-rose-400 tabular-nums">
+                    <div class="rounded-xl border border-rose-100/80 bg-rose-50/30 p-4 dark:border-rose-500/20 dark:bg-rose-950/15">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-300">Sisa Tagihan</span>
+                        <div class="mt-1.5 text-2xl font-bold text-rose-600 dark:text-rose-300 tabular-nums">
                             Rp {{ number_format($tagihan['totalSisa'], 0, ',', '.') }}
                         </div>
-                        <span class="text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                        <span class="text-[11px] font-medium text-rose-500 dark:text-rose-300">
                             {{ $tagihan['countBelumLunas'] }} pos belum lunas
                             @if($tagihan['countSebagian'] > 0)
                                 &bull; {{ $tagihan['countSebagian'] }} dicicil
