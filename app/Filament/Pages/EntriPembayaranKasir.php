@@ -24,9 +24,9 @@ class EntriPembayaranKasir extends Page
 
     protected static UnitEnum|string|null $navigationGroup = 'Transaksi SPP';
 
-    protected static ?string $navigationLabel = 'Entry Pembayaran 2';
+    protected static ?string $navigationLabel = 'Entry Pembayaran';
 
-    protected static ?string $title = 'Entry Pembayaran 2';
+    protected static ?string $title = 'Entry Pembayaran';
 
     protected static ?string $slug = 'entry-pembayaran-2';
 
