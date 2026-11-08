@@ -67,12 +67,16 @@
                                             'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' => $kelas_id !== $kelas->id,
                                         ])>
                                         {{ $kelas->nama_kelas }}{{ $kelas->jurusan?->kode ? ' ('.$kelas->jurusan->kode.')' : '' }}
+                                        <span class="ml-1.5 rounded-full bg-gray-200/70 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">{{ $kelas->siswas_count }}</span>
                                     </button>
                                 @endforeach
                             </div>
                             @if ($kelas_id)
+                                @php
+                                    $kelasTerpilih = $this->kelasList->firstWhere('id', $kelas_id);
+                                @endphp
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Menampilkan siswa kelas terpilih. Klik kelas yang sama untuk menampilkan semua kelas di tingkat ini.
+                                    Menampilkan siswa kelas {{ $kelasTerpilih?->nama_kelas }} ({{ $kelasTerpilih?->siswas_count }} siswa). Klik kelas yang sama untuk menampilkan semua kelas di tingkat ini.
                                 </p>
                             @endif
                         </div>

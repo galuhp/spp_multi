@@ -90,6 +90,7 @@ class EntriPembayaranKasir extends Page
 
         return Kelas::query()
             ->with('jurusan')
+            ->withCount(['siswas' => fn ($query) => $query->aktif()])
             ->whereIn('tingkat', $varianTingkat)
             ->orderBy('nama_kelas')
             ->get();
