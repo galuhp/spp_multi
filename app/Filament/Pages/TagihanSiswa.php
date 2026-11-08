@@ -24,6 +24,8 @@ class TagihanSiswa extends Page
 
     protected static ?string $navigationLabel = 'Status Tagihan per siswa';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $title = 'Matriks Tagihan & Status Pembayaran';
 
     protected static ?int $navigationSort = 1;
