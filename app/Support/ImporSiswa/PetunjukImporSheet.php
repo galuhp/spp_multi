@@ -32,6 +32,7 @@ class PetunjukImporSheet implements FromArray, WithColumnWidths, WithStyles, Wit
             ['12. Batas berkas: .xlsx, maksimal 5 MB dan 2.000 baris data.'],
             ['13. Baris dengan error dilewati. Baris dengan peringatan tetap disimpan.'],
             ['14. Jika NISN/NIK/NIS sudah terdaftar, baris dilewati kecuali opsi "Perbarui data siswa yang sudah ada" dipilih.'],
+            ['15. Kolom Potongan (%) bersifat opsional, diisi angka persentase subsidi/diskon SPP (contoh: 25 atau 50). Kosongkan jika membayar tarif penuh.'],
             [''],
             ['RENTANG UMUR YANG DIANGGAP WAJAR'],
             ['SD (Kelas 1–6): 6–12 tahun. SMP (Kelas 7–9): 12–15 tahun. SMA/SMK (Kelas X–XII): 15–18 tahun (±2 tahun).'],

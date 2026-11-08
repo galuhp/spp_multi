@@ -256,7 +256,7 @@
 
                         <template x-for="x in selectedLainItems" :key="x.key">
                             <div class="flex justify-between gap-3">
-                                <p class="font-medium text-gray-900 dark:text-white" x-text="x.nama"></p>
+                                <p class="font-medium text-gray-900 dark:text-white" x-text="x.nama + (x.diskon ? ' (Diskon ' + x.diskon + '%)' : '')"></p>
                                 <p class="text-gray-900 dark:text-white" x-text="rp(x.sisa)"></p>
                             </div>
                         </template>
@@ -478,13 +478,17 @@
                     return this.monthlyGroups
                         .map((grp) => {
                             const items = grp.months.filter((m) => this.selected.includes(m.key));
+
                             if (items.length === 0) {
                                 return null;
                             }
 
+                            const diskonItem = items.find((m) => m.diskon && Number(m.diskon) > 0);
+                            const diskonSuffix = diskonItem ? ' (Diskon ' + diskonItem.diskon + '%)' : '';
+
                             return {
                                 id: grp.id,
-                                nama: grp.nama,
+                                nama: grp.nama + diskonSuffix,
                                 count: items.length,
                                 range: items.length > 1
                                     ? format(items[0]) + ' – ' + format(items[items.length - 1])
@@ -502,20 +506,28 @@
                         grp.months
                             .filter((m) => this.selected.includes(m.key))
                             .forEach((m) => {
+                                let detail = m.bulan + ' ' + m.tahun;
+                                if (m.diskon && Number(m.diskon) > 0) {
+                                    detail += ' (Diskon ' + m.diskon + '%)';
+                                }
                                 items.push({
                                     key: m.key,
                                     pos: grp.nama,
-                                    detail: m.bulan + ' ' + m.tahun,
+                                    detail: detail,
                                     nilai: Number(m.nominal || 0),
                                 });
                             });
                     });
 
                     this.selectedLainItems.forEach((x) => {
+                        let detail = 'Biaya sekali bayar • ' + x.deskripsi;
+                        if (x.diskon && Number(x.diskon) > 0) {
+                            detail += ' (Diskon ' + x.diskon + '%)';
+                        }
                         items.push({
                             key: x.key,
                             pos: x.nama,
-                            detail: 'Biaya sekali bayar • ' + x.deskripsi,
+                            detail: detail,
                             nilai: Number(x.sisa || 0),
                         });
                     });

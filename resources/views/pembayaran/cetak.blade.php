@@ -97,8 +97,11 @@
                     @php $total += $trx->jumlah_bayar; @endphp
                     <tr>
                         <td class="py-2 px-2 text-center">{{ $index + 1 }}</td>
-                        <td class="py-2 px-2 font-medium">
-                            {{ $trx->namaPos() }}
+                        <td class="py-2 px-2">
+                            <span class="font-medium text-zinc-900">{{ $trx->namaPos() }}</span>
+                            @if($sub = $trx->subsidi())
+                                <span class="block text-[10px] text-zinc-500 italic font-normal">* Potongan subsidi/diskon {{ $sub->persentase }}%</span>
+                            @endif
                         </td>
                         <td class="py-2 px-2 text-center">{{ $trx->spp?->tahun_ajaran }}</td>
                         <td class="py-2 px-2 text-right font-semibold">{{ $trx->formattedJumlahBayar() }}</td>
@@ -112,6 +115,15 @@
                 </tr>
             </tfoot>
         </table>
+
+        @php
+            $hasSubsidi = collect($relatedPayments)->contains(fn ($t) => $t->subsidi() !== null);
+        @endphp
+        @if($hasSubsidi)
+            <p class="text-[10px] text-zinc-500 italic -mt-2 mb-2">
+                * Catatan: Nominal pembayaran telah memperhitungkan potongan subsidi/diskon siswa.
+            </p>
+        @endif
 
         <!-- QR Verification & Signatures -->
         <div class="grid grid-cols-3 gap-4 items-end text-xs pt-6 mt-6 border-t border-zinc-200">

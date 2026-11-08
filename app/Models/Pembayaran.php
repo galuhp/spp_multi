@@ -346,4 +346,13 @@ class Pembayaran extends Model
     {
         return QrCodeSvg::generate($this->buktiUrl(), $sizePx);
     }
+
+    /**
+     * Resolves active subsidy/discount for this payment transaction, if applicable.
+     */
+    public function subsidi(): ?SiswaSubsidi
+    {
+        return $this->siswa?->subsidiUntukTarif($this->spp, $this->bulan_dibayar, $this->tahun_dibayar);
+    }
 }
+

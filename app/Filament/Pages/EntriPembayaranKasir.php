@@ -218,22 +218,23 @@ class EntriPembayaranKasir extends Page
         // Tunggakan SPP tahun-tahun ajaran sebelumnya (timeline riwayat kelas)
         foreach ($items->where('tipe', 'spp') as $unpaidSpp) {
             if ((int) $unpaidSpp['tahun'] < $tahunAjaranSekarang) {
+                $subTunggakan = $subsidiService->subsidiUntuk($siswa, $spp, $unpaidSpp['bulan'], $unpaidSpp['tahun']);
                 $months[] = [
                     'key' => $unpaidSpp['key'],
                     'bulan' => $unpaidSpp['bulan'],
                     'tahun' => $unpaidSpp['tahun'],
                     'nominal' => (int) $unpaidSpp['sisa'],
                     'status' => 'tunggakan',
+                    'diskon' => $subTunggakan?->persentase ?? 0,
                 ];
             }
         }
-
-        $subsidiService = app(SubsidiSiswaService::class);
 
         if ($spp?->isBulanan()) {
             foreach (Pembayaran::bulanTahunAjaran($tahunAjaranSekarang) as $index => $periode) {
                 $key = "spp:{$spp->id}:{$periode['bulan']}:{$periode['tahun']}";
                 $terbuka = $items->get($key);
+                $subSpp = $subsidiService->subsidiUntuk($siswa, $spp, $periode['bulan'], $periode['tahun']);
                 $wajibNominal = $subsidiService->kewajibanSiswa($siswa, $spp, $periode['bulan'], $periode['tahun']);
 
                 if (! $terbuka) {
@@ -254,6 +255,7 @@ class EntriPembayaranKasir extends Page
                     'tahun' => $periode['tahun'],
                     'nominal' => $terbuka ? (int) $terbuka['sisa'] : $wajibNominal,
                     'status' => $status,
+                    'diskon' => $subSpp?->persentase ?? 0,
                 ];
             }
         }
@@ -276,6 +278,7 @@ class EntriPembayaranKasir extends Page
                 foreach (Pembayaran::bulanTahunAjaran($tahunAjaranSekarang) as $index => $periode) {
                     $key = "spp:{$tarifBulanan->id}:{$periode['bulan']}:{$periode['tahun']}";
                     $terbuka = $items->get($key);
+                    $subPosBulanan = $subsidiService->subsidiUntuk($siswa, $tarifBulanan, $periode['bulan'], $periode['tahun']);
                     $wajibPosBulanan = $subsidiService->kewajibanSiswa($siswa, $tarifBulanan, $periode['bulan'], $periode['tahun']);
 
                     if (! $terbuka) {
@@ -296,6 +299,7 @@ class EntriPembayaranKasir extends Page
                         'tahun' => $periode['tahun'],
                         'nominal' => $terbuka ? (int) $terbuka['sisa'] : $wajibPosBulanan,
                         'status' => $status,
+                        'diskon' => $subPosBulanan?->persentase ?? 0,
                     ];
                 }
             }
@@ -324,8 +328,9 @@ class EntriPembayaranKasir extends Page
 
                 return ($tarif?->tipe ?? Spp::TIPE_SEKALI_BAYAR) !== Spp::TIPE_BULANAN;
             })
-            ->map(function (array $item) use ($tarifNonSpp): array {
+            ->map(function (array $item) use ($tarifNonSpp, $subsidiService, $siswa): array {
                 $tarif = $tarifNonSpp->get($item['spp_id']);
+                $subSekali = $tarif ? $subsidiService->subsidiUntuk($siswa, $tarif) : null;
                 $labelTingkat = $tarif?->tingkat ? ' (Kelas '.Spp::labelTingkat($tarif->tingkat).')' : '';
 
                 return [
@@ -334,6 +339,7 @@ class EntriPembayaranKasir extends Page
                     'deskripsi' => $tarif?->kategori ?: 'Sisa tagihan',
                     'sisa' => (int) $item['sisa'],
                     'grup' => 'sekali_bayar',
+                    'diskon' => $subSekali?->persentase ?? 0,
                 ];
             })
             ->values()

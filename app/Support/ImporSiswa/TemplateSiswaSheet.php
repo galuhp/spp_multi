@@ -63,6 +63,7 @@ class TemplateSiswaSheet implements FromArray, WithColumnFormatting, WithColumnW
             'N' => 22,
             'O' => 22,
             'P' => 18,
+            'Q' => 16,
         ];
     }
 

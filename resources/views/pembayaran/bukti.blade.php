@@ -134,8 +134,11 @@
                                 <tbody class="divide-y divide-zinc-100 text-zinc-800">
                                     @foreach($relatedPayments as $trx)
                                         <tr>
-                                            <td class="py-2.5 px-3 font-medium">
-                                                {{ $trx->namaPos() }}
+                                            <td class="py-2.5 px-3">
+                                                <div class="font-medium text-zinc-900">{{ $trx->namaPos() }}</div>
+                                                @if($sub = $trx->subsidi())
+                                                    <div class="text-[10px] text-zinc-500 italic font-normal">* Potongan subsidi/diskon {{ $sub->persentase }}%</div>
+                                                @endif
                                             </td>
                                             <td class="py-2.5 px-3 text-center text-zinc-500">
                                                 {{ $trx->spp?->tahun_ajaran }}
@@ -156,6 +159,14 @@
                                 </tfoot>
                             </table>
                         </div>
+                        @php
+                            $hasSubsidi = collect($relatedPayments)->contains(fn ($t) => $t->subsidi() !== null);
+                        @endphp
+                        @if($hasSubsidi)
+                            <p class="text-[10px] text-zinc-500 italic mt-2">
+                                * Catatan: Nominal pembayaran telah memperhitungkan potongan subsidi/diskon siswa.
+                            </p>
+                        @endif
                     </div>
 
                     <!-- Print / Save PDF Action for Parents -->

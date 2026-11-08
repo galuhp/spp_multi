@@ -101,6 +101,16 @@ class SiswaSubsidi extends Model
         ];
     }
 
+    public function labelJenis(): string
+    {
+        return static::jenisOptions()[$this->jenis] ?? ucfirst((string) $this->jenis);
+    }
+
+    public function labelCakupan(): string
+    {
+        return static::cakupanOptions()[$this->cakupan] ?? ucfirst((string) $this->cakupan);
+    }
+
     public function siswa(): BelongsTo
     {
         return $this->belongsTo(Siswa::class);

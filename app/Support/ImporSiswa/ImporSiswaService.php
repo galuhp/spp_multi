@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use App\Models\LogAktivitas;
 use App\Models\RiwayatKelas;
 use App\Models\Siswa;
+use App\Models\SiswaSubsidi;
 use App\Models\Spp;
 use App\Models\Wali;
 use Carbon\Carbon;
@@ -434,6 +435,13 @@ class ImporSiswaService
             $peringatan[] = 'Nama mengandung angka atau simbol tidak wajar.';
         }
 
+        if ($baris->potongan !== null) {
+            $potonganInt = (int) $baris->potongan;
+            if ($potonganInt < 1 || $potonganInt > 100) {
+                $error[] = "Potongan subsidi ({$baris->potongan}%) harus antara 1% sampai 100%.";
+            }
+        }
+
         $temuan = [];
 
         if ($nisn !== null && isset($byNisn[$nisn])) {
@@ -557,6 +565,22 @@ class ImporSiswaService
                 'spp_id' => $sppId,
             ],
         );
+
+        if ($baris->potongan !== null && (int) $baris->potongan > 0) {
+            SiswaSubsidi::query()->updateOrCreate(
+                [
+                    'siswa_id' => $siswa->id,
+                    'cakupan' => SiswaSubsidi::CAKUPAN_SPP,
+                ],
+                [
+                    'persentase' => (int) $baris->potongan,
+                    'jenis' => SiswaSubsidi::JENIS_LAINNYA,
+                    'keterangan' => 'Potongan dari impor data siswa',
+                    'tahun_ajaran_id' => $baris->tahun_ajaran_id,
+                    'is_aktif' => true,
+                ],
+            );
+        }
 
         $baris->update([
             'siswa_id' => $siswa->id,

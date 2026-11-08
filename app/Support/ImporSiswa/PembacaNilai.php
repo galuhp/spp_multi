@@ -149,6 +149,59 @@ class PembacaNilai
     }
 
     /**
+     * Read and normalize discount/subsidy percentage (1 - 100).
+     */
+    public static function persentase(mixed $nilai): ?int
+    {
+        if ($nilai === null) {
+            return null;
+        }
+
+        if (is_int($nilai)) {
+            return ($nilai >= 1 && $nilai <= 100) ? $nilai : ($nilai <= 0 ? null : $nilai);
+        }
+
+        if (is_float($nilai)) {
+            if ($nilai <= 0) {
+                return null;
+            }
+
+            // Excel percentage format stores 50% as 0.5, 25% as 0.25, etc.
+            if ($nilai > 0 && $nilai <= 1) {
+                return (int) round($nilai * 100);
+            }
+
+            return (int) round($nilai);
+        }
+
+        $teks = trim((string) $nilai);
+
+        if ($teks === '') {
+            return null;
+        }
+
+        $hasPercentSign = str_contains($teks, '%');
+        $cleaned = trim(str_replace(['%', ' '], '', $teks));
+        $cleaned = str_replace(',', '.', $cleaned);
+
+        if (! is_numeric($cleaned)) {
+            return null;
+        }
+
+        $num = (float) $cleaned;
+
+        if ($num <= 0) {
+            return null;
+        }
+
+        if (! $hasPercentSign && $num > 0 && $num < 1) {
+            return (int) round($num * 100);
+        }
+
+        return (int) round($num);
+    }
+
+    /**
      * Determine whether a spreadsheet row has no value at all.
      *
      * @param  array<int, mixed>  $baris
@@ -164,3 +217,4 @@ class PembacaNilai
         return true;
     }
 }
+

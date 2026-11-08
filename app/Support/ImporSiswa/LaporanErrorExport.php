@@ -44,6 +44,7 @@ class LaporanErrorExport implements FromCollection, WithColumnFormatting, WithCo
                 $baris->nama_ibu,
                 $baris->nama_wali,
                 $baris->hp_wali,
+                $baris->potongan ? $baris->potongan.'%' : null,
                 $baris->alasan,
             ]);
     }

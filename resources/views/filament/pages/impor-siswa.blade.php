@@ -208,6 +208,7 @@
                                 <th>Kelas</th>
                                 <th>Kompetensi</th>
                                 <th>HP Wali</th>
+                                <th>Potongan</th>
                                 <th>Status</th>
                                 <th>Alasan</th>
                             </tr>
@@ -224,6 +225,7 @@
                                     <td class="text-xs text-slate-700 dark:text-gray-300">{{ $baris->kelas ?: '-' }}</td>
                                     <td class="text-xs text-slate-700 dark:text-gray-300">{{ $baris->kode_kompetensi ?: '-' }}</td>
                                     <td class="font-mono text-xs text-slate-700 dark:text-gray-300">{{ $baris->hp_wali ?: '-' }}</td>
+                                    <td class="text-xs font-medium text-slate-700 dark:text-gray-300 tabular-nums">{{ $baris->potongan ? $baris->potongan.'%' : '-' }}</td>
                                     <td>
                                         <span class="{{ $baris->status->badgeClass() }}">{{ $baris->status->label() }}</span>
                                     </td>
@@ -231,7 +233,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="py-6 text-center text-xs text-slate-500 dark:text-gray-400">
+                                    <td colspan="12" class="py-6 text-center text-xs text-slate-500 dark:text-gray-400">
                                         Tidak ada baris pada filter ini.
                                     </td>
                                 </tr>

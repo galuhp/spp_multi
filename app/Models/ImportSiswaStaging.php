@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'nama_ibu',
     'nama_wali',
     'hp_wali',
+    'potongan',
     'status',
     'alasan',
     'siswa_id',
@@ -48,6 +49,7 @@ class ImportSiswaStaging extends Model
     protected function casts(): array
     {
         return [
+            'potongan' => 'integer',
             'status' => StatusBarisImpor::class,
             'ditimpa' => 'boolean',
             'tersimpan' => 'boolean',

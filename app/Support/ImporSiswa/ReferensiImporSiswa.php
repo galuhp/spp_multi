@@ -41,6 +41,7 @@ class ReferensiImporSiswa
         'Nama Ibu',
         'Nama Wali',
         'HP Wali',
+        'Potongan (%)',
     ];
 
     /**

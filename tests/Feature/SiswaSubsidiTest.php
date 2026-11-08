@@ -205,4 +205,93 @@ class SiswaSubsidiTest extends TestCase
         $this->assertGreaterThan(0, $barisSiswa['tagihan_spp']);
         $this->assertSame(0, $barisSiswa['tagihan_spp'] % 125000);
     }
+
+    public function test_pembaca_nilai_persentase_berbagai_format(): void
+    {
+        $this->assertSame(50, \App\Support\ImporSiswa\PembacaNilai::persentase(50));
+        $this->assertSame(50, \App\Support\ImporSiswa\PembacaNilai::persentase(0.5));
+        $this->assertSame(25, \App\Support\ImporSiswa\PembacaNilai::persentase('25%'));
+        $this->assertSame(75, \App\Support\ImporSiswa\PembacaNilai::persentase(' 75 % '));
+        $this->assertSame(100, \App\Support\ImporSiswa\PembacaNilai::persentase('100%'));
+        $this->assertNull(\App\Support\ImporSiswa\PembacaNilai::persentase(0));
+        $this->assertNull(\App\Support\ImporSiswa\PembacaNilai::persentase(null));
+        $this->assertNull(\App\Support\ImporSiswa\PembacaNilai::persentase(''));
+    }
+
+    public function test_impor_siswa_otomatis_mencatat_subsidi(): void
+    {
+        $batchId = (string) \Illuminate\Support\Str::uuid();
+        $staging = \App\Models\ImportSiswaStaging::query()->create([
+            'batch_id' => $batchId,
+            'user_id' => $this->admin->id,
+            'nama_file' => 'test.xlsx',
+            'tahun_ajaran_id' => $this->tahunAjaran->id,
+            'spp_id' => $this->spp->id,
+            'baris' => 2,
+            'nisn' => '0098765432',
+            'nik' => '3201010101010001',
+            'nis' => '2026199',
+            'nama_lengkap' => 'Siti Aisyah',
+            'jenis_kelamin' => 'P',
+            'tempat_lahir' => 'Bandung',
+            'tanggal_lahir' => '2010-05-10',
+            'agama' => 'Islam',
+            'alamat' => 'Jl. Merdeka No. 10',
+            'tanggal_masuk' => '2026-07-01',
+            'kode_kompetensi' => 'RPL',
+            'kelas' => 'X RPL 1',
+            'nama_ayah' => 'Ahmad',
+            'hp_wali' => '081234567890',
+            'potongan' => 30,
+            'status' => \App\Enums\StatusBarisImpor::Valid,
+        ]);
+
+        $service = app(\App\Support\ImporSiswa\ImporSiswaService::class);
+        $service->simpanBatch($batchId, false);
+
+        $siswaBaru = Siswa::query()->where('nis', '2026199')->first();
+        $this->assertNotNull($siswaBaru);
+
+        $subsidi = SiswaSubsidi::query()->where('siswa_id', $siswaBaru->id)->first();
+        $this->assertNotNull($subsidi);
+        $this->assertSame(30, $subsidi->persentase);
+        $this->assertSame(SiswaSubsidi::CAKUPAN_SPP, $subsidi->cakupan);
+        $this->assertTrue($subsidi->is_aktif);
+    }
+
+    public function test_kasir_data_mencakup_diskon_dan_pembayaran_subsidi(): void
+    {
+        SiswaSubsidi::query()->create([
+            'siswa_id' => $this->siswa->id,
+            'cakupan' => SiswaSubsidi::CAKUPAN_SPP,
+            'persentase' => 40,
+            'is_aktif' => true,
+        ]);
+
+        $kasir = new \App\Filament\Pages\EntriPembayaranKasir;
+        $kasir->pilihSiswa($this->siswa->id);
+        $data = $kasir->kasirData;
+
+        $this->assertNotEmpty($data['months']);
+        $bulanJuli = collect($data['months'])->firstWhere('bulan', 'Juli');
+        $this->assertNotNull($bulanJuli);
+        $this->assertSame(40, $bulanJuli['diskon']);
+
+        // Check Pembayaran::subsidi() helper
+        $pembayaran = Pembayaran::query()->create([
+            'kode_transaksi' => 'TRX-TEST-DISCOUNT',
+            'user_id' => $this->admin->id,
+            'siswa_id' => $this->siswa->id,
+            'spp_id' => $this->spp->id,
+            'tgl_bayar' => now()->toDateString(),
+            'bulan_dibayar' => 'Juli',
+            'tahun_dibayar' => 2026,
+            'jumlah_bayar' => 150000,
+            'metode_pembayaran' => 'Tunai',
+        ]);
+
+        $this->assertNotNull($pembayaran->subsidi());
+        $this->assertSame(40, $pembayaran->subsidi()->persentase);
+    }
 }
+

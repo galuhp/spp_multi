@@ -68,6 +68,7 @@ class SiswaStagingImport implements ToArray, WithChunkReading, WithStartRow
                 'nama_ibu' => PembacaNilai::teks($baris[13] ?? null),
                 'nama_wali' => PembacaNilai::teks($baris[14] ?? null),
                 'hp_wali' => PembacaNilai::teks($baris[15] ?? null),
+                'potongan' => PembacaNilai::persentase($baris[16] ?? null),
                 'status' => 'valid',
                 'created_at' => $sekarang,
                 'updated_at' => $sekarang,
