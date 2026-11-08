@@ -134,7 +134,7 @@
                         <div class="shrink-0 flex items-center gap-2">
                             <x-filament::button tag="a"
                                 href="{{ route('laporan.kartu.cetak', ['siswa_id' => $siswa->id]) }}"
-                                target="_blank" color="gray" size="sm" outlined icon="heroicon-o-printer">
+                                target="_blank" color="primary" size="sm" icon="heroicon-o-printer">
                                 Cetak Kartu Ledger
                             </x-filament::button>
                         </div>
