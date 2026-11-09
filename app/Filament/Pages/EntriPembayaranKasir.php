@@ -204,6 +204,7 @@ class EntriPembayaranKasir extends Page
         }
 
         $service = app(PembayaranService::class);
+        $subsidiService = app(SubsidiSiswaService::class);
         $tanggunganPemerintah = app(TanggunganPemerintahService::class);
         $items = collect($service->tagihanTerbuka($siswa))->keyBy('key');
         $spp = $siswa->spp;
