@@ -276,7 +276,9 @@ EOF
 cat >/etc/nginx/spp-api/upstream-green.conf <<'EOF'
 server 127.0.0.1:8082;
 EOF
-ln -sfn /etc/nginx/spp-api/upstream-blue.conf /etc/nginx/spp-api/upstream.conf
+if [[ ! -e /etc/nginx/spp-api/upstream.conf && ! -L /etc/nginx/spp-api/upstream.conf ]]; then
+    ln -sfn /etc/nginx/spp-api/upstream-blue.conf /etc/nginx/spp-api/upstream.conf
+fi
 
 cat >/etc/nginx/sites-available/spp-api <<EOF
 upstream spp_api_backend {
@@ -285,8 +287,9 @@ upstream spp_api_backend {
 }
 
 server {
+    # IPv6 sengaja tidak diaktifkan agar kompatibel dengan VPS yang
+    # menonaktifkan IPv6. Tambahkan "listen [::]:80;" manual jika diperlukan.
     listen 80;
-    listen [::]:80;
     server_name ${DOMAIN};
 
     access_log /var/log/nginx/spp-api.access.log;
