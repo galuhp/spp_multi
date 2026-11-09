@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -143,7 +144,16 @@ func main() {
 }
 
 func openDatabase(cfg *config.Config) (*gorm.DB, error) {
-	db, err := gorm.Open(mysql.Open(cfg.DBDSN), &gorm.Config{
+	var dialector gorm.Dialector
+
+	switch cfg.DBDriver {
+	case "sqlite":
+		dialector = sqlite.Open(cfg.DBDSN)
+	default:
+		dialector = mysql.Open(cfg.DBDSN)
+	}
+
+	db, err := gorm.Open(dialector, &gorm.Config{
 		TranslateError: true,
 	})
 	if err != nil {
@@ -155,10 +165,17 @@ func openDatabase(cfg *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	sqlDB.SetMaxOpenConns(25)
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetConnMaxLifetime(30 * time.Minute)
-	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
+	if cfg.DBDriver == "sqlite" {
+		// SQLite hanya mendukung satu penulis; batasi koneksi agar tidak
+		// memicu "database is locked" saat audit logger berjalan paralel.
+		sqlDB.SetMaxOpenConns(1)
+		sqlDB.SetMaxIdleConns(1)
+	} else {
+		sqlDB.SetMaxOpenConns(25)
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetConnMaxLifetime(30 * time.Minute)
+		sqlDB.SetConnMaxIdleTime(5 * time.Minute)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -98,8 +98,9 @@ Salin `backend-go/.env.example` menjadi `/var/www/spp-api/shared/api.env`. Provi
 | `LOG_LEVEL` | tidak | `info` | `debug`, `info`, `warn`, `error`. |
 | `JWT_SECRET` | **ya** | — | Minimal 32 karakter. `openssl rand -base64 48`. |
 | `JWT_TTL` | tidak | `12h` | Masa berlaku token. |
-| `DB_DSN` | **ya** | — | `user:pass@tcp(host:3306)/db?charset=utf8mb4&parseTime=True&loc=Local`. |
-| `DB_AUTO_MIGRATE` | tidak | `false` | Jangan aktifkan di production. |
+| `DB_DRIVER` | tidak | `mysql` | `mysql` untuk production, `sqlite` untuk lokal. |
+| `DB_DSN` | **ya** | — | MySQL: `user:pass@tcp(host:3306)/db?charset=utf8mb4&parseTime=True&loc=Local`. SQLite: path absolut ke file `.sqlite`. |
+| `DB_AUTO_MIGRATE` | tidak | `false` | Jangan aktifkan di production. Untuk SQLite lokal boleh `true`. |
 | `CACHE_DRIVER` | tidak | `memory` | Gunakan `redis` untuk multi-instance. |
 | `REDIS_ADDR` | tidak | `127.0.0.1:6379` | Alamat Redis. |
 | `REDIS_PASSWORD` | tidak | kosong | Isi jika Redis memakai password. |
@@ -130,6 +131,43 @@ Fitur yang tidak terdaftar dianggap khusus Pro, sama seperti `LisensiPaket::hasF
 
 > Setelah mengubah `api.env`, jalankan deploy ulang atau `systemctl restart` slot aktif. Perubahan JWT secret langsung membatalkan seluruh token lama.
 
+### 4.1 Strategi Database: Berbagi atau Terpisah
+
+Backend Go membutuhkan **koneksi database**, tetapi tidak wajib memakai database baru. Pilihan yang didukung:
+
+| Skenario | Konfigurasi | Catatan |
+|---|---|---|
+| Berbagi database Laravel (disarankan saat migrasi) | `DB_DSN` sama dengan Laravel | Go hanya menambah tabel `audit_logs`; tabel `log_aktivitas` Laravel tidak diubah. |
+| Database khusus Go | `DB_NAME=spp_go` atau instance terpisah | Seluruh skema domain (`users`, `siswa`, `spp`, `pembayaran`, dst.) harus dimigrasikan/diimpor lebih dulu. |
+| SQLite lokal | `DB_DRIVER=sqlite` + path `database/database.sqlite` | Hanya untuk pengembangan; jangan untuk production. |
+
+Saat ini skeleton Go **hanya memakai tabel `audit_logs`** karena handler bisnis masih placeholder. Jika nantinya endpoint pembayaran/siswa diimplementasikan, tabel domain harus tersedia di database yang sama.
+
+Migration audit memiliki foreign key ke `users(id)`. Jika memakai database khusus tanpa tabel `users`, buat tabel tersebut lebih dulu atau hapus blok `CONSTRAINT fk_audit_logs_user` dari migration.
+
+`provision-go.sh` memakai `DB_NAME=spp` secara default. Jika database `spp` sudah ada (milik Laravel), script memakai database yang sama dan tidak membuat database kedua.
+
+### 4.2 Menjalankan Lokal dengan SQLite
+
+Aplikasi Laravel di repo ini memakai SQLite (`database/database.sqlite`). Backend Go dapat memakai file yang sama untuk pengembangan lokal:
+
+```dotenv
+DB_DRIVER=sqlite
+DB_DSN=C:/Users/it/Documents/2.belajar_ai/spp/database/database.sqlite
+DB_AUTO_MIGRATE=true
+CACHE_DRIVER=memory
+APP_TIER=basic
+TRUSTED_PROXIES=none
+```
+
+Jalankan dari folder `backend-go`:
+
+```bash
+go run ./cmd/api
+```
+
+`DB_AUTO_MIGRATE=true` akan membuat tabel `audit_logs` otomatis di database SQLite tersebut. Untuk production tetap gunakan MySQL/MariaDB dan migration versioned; SQLite tidak cocok untuk beban kasir paralel.
+
 ---
 
 ## 5. Provisioning VPS
@@ -155,6 +193,24 @@ Yang dilakukan script:
 - Membuat helper `spp-api-switch`.
 - Memberi sudo hanya untuk start/stop/restart slot dan switch Nginx.
 - Mengaktifkan UFW (OpenSSH + Nginx).
+
+### 5.1 VPS yang Sudah Menjalankan Laravel
+
+`provision-go.sh` dirancang untuk VPS baru. Jika MariaDB/Nginx sudah dipakai Laravel:
+
+- `apt-get install` bersifat **idempoten**: paket yang sudah terpasang tidak dipasang ulang, dan tidak ada database/tabel yang dihapus.
+- Script **tidak mengganti password** user database yang sudah ada. Jika `spp@127.0.0.1` sudah ada, script berhenti dan meminta password lama melalui `DB_PASSWORD` atau file `shared/db-password`.
+- Gunakan `DB_NAME`, `DB_USER`, dan `DB_PASSWORD` yang sama dengan Laravel agar Go dan Laravel berbagi database yang sama.
+- Jika tidak ingin menyentuh paket sistem, default site Nginx, atau UFW:
+
+```bash
+sudo INSTALL_PACKAGES=0 REMOVE_DEFAULT_NGINX_SITE=0 SETUP_UFW=0 \
+     DB_NAME=spp DB_USER=spp DB_PASSWORD='password-lama' \
+     bash backend-go/provision-go.sh
+```
+
+- Isi `DOMAIN` dengan domain API dan pastikan tidak bentrok dengan `server_name` Laravel. Script tetap membuat site Nginx baru dan unit systemd.
+- Alternatif paling aman: jalankan backend Go di VPS terpisah, lalu arahkan `DB_DSN` ke database Laravel melalui jaringan privat/VPN.
 
 Setelah provisioning, isi repository:
 

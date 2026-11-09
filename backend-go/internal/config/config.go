@@ -39,6 +39,7 @@ type Config struct {
 	JWTSecret string
 	JWTTTL    time.Duration
 
+	DBDriver    string
 	DBDSN       string
 	AutoMigrate bool
 
@@ -134,6 +135,7 @@ func Load() (*Config, error) {
 		LogLevel:          strings.ToLower(env("LOG_LEVEL", "info")),
 		JWTSecret:         strings.TrimSpace(os.Getenv("JWT_SECRET")),
 		JWTTTL:            jwtTTL,
+		DBDriver:          strings.ToLower(env("DB_DRIVER", "mysql")),
 		DBDSN:             strings.TrimSpace(os.Getenv("DB_DSN")),
 		AutoMigrate:       autoMigrate,
 		CacheDriver:       strings.ToLower(env("CACHE_DRIVER", "memory")),
@@ -159,6 +161,10 @@ func Load() (*Config, error) {
 
 	if cfg.DBDSN == "" {
 		problems = append(problems, errors.New("DB_DSN wajib diisi"))
+	}
+
+	if cfg.DBDriver != "mysql" && cfg.DBDriver != "sqlite" {
+		problems = append(problems, fmt.Errorf("DB_DRIVER tidak dikenal: %s (gunakan mysql atau sqlite)", cfg.DBDriver))
 	}
 
 	if cfg.CacheDriver != "memory" && cfg.CacheDriver != "redis" {

@@ -10,6 +10,15 @@
 #   - dua slot systemd (blue/green) untuk deploy zero-downtime
 #   - Nginx upstream yang dapat dipindahkan antar slot secara atomik
 #
+# Jika VPS sudah menjalankan Laravel/aplikasi lain, jangan jalankan default.
+# Gunakan kredensial database yang sudah ada dan lewati bagian yang berisiko:
+#
+#   sudo INSTALL_PACKAGES=0 REMOVE_DEFAULT_NGINX_SITE=0 SETUP_UFW=0 \
+#        DB_NAME=spp DB_USER=spp DB_PASSWORD='password-lama' \
+#        bash provision-go.sh
+#
+# Script tidak akan mengganti password user database yang sudah ada.
+#
 # Setelah script selesai:
 #   1. Isi REPO_URL pada /var/www/spp-api/shared/deploy.env
 #   2. Deploy dengan deploy-go.sh sebagai user aplikasi
@@ -28,7 +37,26 @@ GO_VERSION="${GO_VERSION:-1.23.4}"
 DOMAIN="${DOMAIN:-_}"
 DB_NAME="${DB_NAME:-spp}"
 DB_USER="${DB_USER:-spp}"
+DB_PASSWORD_INPUT="${DB_PASSWORD:-}"
 REDIS_DB="${REDIS_DB:-0}"
+
+# Untuk VPS yang sudah menjalankan aplikasi lain:
+#   INSTALL_PACKAGES=0          jangan jalankan apt-get install
+#   REMOVE_DEFAULT_NGINX_SITE=0 pertahankan default site Nginx
+#   SETUP_UFW=0                 jangan aktifkan/mengubah aturan UFW
+INSTALL_PACKAGES="${INSTALL_PACKAGES:-1}"
+REMOVE_DEFAULT_NGINX_SITE="${REMOVE_DEFAULT_NGINX_SITE:-1}"
+SETUP_UFW="${SETUP_UFW:-1}"
+
+if [[ ! "$DB_NAME" =~ ^[A-Za-z0-9_]+$ ]]; then
+    echo "DB_NAME hanya boleh berisi huruf, angka, dan underscore." >&2
+    exit 1
+fi
+
+if [[ ! "$DB_USER" =~ ^[A-Za-z0-9_]+$ ]]; then
+    echo "DB_USER hanya boleh berisi huruf, angka, dan underscore." >&2
+    exit 1
+fi
 
 ARCH="$(dpkg --print-architecture)"
 case "$ARCH" in
@@ -39,11 +67,16 @@ case "$ARCH" in
         ;;
 esac
 
-echo "==> Memasang paket sistem"
 export DEBIAN_FRONTEND=noninteractive
-apt-get update
-apt-get install -y --no-install-recommends \
-    ca-certificates curl git nginx mariadb-server redis-server ufw openssl jq
+
+if [[ "$INSTALL_PACKAGES" == "1" ]]; then
+    echo "==> Memasang paket sistem (apt bersifat idempoten; paket yang sudah ada tidak dipasang ulang)"
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        ca-certificates curl git nginx mariadb-server redis-server ufw openssl jq
+else
+    echo "==> Melewati apt-get install (INSTALL_PACKAGES=0)"
+fi
 
 echo "==> Memasang Go ${GO_VERSION}"
 if ! /usr/local/go/bin/go version 2>/dev/null | grep -q "go${GO_VERSION}"; then
@@ -74,20 +107,64 @@ echo "==> Menyiapkan MariaDB"
 systemctl enable --now mariadb
 
 DB_PASSWORD_FILE="$APP_ROOT/shared/db-password"
-if [[ ! -s "$DB_PASSWORD_FILE" ]]; then
+PASSWORD_CREATED=0
+
+if [[ -n "$DB_PASSWORD_INPUT" ]]; then
+    if [[ -s "$DB_PASSWORD_FILE" && "$(cat "$DB_PASSWORD_FILE")" != "$DB_PASSWORD_INPUT" ]]; then
+        echo "DB_PASSWORD berbeda dengan isi ${DB_PASSWORD_FILE}." >&2
+        echo "Samakan salah satunya, lalu jalankan ulang." >&2
+        exit 1
+    fi
+
+    if [[ ! -s "$DB_PASSWORD_FILE" ]]; then
+        printf '%s' "$DB_PASSWORD_INPUT" >"$DB_PASSWORD_FILE"
+        chown "$APP_USER:$APP_USER" "$DB_PASSWORD_FILE"
+        chmod 600 "$DB_PASSWORD_FILE"
+    fi
+elif [[ ! -s "$DB_PASSWORD_FILE" ]]; then
     openssl rand -hex 24 >"$DB_PASSWORD_FILE"
     chown "$APP_USER:$APP_USER" "$DB_PASSWORD_FILE"
     chmod 600 "$DB_PASSWORD_FILE"
+    PASSWORD_CREATED=1
 fi
 
 DB_PASSWORD="$(cat "$DB_PASSWORD_FILE")"
+
+if [[ "$DB_PASSWORD" == *"'"* || "$DB_PASSWORD" == *"\\"* || "$DB_PASSWORD" == *$'\n'* ]]; then
+    echo "DB_PASSWORD mengandung karakter yang belum didukung (' \\ atau newline)." >&2
+    exit 1
+fi
+
 MYSQL_BIN="$(command -v mariadb || command -v mysql)"
+USER_EXISTS="$("$MYSQL_BIN" -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE User='${DB_USER}' AND Host='127.0.0.1';" | tr -d '[:space:]')"
+USER_EXISTS="${USER_EXISTS:-0}"
+
+if [[ "$USER_EXISTS" -gt 0 ]]; then
+    if [[ "$PASSWORD_CREATED" -eq 1 ]]; then
+        rm -f "$DB_PASSWORD_FILE"
+
+        echo "User database '${DB_USER}'@'127.0.0.1' sudah ada." >&2
+        echo "Script tidak akan mengganti password user yang sudah ada." >&2
+        echo "Simpan password user tersebut ke ${DB_PASSWORD_FILE}," >&2
+        echo "atau jalankan ulang dengan DB_PASSWORD=<password-user-tersebut>." >&2
+        exit 1
+    fi
+
+    if ! "$MYSQL_BIN" -u "$DB_USER" -p"$DB_PASSWORD" -h 127.0.0.1 -e 'SELECT 1' >/dev/null 2>&1; then
+        echo "Password di ${DB_PASSWORD_FILE} tidak cocok untuk user '${DB_USER}'@'127.0.0.1'." >&2
+        echo "Script tidak mengubah password. Perbaiki password lalu jalankan ulang." >&2
+        exit 1
+    fi
+
+    USER_SQL=""
+else
+    USER_SQL="CREATE USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';"
+fi
 
 "$MYSQL_BIN" <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';
-ALTER USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';
+${USER_SQL}
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
 FLUSH PRIVILEGES;
 SQL
@@ -105,6 +182,7 @@ GIN_MODE=release
 LOG_LEVEL=info
 JWT_SECRET=${JWT_SECRET}
 JWT_TTL=12h
+DB_DRIVER=mysql
 DB_DSN=${DB_USER}:${DB_PASSWORD}@tcp(127.0.0.1:3306)/${DB_NAME}?charset=utf8mb4&parseTime=True&loc=Local
 DB_AUTO_MIGRATE=false
 CACHE_DRIVER=redis
@@ -237,7 +315,14 @@ server {
 EOF
 
 ln -sfn /etc/nginx/sites-available/spp-api /etc/nginx/sites-enabled/spp-api
-rm -f /etc/nginx/sites-enabled/default
+
+if [[ "$REMOVE_DEFAULT_NGINX_SITE" == "1" ]]; then
+    rm -f /etc/nginx/sites-enabled/default
+else
+    echo "==> Mempertahankan default site Nginx (REMOVE_DEFAULT_NGINX_SITE=0)"
+    echo "    Pastikan DOMAIN diisi dan tidak bentrok dengan site yang sudah ada."
+fi
+
 nginx -t
 systemctl enable --now nginx
 systemctl reload nginx
@@ -308,10 +393,14 @@ EOF
 chmod 440 /etc/sudoers.d/spp-api
 visudo -cf /etc/sudoers.d/spp-api >/dev/null
 
-echo "==> Mengaktifkan firewall"
-ufw allow OpenSSH
-ufw allow 'Nginx Full'
-ufw --force enable
+if [[ "$SETUP_UFW" == "1" ]]; then
+    echo "==> Mengaktifkan firewall"
+    ufw allow OpenSSH
+    ufw allow 'Nginx Full'
+    ufw --force enable
+else
+    echo "==> Melewati konfigurasi UFW (SETUP_UFW=0)"
+fi
 
 cat <<EOF
 
