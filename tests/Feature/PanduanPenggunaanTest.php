@@ -46,6 +46,11 @@ class PanduanPenggunaanTest extends TestCase
             ->assertSee('BAB 1: Pengenalan & Hak Akses Pengguna')
             ->assertSee('BAB 3: Transaksi Kasir & Penerimaan Keuangan')
             ->assertSee('BAB 6: Siklus Akhir Tahun Ajaran (Kelulusan & Kenaikan Kelas)')
-            ->assertSee('BAB 9: Tanya Jawab (FAQ) & Solusi Permasalahan');
+            ->assertSee('BAB 9: Tanya Jawab (FAQ) & Solusi Permasalahan')
+            ->assertSeeHtml('id="bab-1-pengenalan--hak-akses-pengguna"')
+            ->assertSeeHtml('href="#bab-3-transaksi-kasir--penerimaan-keuangan"')
+            ->assertSeeHtml('panduan-alert panduan-alert-important')
+            ->assertSee('Penting')
+            ->assertDontSee('[!IMPORTANT]');
     }
 }

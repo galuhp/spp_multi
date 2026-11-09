@@ -1,292 +1,301 @@
 <x-filament-panels::page>
-    <style>
-        /* Styling khusus tipografi dokumen panduan */
-        .panduan-content h1 {
-            font-size: 1.65rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        .dark .panduan-content h1 {
-            color: #f8fafc;
-            border-color: #334155;
-        }
-        .panduan-content h2 {
-            font-size: 1.35rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-top: 2rem;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.35rem;
-            border-bottom: 1px solid #cbd5e1;
-        }
-        .dark .panduan-content h2 {
-            color: #f1f5f9;
-            border-color: #475569;
-        }
-        .panduan-content h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #334155;
-            margin-top: 1.25rem;
-            margin-bottom: 0.5rem;
-        }
-        .dark .panduan-content h3 {
-            color: #e2e8f0;
-        }
-        .panduan-content h4 {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #475569;
-            margin-top: 1rem;
-            margin-bottom: 0.35rem;
-        }
-        .dark .panduan-content h4 {
-            color: #cbd5e1;
-        }
-        .panduan-content p {
-            margin-bottom: 0.85rem;
-            line-height: 1.65;
-            color: #334155;
-        }
-        .dark .panduan-content p {
-            color: #cbd5e1;
-        }
-        .panduan-content ul, .panduan-content ol {
-            margin-bottom: 1rem;
-            padding-left: 1.5rem;
-        }
-        .panduan-content ul {
-            list-style-type: disc;
-        }
-        .panduan-content ol {
-            list-style-type: decimal;
-        }
-        .panduan-content li {
-            margin-bottom: 0.35rem;
-            line-height: 1.55;
-            color: #334155;
-        }
-        .dark .panduan-content li {
-            color: #cbd5e1;
-        }
-        .panduan-content table {
-            width: 100%;
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-        .dark .panduan-content table {
-            border-color: #334155;
-        }
-        .panduan-content th {
-            background-color: #f1f5f9;
-            color: #0f172a;
-            font-weight: 600;
-            text-align: left;
-            padding: 0.65rem 0.85rem;
-            border: 1px solid #e2e8f0;
-        }
-        .dark .panduan-content th {
-            background-color: #1e293b;
-            color: #f8fafc;
-            border-color: #334155;
-        }
-        .panduan-content td {
-            padding: 0.6rem 0.85rem;
-            border: 1px solid #e2e8f0;
-            color: #334155;
-            vertical-align: top;
-        }
-        .dark .panduan-content td {
-            border-color: #334155;
-            color: #cbd5e1;
-        }
-        .panduan-content code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.825rem;
-            padding: 0.15rem 0.35rem;
-            border-radius: 0.25rem;
-            background-color: #f1f5f9;
-            color: #0284c7;
-        }
-        .dark .panduan-content code {
-            background-color: #1e293b;
-            color: #38bdf8;
-        }
-        .panduan-content pre {
-            background-color: #0f172a;
-            color: #f8fafc;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            margin-bottom: 1rem;
-            font-size: 0.825rem;
-        }
-        .panduan-content pre code {
-            background-color: transparent;
-            color: inherit;
-            padding: 0;
-        }
-        .panduan-content blockquote {
-            border-left: 4px solid #3b82f6;
-            background-color: #eff6ff;
-            padding: 0.75rem 1rem;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 0 0.5rem 0.5rem 0;
-        }
-        .dark .panduan-content blockquote {
-            border-color: #60a5fa;
-            background-color: rgba(30, 58, 138, 0.25);
-        }
-        .panduan-content hr {
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            border: 0;
-            border-top: 1px dashed #cbd5e1;
-        }
-        .dark .panduan-content hr {
-            border-top-color: #475569;
-        }
+    @push('styles')
+        @vite('resources/css/panduan-penggunaan.css')
+    @endpush
 
-        /* Mode Cetak (Print Media Query) */
-        @media print {
-            .no-print,
-            header,
-            aside,
-            .fi-sidebar,
-            .fi-topbar,
-            .fi-header,
-            .fi-page-header-actions {
-                display: none !important;
-            }
-            body {
-                background: white !important;
-                color: black !important;
-                font-size: 11pt !important;
-            }
-            .panduan-content {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .panduan-content h1,
-            .panduan-content h2 {
-                page-break-after: avoid;
-            }
-            .panduan-content table,
-            .panduan-content blockquote,
-            .panduan-content pre {
-                page-break-inside: avoid;
-            }
-        }
-    </style>
 
-    <div x-data="{
-        cari: '',
-        aktifBab: '',
-        scrollTo(id) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    <div
+        x-data="{
+            cari: '',
+            aktifBab: @js($this->daftarBab[0]['id'] ?? ''),
+            tocOpen: false,
+            showTop: false,
+            babList: @js($this->daftarBab),
+            init() {
+                this.wrapTables();
+                this.onScroll = () => this.updateState();
+                window.addEventListener('scroll', this.onScroll, { passive: true });
+                this.updateState();
+            },
+            destroy() {
+                if (this.onScroll) {
+                    window.removeEventListener('scroll', this.onScroll);
+                }
+                if (this._frame) {
+                    cancelAnimationFrame(this._frame);
+                }
+            },
+            wrapTables() {
+                this.$nextTick(() => {
+                    this.$el.querySelectorAll('.panduan-content table').forEach((table) => {
+                        if (table.parentElement && table.parentElement.classList.contains('panduan-table-wrap')) {
+                            return;
+                        }
+                        const wrap = document.createElement('div');
+                        wrap.className = 'panduan-table-wrap';
+                        wrap.setAttribute('tabindex', '0');
+                        wrap.setAttribute('role', 'region');
+                        wrap.setAttribute('aria-label', 'Tabel dapat digeser secara horizontal');
+                        table.parentNode.insertBefore(wrap, table);
+                        wrap.appendChild(table);
+                    });
+                });
+            },
+            updateState() {
+                if (this._frame) {
+                    return;
+                }
+                this._frame = requestAnimationFrame(() => {
+                    this._frame = null;
+                    this.showTop = window.scrollY > 600;
+                    let current = this.babList.length ? this.babList[0].id : '';
+                    for (const bab of this.babList) {
+                        const el = document.getElementById(bab.id);
+                        if (el && el.getBoundingClientRect().top <= 160) {
+                            current = bab.id;
+                        }
+                    }
+                    this.aktifBab = current;
+                });
+            },
+            goTo(id) {
+                const el = document.getElementById(id);
+                if (!el) {
+                    return;
+                }
+                const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const top = el.getBoundingClientRect().top + window.scrollY - 88;
+                window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
                 this.aktifBab = id;
-            }
-        }
-    }" class="space-y-6">
+                this.tocOpen = false;
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', '#' + id);
+                }
+            },
+            matches(bab) {
+                const query = this.cari.trim().toLowerCase();
+                if (query === '') {
+                    return true;
+                }
+                return `${bab.judul} ${bab.deskripsi} ${bab.topik}`.toLowerCase().includes(query);
+            },
+            get hasilCount() {
+                return this.babList.filter((bab) => this.matches(bab)).length;
+            },
+            scrollTop() {
+                const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+            },
+        }"
+        class="space-y-6"
+    >
+        {{-- Banner Sambutan --}}
+        <div class="panduan-hero no-print relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-800 p-6 text-white shadow-lg shadow-primary-900/10 sm:p-8">
+            <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div class="max-w-2xl space-y-3">
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium ring-1 ring-inset ring-white/20">
+                        <x-filament::icon icon="heroicon-o-book-open" class="size-3.5" />
+                        <span>Dokumentasi Resmi E-SPP</span>
+                        <span class="opacity-60" aria-hidden="true">&bull;</span>
+                        <span>Versi Lengkap</span>
+                    </div>
 
-        {{-- Banner Selamat Datang --}}
-        <div class="no-print relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-800 p-6 text-white shadow-md">
-            <div class="relative z-10 max-w-3xl space-y-2">
-                <div class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-xs">
-                    <span>📖 Dokumentasi Resmi Sistem E-SPP</span>
-                    <span class="opacity-60">•</span>
-                    <span>Versi Lengkap</span>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
+                        Buku Panduan Penggunaan &amp; SOP Operasional
+                    </h2>
+
+                    <p class="text-sm leading-relaxed text-primary-100">
+                        Panduan komprehensif bagi Administrator, Kasir Keuangan, Wali Kelas, dan Siswa.
+                        Gunakan daftar isi untuk melompat langsung ke topik yang dibutuhkan, atau cetak buku
+                        pedoman resmi melalui tombol di kanan atas.
+                    </p>
                 </div>
-                <h2 class="text-xl font-bold sm:text-2xl">Buku Panduan Penggunaan & SOP Operasional</h2>
-                <p class="text-xs text-primary-100 sm:text-sm leading-relaxed">
-                    Panduan komprehensif bagi Administrator, Kasir Keuangan, Wali Kelas, dan Siswa. Gunakan daftar isi di sebelah kiri untuk melompat langsung ke topik yang Anda butuhkan, atau klik tombol <strong>Cetak Panduan</strong> di kanan atas untuk mencetak buku pedoman resmi.
-                </p>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        @click="goTo(babList[0]?.id)"
+                        class="panduan-action inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50"
+                    >
+                        <x-filament::icon icon="heroicon-o-play" class="size-4" />
+                        <span>Mulai Membaca</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="window.print()"
+                        class="panduan-action inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-inset ring-white/25 transition hover:bg-white/20"
+                    >
+                        <x-filament::icon icon="heroicon-o-printer" class="size-4" />
+                        <span>Cetak Panduan</span>
+                    </button>
+                </div>
             </div>
-            <div class="absolute -right-6 -bottom-8 h-44 w-44 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+
+            <div class="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -bottom-16 right-24 h-56 w-56 rounded-full bg-indigo-400/20 blur-3xl" aria-hidden="true"></div>
         </div>
 
-        {{-- Konten Utama: 2 Kolom (Sidebar TOC + Isi Dokumen) --}}
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-4 items-start">
+        {{-- Konten Utama: Sidebar Daftar Isi + Dokumen --}}
+        <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-4">
 
-            {{-- Kolom Kiri: Navigasi Daftar Bab (Sticky) --}}
-            <div class="no-print lg:col-span-1 lg:sticky lg:top-4 space-y-3">
-                <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-gray-900">
-                    <div class="mb-3 flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400">
-                            Daftar Isi Bab
-                        </h3>
-                        <span class="rounded bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-600 dark:bg-primary-950/50 dark:text-primary-400">
-                            9 Bab
-                        </span>
-                    </div>
+            {{-- Kolom Kiri: Daftar Isi --}}
+            <aside class="no-print lg:sticky lg:top-20 lg:col-span-1" aria-label="Daftar isi buku panduan">
+                <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs dark:border-white/10 dark:bg-gray-900">
+                    <div class="flex items-center justify-between gap-2 border-b border-gray-100 p-4 dark:border-white/10">
+                        <div class="flex items-center gap-2">
+                            <x-filament::icon icon="heroicon-o-list-bullet" class="size-4 text-gray-400 dark:text-gray-500" />
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                Daftar Isi
+                            </h2>
+                        </div>
 
-                    <div class="space-y-1 text-sm max-h-[70vh] overflow-y-auto pr-1">
-                        @foreach ($this->daftarBab as $bab)
+                        <div class="flex items-center gap-2">
+                            <span class="rounded-md bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
+                                9 Bab
+                            </span>
                             <button
                                 type="button"
-                                @click="scrollTo('{{ $bab['id'] }}')"
-                                :class="aktifBab === '{{ $bab['id'] }}'
-                                    ? 'bg-primary-50 text-primary-700 font-semibold border-primary-500 dark:bg-primary-950/40 dark:text-primary-300'
-                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-transparent dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'"
-                                class="w-full text-left rounded-lg border-l-3 px-3 py-2 text-xs transition duration-150 flex flex-col gap-0.5">
-                                <span class="font-medium truncate">{{ $bab['judul'] }}</span>
-                                <span class="text-[10px] text-slate-400 dark:text-gray-400 line-clamp-1">{{ $bab['deskripsi'] }}</span>
+                                class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 lg:hidden dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                                @click="tocOpen = !tocOpen"
+                                :aria-expanded="tocOpen"
+                                aria-controls="panduan-toc"
+                            >
+                                <span x-text="tocOpen ? 'Tutup' : 'Buka'">Buka</span>
+                                <x-filament::icon
+                                    icon="heroicon-o-chevron-down"
+                                    class="size-3.5 transition-transform duration-200"
+                                    x-bind:class="tocOpen ? 'rotate-180' : ''"
+                                />
                             </button>
-                        @endforeach
+                        </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-gray-800 text-center">
-                        <a href="{{ route('panduan.unduh') }}" target="_blank"
-                            class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
-                            <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
-                            <span>Unduh File .md Asli</span>
-                        </a>
+                    <div id="panduan-toc" :class="tocOpen ? 'block' : 'hidden lg:block'">
+                        <div class="p-3 pb-0">
+                            <label for="panduan-cari" class="sr-only">Cari bab panduan</label>
+                            <div class="relative">
+                                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500">
+                                    <x-filament::icon icon="heroicon-o-magnifying-glass" class="size-4" />
+                                </span>
+                                <input
+                                    id="panduan-cari"
+                                    type="search"
+                                    x-model="cari"
+                                    placeholder="Cari bab atau topik&hellip;"
+                                    autocomplete="off"
+                                    class="block w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-xs text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-white/10 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500"
+                                />
+                                <button
+                                    type="button"
+                                    :class="cari !== '' ? 'flex' : 'hidden'"
+                                    @click="cari = ''"
+                                    class="absolute inset-y-0 right-0 cursor-pointer items-center pr-2.5 text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-200"
+                                    aria-label="Hapus pencarian"
+                                >
+                                    <x-filament::icon icon="heroicon-o-x-mark" class="size-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto p-3 lg:max-h-[calc(100vh-16rem)]" aria-label="Bab panduan">
+                            @foreach ($this->daftarBab as $bab)
+                                <a
+                                    href="#{{ $bab['id'] }}"
+                                    @click.prevent="goTo('{{ $bab['id'] }}')"
+                                    :aria-current="aktifBab === '{{ $bab['id'] }}' ? 'location' : 'false'"
+                                    :class="{
+                                        'hidden': !matches(@js($bab)),
+                                        'border-primary-500 bg-primary-50 text-primary-800 dark:border-primary-400 dark:bg-primary-950/40 dark:text-primary-200': aktifBab === '{{ $bab['id'] }}',
+                                        'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:border-white/20 dark:hover:bg-white/5 dark:hover:text-white': aktifBab !== '{{ $bab['id'] }}',
+                                    }"
+                                    class="panduan-toc-link group flex cursor-pointer items-start gap-2.5 rounded-lg border-l-4 px-2.5 py-2"
+                                >
+                                    <x-filament::icon
+                                        :icon="'heroicon-o-'.$bab['icon']"
+                                        class="mt-0.5 size-4 shrink-0 opacity-70 group-hover:opacity-100"
+                                    />
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-xs font-medium">{{ $bab['judul'] }}</span>
+                                        <span class="mt-0.5 block text-[10px] leading-snug text-gray-400 line-clamp-2 dark:text-gray-500">
+                                            {{ $bab['deskripsi'] }}
+                                        </span>
+                                    </span>
+                                </a>
+                            @endforeach
+
+                            <p
+                                :class="hasilCount === 0 ? 'block' : 'hidden'"
+                                class="rounded-lg border border-dashed border-gray-200 px-3 py-6 text-center text-xs text-gray-500 dark:border-white/10 dark:text-gray-400"
+                            >
+                                Tidak ada bab yang cocok dengan kata kunci tersebut.
+                            </p>
+                        </nav>
+
+                        <div class="border-t border-gray-100 p-3 text-center dark:border-white/10">
+                            <a
+                                href="{{ route('panduan.unduh') }}"
+                                target="_blank"
+                                rel="noopener"
+                                class="panduan-action inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                            >
+                                <x-filament::icon icon="heroicon-o-arrow-down-tray" class="size-3.5" />
+                                <span>Unduh berkas .md asli</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </aside>
 
-            {{-- Kolom Kanan: Tampilan Dokumen Panduan --}}
-            <div class="lg:col-span-3">
-                <div class="rounded-xl border border-slate-200 bg-white p-6 md:p-8 shadow-xs dark:border-white/10 dark:bg-gray-900">
-                    <article class="panduan-content prose max-w-none dark:prose-invert">
+            {{-- Kolom Kanan: Dokumen Panduan --}}
+            <div class="min-w-0 lg:col-span-3">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-xs sm:p-6 md:p-8 dark:border-white/10 dark:bg-gray-900">
+                    <div class="panduan-print-header" aria-hidden="true">
+                        <h1>Buku Panduan Penggunaan &amp; SOP Operasional E-SPP</h1>
+                        <p>Dokumen resmi sistem informasi pembayaran SPP dan keuangan sekolah.</p>
+                    </div>
+
+                    <article id="panduan-article" class="panduan-content max-w-none">
                         {!! $this->kontenHtml !!}
                     </article>
 
-                    <div class="no-print mt-10 pt-6 border-t border-slate-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-gray-400">
-                        <div>
-                            <span>Sistem E-SPP • Buku Panduan Resmi Versi 1.0</span>
+                    <div class="no-print mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-6 text-xs text-gray-500 dark:border-white/10 dark:text-gray-400">
+                        <div class="flex items-center gap-1.5">
+                            <x-filament::icon icon="heroicon-o-document-text" class="size-3.5" />
+                            <span>Sistem E-SPP &bull; Buku Panduan Resmi Versi 1.0</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
-                                class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 font-medium hover:bg-slate-50 dark:border-gray-700 dark:hover:bg-gray-800">
-                                <x-heroicon-o-arrow-up class="w-3.5 h-3.5" />
+                            <button
+                                type="button"
+                                @click="scrollTop()"
+                                class="panduan-action inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 font-medium transition hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
+                            >
+                                <x-filament::icon icon="heroicon-o-arrow-up" class="size-3.5" />
                                 <span>Kembali ke Atas</span>
                             </button>
-                            <button type="button" onclick="window.print()"
-                                class="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 font-medium text-white hover:bg-primary-700">
-                                <x-heroicon-o-printer class="w-3.5 h-3.5" />
+                            <button
+                                type="button"
+                                onclick="window.print()"
+                                class="panduan-action inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 font-medium text-white transition hover:bg-primary-700"
+                            >
+                                <x-filament::icon icon="heroicon-o-printer" class="size-3.5" />
                                 <span>Cetak Dokumen</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
+        {{-- Tombol kembali ke atas (muncul setelah menggulir) --}}
+        <button
+            type="button"
+            :class="showTop ? 'inline-flex' : 'hidden'"
+            @click="scrollTop()"
+            class="panduan-action no-print fixed bottom-5 right-5 z-40 size-11 cursor-pointer items-center justify-center rounded-full bg-primary-600 text-white shadow-lg shadow-primary-900/20 transition hover:bg-primary-700"
+            aria-label="Kembali ke atas"
+        >
+            <x-filament::icon icon="heroicon-o-arrow-up" class="size-5" />
+        </button>
     </div>
 </x-filament-panels::page>

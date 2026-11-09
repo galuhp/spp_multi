@@ -451,6 +451,8 @@ Sistem menyediakan antarmuka khusus bagi siswa dan orang tua agar dapat memantau
 
 # BAB 9: Tanya Jawab (FAQ) & Solusi Permasalahan
 
+### 9.1 Pertanyaan yang Sering Diajukan
+
 #### Q1: Kasir salah memasukkan nominal pembayaran atau salah memilih nama siswa di loket kasir. Apa solusinya?
 > **Solusi**: Jangan panik. Segera laporkan kepada staf bertugas yang memiliki akun **Administrator**. Administrator dapat membuka menu *Transaksi SPP > History Pembayaran*, lalu mengklik tombol **Void / Batalkan** pada transaksi yang keliru dengan menyertakan alasan pembatalan. Tagihan siswa akan otomatis pulih menjadi belum lunas dan kasir dapat menginput ulang transaksi yang benar.
 

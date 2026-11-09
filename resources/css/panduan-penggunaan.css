@@ -1,0 +1,439 @@
+@import './theme.css';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@source '../views/filament/pages/panduan-penggunaan.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tipografi dokumen panduan */
+.panduan-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #334155;
+    overflow-wrap: anywhere;
+}
+
+.panduan-content > h2:first-child {
+    display: none; /* Judul dokumen sudah ditampilkan pada banner halaman */
+}
+
+.panduan-content h2,
+.panduan-content h3,
+.panduan-content h4,
+.panduan-content h5 {
+    scroll-margin-top: 6rem;
+}
+
+.panduan-content h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: #0f172a;
+    margin-top: 2.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.dark .panduan-content h2 {
+    color: #f8fafc;
+    border-color: #334155;
+}
+
+.panduan-content h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.dark .panduan-content h3 {
+    color: #f1f5f9;
+    border-color: #475569;
+}
+
+.panduan-content h4 {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.dark .panduan-content h4 {
+    color: #e2e8f0;
+}
+
+.panduan-content h5 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 1.25rem;
+    margin-bottom: 0.35rem;
+}
+
+.dark .panduan-content h5 {
+    color: #cbd5e1;
+}
+
+.panduan-content p {
+    margin-bottom: 0.85rem;
+}
+
+.dark .panduan-content {
+    color: #cbd5e1;
+}
+
+.panduan-content a {
+    color: var(--primary-600, #2563eb);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    text-underline-offset: 2px;
+}
+
+.panduan-content a:hover {
+    text-decoration-color: currentColor;
+}
+
+.dark .panduan-content a {
+    color: var(--primary-400, #60a5fa);
+}
+
+.panduan-content ul,
+.panduan-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.panduan-content ul {
+    list-style-type: disc;
+}
+
+.panduan-content ol {
+    list-style-type: decimal;
+}
+
+.panduan-content li {
+    margin-bottom: 0.35rem;
+}
+
+.panduan-content li::marker {
+    color: #94a3b8;
+}
+
+.panduan-content strong {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.dark .panduan-content strong {
+    color: #f8fafc;
+}
+
+.panduan-content table {
+    width: 100%;
+    margin-top: 0.75rem;
+    margin-bottom: 1.25rem;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.dark .panduan-content table {
+    border-color: #334155;
+}
+
+.panduan-content th {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.dark .panduan-content th {
+    background-color: #1e293b;
+    color: #f8fafc;
+    border-color: #334155;
+}
+
+.panduan-content td {
+    padding: 0.6rem 0.85rem;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+}
+
+.dark .panduan-content td {
+    border-color: #334155;
+}
+
+.panduan-content code {
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.825rem;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    background-color: #f1f5f9;
+    color: #0369a1;
+}
+
+.dark .panduan-content code {
+    background-color: #1e293b;
+    color: #7dd3fc;
+}
+
+.panduan-content pre {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    font-size: 0.825rem;
+}
+
+.panduan-content pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+.panduan-content blockquote {
+    border-left: 4px solid #3b82f6;
+    background-color: #eff6ff;
+    padding: 0.75rem 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    color: #1e3a8a;
+}
+
+.panduan-content blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+.dark .panduan-content blockquote {
+    border-color: #60a5fa;
+    background-color: rgba(30, 58, 138, 0.25);
+    color: #dbeafe;
+}
+
+/* Callout GitHub alerts */
+.panduan-content .panduan-alert {
+    border-left-width: 4px;
+    border-radius: 0 0.65rem 0.65rem 0;
+    padding: 0.85rem 1rem;
+}
+
+.panduan-content .panduan-alert-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.panduan-content .panduan-alert-icon {
+    height: 1.05rem;
+    width: 1.05rem;
+    flex: none;
+}
+
+.panduan-content .panduan-alert-important,
+.panduan-content .panduan-alert-note {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+    color: #1e3a8a;
+}
+
+.dark .panduan-content .panduan-alert-important,
+.dark .panduan-content .panduan-alert-note {
+    border-color: #60a5fa;
+    background-color: rgba(30, 58, 138, 0.3);
+    color: #dbeafe;
+}
+
+.panduan-content .panduan-alert-tip {
+    border-color: #059669;
+    background-color: #ecfdf5;
+    color: #065f46;
+}
+
+.dark .panduan-content .panduan-alert-tip {
+    border-color: #34d399;
+    background-color: rgba(6, 78, 59, 0.35);
+    color: #d1fae5;
+}
+
+.panduan-content .panduan-alert-warning {
+    border-color: #d97706;
+    background-color: #fffbeb;
+    color: #92400e;
+}
+
+.dark .panduan-content .panduan-alert-warning {
+    border-color: #fbbf24;
+    background-color: rgba(120, 53, 15, 0.35);
+    color: #fef3c7;
+}
+
+.panduan-content .panduan-alert-caution {
+    border-color: #e11d48;
+    background-color: #fff1f2;
+    color: #9f1239;
+}
+
+.dark .panduan-content .panduan-alert-caution {
+    border-color: #fb7185;
+    background-color: rgba(136, 19, 55, 0.35);
+    color: #ffe4e6;
+}
+
+/* Tabel lebar: geser horizontal, jangan merusak layout halaman */
+.panduan-table-wrap {
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.panduan-table-wrap:focus-visible {
+    outline: 2px solid var(--primary-500, #3b82f6);
+    outline-offset: 2px;
+}
+
+.panduan-table-wrap table {
+    margin-bottom: 0;
+}
+
+/* Navigasi daftar isi */
+.panduan-toc-link,
+.panduan-action {
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+.panduan-toc-link:focus-visible,
+.panduan-action:focus-visible {
+    outline: 2px solid var(--primary-500, #3b82f6);
+    outline-offset: 2px;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+.panduan-print-header {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panduan-toc-link,
+    .panduan-action {
+        transition: none !important;
+    }
+
+    html {
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Mode Cetak */
+@media print {
+    @page {
+        margin: 1.4cm;
+    }
+
+    .no-print,
+    .panduan-hero,
+    header,
+    aside,
+    .fi-sidebar,
+    .fi-topbar,
+    .fi-header,
+    .fi-page-header-actions {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 10.5pt !important;
+    }
+
+    .panduan-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #000 !important;
+    }
+
+    .panduan-content h2,
+    .panduan-content h3 {
+        page-break-after: avoid;
+        color: #000 !important;
+        border-color: #999 !important;
+    }
+
+    .panduan-content h4,
+    .panduan-content h5,
+    .panduan-content strong {
+        color: #000 !important;
+    }
+
+    .panduan-content table,
+    .panduan-content blockquote,
+    .panduan-content pre {
+        page-break-inside: avoid;
+    }
+
+    .panduan-content pre {
+        background: #f1f5f9 !important;
+        color: #000 !important;
+        border: 1px solid #cbd5e1;
+    }
+
+    .panduan-content .panduan-alert {
+        border: 1px solid #666 !important;
+        border-left-width: 4px !important;
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    .panduan-print-header {
+        display: block !important;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #000;
+        padding-bottom: 0.75rem;
+    }
+
+    .panduan-print-header h1 {
+        display: block !important;
+        font-size: 16pt;
+        font-weight: 700;
+        margin: 0 0 0.25rem;
+        padding: 0;
+        border: 0;
+        color: #000;
+    }
+
+    .panduan-print-header p {
+        margin: 0;
+        font-size: 9pt;
+        color: #333;
+    }
+
+    a[href]::after {
+        content: none !important;
+    }
+}

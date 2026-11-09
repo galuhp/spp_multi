@@ -16,6 +16,7 @@ export default defineConfig({
                 'resources/css/manajemen-role.css',
                 'resources/css/pembayaran-massal.css',
                 'resources/css/laporan-pembayaran.css',
+                'resources/css/panduan-penggunaan.css',
                 'resources/css/pembayaran-form.css',
                 'resources/css/sidebar.css',
                 'resources/css/entri-pembayaran-kasir.css',
