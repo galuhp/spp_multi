@@ -39,6 +39,9 @@ DB_NAME="${DB_NAME:-spp}"
 DB_USER="${DB_USER:-spp}"
 DB_PASSWORD_INPUT="${DB_PASSWORD:-}"
 REDIS_DB="${REDIS_DB:-0}"
+# Port loopback Nginx untuk backend Go (dipakai Cloudflare Tunnel).
+# Dibedakan dari port 80 Laravel dan port 8081/8082 blue/green.
+NGINX_PORT="${NGINX_PORT:-8080}"
 
 # Untuk VPS yang sudah menjalankan aplikasi lain:
 #   INSTALL_PACKAGES=0          jangan jalankan apt-get install
@@ -287,9 +290,10 @@ upstream spp_api_backend {
 }
 
 server {
+    # Hanya loopback: ingress publik ditangani Cloudflare Tunnel.
     # IPv6 sengaja tidak diaktifkan agar kompatibel dengan VPS yang
-    # menonaktifkan IPv6. Tambahkan "listen [::]:80;" manual jika diperlukan.
-    listen 80;
+    # menonaktifkannya. Tambahkan "listen [::]:${NGINX_PORT};" manual jika perlu.
+    listen 127.0.0.1:${NGINX_PORT};
     server_name ${DOMAIN};
 
     access_log /var/log/nginx/spp-api.access.log;
@@ -419,5 +423,11 @@ Langkah berikutnya:
 Environment aplikasi : ${ENV_FILE}
 Slot aktif           : $(cat "$ACTIVE_FILE")
 Port blue/green      : 8081 / 8082
+Nginx Go API         : http://127.0.0.1:${NGINX_PORT}
 Health check         : http://127.0.0.1:8081/healthz
+
+Cloudflare Tunnel public hostname untuk Go API:
+  Service : HTTP
+  URL     : localhost:${NGINX_PORT}
+  Host    : ${DOMAIN}
 EOF
