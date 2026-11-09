@@ -2,3 +2,7 @@
 *.exe
 *.test
 *.out
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
