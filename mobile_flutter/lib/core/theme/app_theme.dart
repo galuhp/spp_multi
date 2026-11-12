@@ -35,10 +35,16 @@ class AppTheme {
   AppTheme._();
 
   /// Gaya monospace (IBM Plex Mono) untuk nomor kuitansi & kode transaksi.
-  static TextStyle mono({FontWeight? fontWeight}) => GoogleFonts.ibmPlexMono(
-        fontWeight: fontWeight,
-        fontFeatures: const [FontFeature.tabularFigures()],
-      );
+  /// Memakai font lokal aset (offline-first) dengan fallback GoogleFonts.
+  static TextStyle mono({FontWeight? fontWeight, double? fontSize, Color? color}) {
+    return TextStyle(
+      fontFamily: 'IBMPlexMono',
+      fontWeight: fontWeight,
+      fontSize: fontSize,
+      color: color,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+  }
 
   static ShadThemeData light() => ShadThemeData(
         brightness: Brightness.light,

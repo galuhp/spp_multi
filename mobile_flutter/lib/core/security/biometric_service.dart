@@ -1,24 +1,49 @@
 import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
 
-/// Service antarmuka biometrik (Fingerprint / Face ID).
-/// Menggunakan graceful degradation: jika perangkat tidak mendukung sensor,
-/// verifikasi biometrik dilewati tanpa crash.
+/// Service otentikasi biometrik nyata (Fingerprint / Face ID).
+/// Menggunakan graceful degradation jika perangkat tidak memiliki hardware biometrik
+/// atau berjalan pada environment pengujian headless.
 class BiometricService {
-  const BiometricService();
+  BiometricService([LocalAuthentication? auth]) : _auth = auth ?? LocalAuthentication();
 
+  final LocalAuthentication _auth;
+
+  /// Memeriksa ketersediaan hardware sensor biometrik di perangkat.
   Future<bool> isAvailable() async {
     try {
-      // Stub siap pakai bila package local_auth diaktifkan
+      final canCheck = await _auth.canCheckBiometrics;
+      final isSupported = await _auth.isDeviceSupported();
+      return canCheck || isSupported;
+    } on MissingPluginException {
       return false;
     } on PlatformException {
+      return false;
+    } catch (_) {
       return false;
     }
   }
 
-  Future<bool> authenticate({required String localizedReason}) async {
+  /// Meminta verifikasi sidik jari / Face ID ke pengguna.
+  Future<bool> authenticate({
+    String localizedReason = 'Pindai sidik jari atau Face ID untuk masuk ke E-SPP',
+  }) async {
     try {
-      return true;
+      final available = await isAvailable();
+      if (!available) {
+        return false;
+      }
+
+      return await _auth.authenticate(
+        localizedReason: localizedReason,
+        biometricOnly: false,
+        persistAcrossBackgrounding: true,
+      );
+    } on MissingPluginException {
+      return false;
     } on PlatformException {
+      return false;
+    } catch (_) {
       return false;
     }
   }

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'receipt_pdf_service.dart';
+import '../dashboard/dashboard_providers.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -114,7 +116,7 @@ class _PembayaranTile extends StatelessWidget {
 }
 
 /// Kuitansi digital dengan QR verifikasi keaslian.
-class KuitansiScreen extends StatelessWidget {
+class KuitansiScreen extends ConsumerWidget {
   const KuitansiScreen({super.key, required this.item});
 
   final PembayaranItem item;
@@ -125,43 +127,83 @@ class KuitansiScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Kuitansi')),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            ShadCard(
-              title: Text(item.kode,
-                  style: AppTheme.mono()),
-              description: Text(Formatters.tanggal(item.tanggal)),
-              trailing: item.isVoid
-                  ? const ShadBadge.destructive(child: Text('VOID'))
-                  : const ShadBadge(child: Text('VALID')),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  Text('Jumlah: ${Formatters.rupiah(item.jumlah)}'),
-                  Text('Metode: ${item.metode}'),
-                  Text('Petugas: ${item.petugas}'),
-                  const SizedBox(height: 16),
-                  Center(child: QrImageView(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final studentData = ref.watch(dashboardProvider).valueOrNull;
+    final nama = studentData?.namaSiswa ?? 'Siswa E-SPP';
+    final kelas = studentData?.kelas ?? '-';
+    final nisn = studentData?.nisn ?? '-';
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kuitansi Digital')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          ShadCard(
+            title: Text(item.kode, style: AppTheme.mono()),
+            description: Text(Formatters.tanggal(item.tanggal)),
+            trailing: item.isVoid
+                ? const ShadBadge.destructive(child: Text('VOID'))
+                : const ShadBadge(child: Text('VALID')),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                Text('Jumlah: ${Formatters.rupiah(item.jumlah)}'),
+                Text('Metode: ${item.metode}'),
+                Text('Petugas: ${item.petugas}'),
+                const SizedBox(height: 16),
+                Center(
+                  child: QrImageView(
                     data: _verifyUrl,
                     size: 180,
                     backgroundColor: Colors.white,
                     semanticsLabel: 'QR code verifikasi kuitansi ${item.kode}',
-                  )),
-                  const SizedBox(height: 16),
-                  ShadButton(
-                    onPressed: () => Share.share(
-                        'Bukti pembayaran SPP ${item.kode}: $_verifyUrl'),
-                    leading: const ExcludeSemantics(child: Icon(LucideIcons.share2, size: 16)),
-                    child: const Text('Bagikan ke WhatsApp'),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                ShadButton(
+                  width: double.infinity,
+                  onPressed: () => ReceiptPdfService.printReceipt(
+                    item: item,
+                    namaSiswa: nama,
+                    kelas: kelas,
+                    nisn: nisn,
+                  ),
+                  leading: const ExcludeSemantics(
+                    child: Icon(LucideIcons.printer, size: 16),
+                  ),
+                  child: const Text('Unduh / Cetak PDF'),
+                ),
+                const SizedBox(height: 8),
+                ShadButton.outline(
+                  width: double.infinity,
+                  onPressed: () => ReceiptPdfService.shareReceiptPdf(
+                    item: item,
+                    namaSiswa: nama,
+                    kelas: kelas,
+                    nisn: nisn,
+                  ),
+                  leading: const ExcludeSemantics(
+                    child: Icon(LucideIcons.fileText, size: 16),
+                  ),
+                  child: const Text('Kirim Berkas PDF'),
+                ),
+                const SizedBox(height: 8),
+                ShadButton.ghost(
+                  width: double.infinity,
+                  onPressed: () => Share.share(
+                    'Bukti pembayaran SPP ${item.kode}: $_verifyUrl',
+                  ),
+                  leading: const ExcludeSemantics(
+                    child: Icon(LucideIcons.share2, size: 16),
+                  ),
+                  child: const Text('Bagikan Tautan ke WhatsApp'),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }
