@@ -38,17 +38,25 @@ class MockInterceptor extends Interceptor {
         );
       }
 
+      final isWali = username.toLowerCase().contains('wali');
+
       return handler.resolve(
         Response(
           requestOptions: options,
           statusCode: 200,
           data: {
             'success': true,
-            'message': 'Login berhasil.',
+            'message': isWali
+                ? 'Login berhasil sebagai Wali Kelas.'
+                : 'Login berhasil.',
             'data': {
-              'token': 'demo_jwt_token_espp_student_2026',
-              'role': 'siswa',
-              'name': username.isEmpty ? 'M. Rizky Pratama' : username,
+              'token': isWali
+                  ? 'demo_jwt_token_espp_wali_2026'
+                  : 'demo_jwt_token_espp_student_2026',
+              'role': isWali ? 'wali_kelas' : 'siswa',
+              'name': isWali
+                  ? 'Drs. Bambang Sudarsono, M.Pd'
+                  : (username.isEmpty ? 'M. Rizky Pratama' : username),
             },
           },
         ),
@@ -131,6 +139,128 @@ class MockInterceptor extends Interceptor {
                   'petugas': 'Loket Kasir 1',
                   'status': 'valid',
                   'token': 'f7e9b1c3a5',
+                },
+              ],
+            },
+          },
+        ),
+      );
+    }
+
+    if (path.contains('/wali/tunggakan')) {
+      return handler.resolve(
+        Response(
+          requestOptions: options,
+          statusCode: 200,
+          data: {
+            'success': true,
+            'message': 'Data tunggakan kelas berhasil dimuat.',
+            'data': {
+              'total_menunggak': 3,
+              'siswa': [
+                {
+                  'id': 101,
+                  'nisn': '0065432190',
+                  'nis': '240101',
+                  'nama': 'Ahmad Fauzi',
+                  'no_hp_wali': '081234567890',
+                  'total_tunggakan': 500000,
+                  'bulan_menunggak': ['Oktober', 'November'],
+                  'status_bulan_ini': 'belum_lunas',
+                },
+                {
+                  'id': 102,
+                  'nisn': '0065432191',
+                  'nis': '240102',
+                  'nama': 'Bintang Pratama',
+                  'no_hp_wali': '082198765432',
+                  'total_tunggakan': 250000,
+                  'bulan_menunggak': ['November'],
+                  'status_bulan_ini': 'belum_lunas',
+                },
+                {
+                  'id': 105,
+                  'nisn': '0065432194',
+                  'nis': '240105',
+                  'nama': 'Eka Putri Rahayu',
+                  'no_hp_wali': '085611223344',
+                  'total_tunggakan': 750000,
+                  'bulan_menunggak': ['September', 'Oktober', 'November'],
+                  'status_bulan_ini': 'belum_lunas',
+                },
+              ],
+            },
+          },
+        ),
+      );
+    }
+
+    if (path.contains('/wali/rekap-kelas')) {
+      return handler.resolve(
+        Response(
+          requestOptions: options,
+          statusCode: 200,
+          data: {
+            'success': true,
+            'message': 'Rekap kelas berhasil dimuat.',
+            'data': {
+              'kelas_id': '1',
+              'nama_kelas': 'XII Rekayasa Perangkat Lunak 1',
+              'wali_kelas': 'Drs. Bambang Sudarsono, M.Pd',
+              'total_siswa': 32,
+              'siswa_lunas': 26,
+              'siswa_menunggak': 6,
+              'total_tunggakan': 2250000,
+              'siswa': [
+                {
+                  'id': 101,
+                  'nisn': '0065432190',
+                  'nis': '240101',
+                  'nama': 'Ahmad Fauzi',
+                  'no_hp_wali': '081234567890',
+                  'total_tunggakan': 500000,
+                  'bulan_menunggak': ['Oktober', 'November'],
+                  'status_bulan_ini': 'belum_lunas',
+                },
+                {
+                  'id': 102,
+                  'nisn': '0065432191',
+                  'nis': '240102',
+                  'nama': 'Bintang Pratama',
+                  'no_hp_wali': '082198765432',
+                  'total_tunggakan': 250000,
+                  'bulan_menunggak': ['November'],
+                  'status_bulan_ini': 'belum_lunas',
+                },
+                {
+                  'id': 103,
+                  'nisn': '0065432192',
+                  'nis': '240103',
+                  'nama': 'Citra Lestari',
+                  'no_hp_wali': '085712345678',
+                  'total_tunggakan': 0,
+                  'bulan_menunggak': [],
+                  'status_bulan_ini': 'lunas',
+                },
+                {
+                  'id': 104,
+                  'nisn': '0065432193',
+                  'nis': '240104',
+                  'nama': 'Dedi Supriadi',
+                  'no_hp_wali': '081399887766',
+                  'total_tunggakan': 0,
+                  'bulan_menunggak': [],
+                  'status_bulan_ini': 'lunas',
+                },
+                {
+                  'id': 105,
+                  'nisn': '0065432194',
+                  'nis': '240105',
+                  'nama': 'Eka Putri Rahayu',
+                  'no_hp_wali': '085611223344',
+                  'total_tunggakan': 750000,
+                  'bulan_menunggak': ['September', 'Oktober', 'November'],
+                  'status_bulan_ini': 'belum_lunas',
                 },
               ],
             },

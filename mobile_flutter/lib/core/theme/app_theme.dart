@@ -29,6 +29,9 @@ class AppColors {
   static const headerEnd = Color(0xFF3B5BDB);
   static const onHeader = Colors.white;
   static const onHeaderMuted = Color(0xFFDBE4FF);
+
+  static Color paid(Brightness b) => b == Brightness.dark ? successDark : success;
+  static Color unpaid(Brightness b) => b == Brightness.dark ? dangerDark : danger;
 }
 
 class AppTheme {

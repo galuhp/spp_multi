@@ -4,6 +4,12 @@
 	<dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Gunakan Face ID untuk masuk ke akun E-SPP Anda dengan cepat dan aman.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+		<string>whatsapp</string>
+	</array>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>

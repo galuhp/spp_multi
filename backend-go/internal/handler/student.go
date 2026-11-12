@@ -102,6 +102,25 @@ func StudentLogin(db *gorm.DB, tm *auth.TokenManager) gin.HandlerFunc {
 				response.Error(c, http.StatusUnauthorized, response.CodeUnauthenticated, "NISN atau kata sandi tidak valid.")
 				return
 			}
+			if strings.Contains(strings.ToLower(username), "wali") {
+				user = UserRecord{
+					ID:       2,
+					Name:     "Drs. Bambang Sudarsono, M.Pd",
+					Username: username,
+					Role:     middleware.RoleWaliKelas,
+				}
+				token, _, err := tm.Issue(user.ID, user.Username, user.Role, nil)
+				if err != nil {
+					response.Error(c, http.StatusInternalServerError, response.CodeInternalServerError, "Gagal menerbitkan token akses.")
+					return
+				}
+				response.Success(c, http.StatusOK, "Login berhasil sebagai Wali Kelas.", gin.H{
+					"token": token,
+					"role":  user.Role,
+					"name":  user.Name,
+				})
+				return
+			}
 			user = UserRecord{
 				ID:       1,
 				Name:     "M. Rizky Pratama",

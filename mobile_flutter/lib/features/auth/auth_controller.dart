@@ -31,7 +31,12 @@ class AuthController extends StateNotifier<AuthStatus> {
       ),
       (data) => AuthSession.fromJson(data as Map<String, dynamic>),
     );
-    await _ref.read(tokenStorageProvider).write(session.token, persist: remember);
+    await _ref.read(tokenStorageProvider).write(
+          session.token,
+          role: session.role,
+          name: session.name,
+          persist: remember,
+        );
     state = AuthStatus.signedIn;
   }
 
@@ -43,3 +48,15 @@ class AuthController extends StateNotifier<AuthStatus> {
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthStatus>(AuthController.new);
+
+final userRoleProvider = FutureProvider<String?>((ref) async {
+  final status = ref.watch(authControllerProvider);
+  if (status != AuthStatus.signedIn) return null;
+  return ref.read(tokenStorageProvider).readRole();
+});
+
+final userNameProvider = FutureProvider<String?>((ref) async {
+  final status = ref.watch(authControllerProvider);
+  if (status != AuthStatus.signedIn) return null;
+  return ref.read(tokenStorageProvider).readName();
+});

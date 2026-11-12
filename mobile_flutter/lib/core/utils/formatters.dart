@@ -11,3 +11,9 @@ class Formatters {
   static String tanggal(DateTime date) =>
       DateFormat('d MMMM y', 'id_ID').format(date);
 }
+
+class Rupiah {
+  Rupiah._();
+
+  static String format(num value) => Formatters.rupiah(value);
+}

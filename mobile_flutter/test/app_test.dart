@@ -19,7 +19,12 @@ class _MemoryStorage extends TokenStorage {
   Future<String?> read() async => token;
 
   @override
-  Future<void> write(String t, {bool persist = true}) async {
+  Future<void> write(
+    String t, {
+    String role = 'siswa',
+    String name = '',
+    bool persist = true,
+  }) async {
     token = t;
     lastPersist = persist;
   }

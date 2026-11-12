@@ -14,4 +14,8 @@ class ApiConstants {
   static String studentReceipt(String kode) => '/siswa/kuitansi/$kode';
   static String publicReceipt(String kode, String token) =>
       '/public/bukti/$kode/$token';
+
+  // Wali Kelas Endpoints
+  static const String waliTunggakan = '/wali/tunggakan';
+  static String waliRekap(dynamic kelasId) => '/wali/rekap-kelas/$kelasId';
 }

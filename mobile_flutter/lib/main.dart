@@ -5,11 +5,13 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'app_router.dart';
+import 'core/notifications/notification_service.dart';
 import 'core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID');
+  await NotificationService().initialize();
   runApp(const ProviderScope(child: EsppApp()));
 }
 
