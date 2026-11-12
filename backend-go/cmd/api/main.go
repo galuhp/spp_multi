@@ -15,6 +15,7 @@ import (
 	"gorm.io/gorm"
 
 	"spp-backend/internal/cache"
+	"spp-backend/internal/auth"
 	"spp-backend/internal/config"
 	"spp-backend/internal/handler"
 	"spp-backend/internal/license"
@@ -66,15 +67,17 @@ func main() {
 	}
 	defer closeStore()
 
+	tm := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTTTL)
+
 	handlers := router.Handlers{
 		Health: handler.Health,
 		Ready:  handler.Ready(db, store),
 
-		Login:            handler.NotImplemented,
-		PublicReceipt:    handler.NotImplemented,
-		StudentDashboard: handler.NotImplemented,
-		StudentCard:      handler.NotImplemented,
-		StudentReceipt:   handler.NotImplemented,
+		Login:            handler.StudentLogin(db, tm),
+		PublicReceipt:    handler.PublicReceipt(cfg.JWTSecret),
+		StudentDashboard: handler.StudentDashboard(db),
+		StudentCard:      handler.StudentCard(db, cfg.JWTSecret),
+		StudentReceipt:   handler.StudentReceipt(db, cfg.JWTSecret),
 		WaliTunggakan:    handler.NotImplemented,
 		WaliRekap:        handler.NotImplemented,
 		CreatePayment:    handler.NotImplemented,
