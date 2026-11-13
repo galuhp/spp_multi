@@ -53,14 +53,16 @@ class RiwayatScreen extends ConsumerWidget {
           data: (kartu) => kartu.pembayaran.isEmpty
               ? ListView(
                   children: const [
-                    EmptyView(message: 'Belum ada transaksi pembayaran tersimpan.'),
+                    EmptyView(
+                        message: 'Belum ada transaksi pembayaran tersimpan.'),
                   ],
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: kartu.pembayaran.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) => _PembayaranTile(item: kartu.pembayaran[i]),
+                  itemBuilder: (_, i) =>
+                      _PembayaranTile(item: kartu.pembayaran[i]),
                 ),
         ),
       ),
@@ -111,7 +113,8 @@ class _PembayaranTile extends StatelessWidget {
                   children: [
                     Text(
                       item.kode,
-                      style: AppTheme.mono(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: AppTheme.mono(
+                          fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -129,7 +132,8 @@ class _PembayaranTile extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
-                      decoration: item.isVoid ? TextDecoration.lineThrough : null,
+                      decoration:
+                          item.isVoid ? TextDecoration.lineThrough : null,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -212,8 +216,11 @@ class KuitansiScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Detail Data
-                _KuitansiRow(label: 'No. Transaksi', value: item.kode, isMono: true),
-                _KuitansiRow(label: 'Waktu Transaksi', value: Formatters.tanggal(item.tanggal)),
+                _KuitansiRow(
+                    label: 'No. Transaksi', value: item.kode, isMono: true),
+                _KuitansiRow(
+                    label: 'Waktu Transaksi',
+                    value: Formatters.tanggal(item.tanggal)),
                 _KuitansiRow(label: 'Nama Siswa', value: nama),
                 _KuitansiRow(label: 'NISN / Kelas', value: '$nisn / $kelas'),
                 _KuitansiRow(label: 'Metode Bayar', value: item.metode),
@@ -233,9 +240,13 @@ class KuitansiScreen extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      const Text(
+                      Text(
                         'TOTAL PEMBAYARAN',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.mutedForeground,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -253,10 +264,10 @@ class KuitansiScreen extends ConsumerWidget {
                       Text(
                         'Terbilang: ${ReceiptPdfService.terbilang(item.jumlah)}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontStyle: FontStyle.italic,
-                          color: Colors.grey,
+                          color: theme.colorScheme.mutedForeground,
                         ),
                       ),
                     ],
@@ -336,7 +347,13 @@ class _KuitansiRow extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: ShadTheme.of(context).colorScheme.mutedForeground,
+              ),
+            ),
             Text(
               value,
               style: isMono

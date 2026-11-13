@@ -21,16 +21,20 @@ class SiswaWaliItem {
   final List<String> bulanMenunggak;
   final String statusBulanIni;
 
-  bool get isLunas => totalTunggakan == 0 || statusBulanIni.toLowerCase() == 'lunas';
+  bool get isLunas =>
+      totalTunggakan == 0 || statusBulanIni.toLowerCase() == 'lunas';
 
-  String generateWhatsAppMessage({String namaKelas = '', String namaWali = ''}) {
-    final rincian = bulanMenunggak.isEmpty ? 'bulan ini' : bulanMenunggak.join(', ');
+  String generateWhatsAppMessage(
+      {String namaKelas = '', String namaWali = ''}) {
+    final rincian =
+        bulanMenunggak.isEmpty ? 'bulan ini' : bulanMenunggak.join(', ');
     final kelasTxt = namaKelas.isNotEmpty ? ' di kelas $namaKelas' : '';
-    final waliTxt = namaWali.isNotEmpty ? '\nWali Kelas: $namaWali' : '\nWali Kelas';
+    final waliTxt =
+        namaWali.isNotEmpty ? '\nWali Kelas: $namaWali' : '\nWali Kelas';
 
     return 'Yth. Bapak/Ibu Wali Murid dari $nama ($nisn)$kelasTxt,\n\n'
         'Kami menginformasikan bahwa kewajiban administrasi SPP sekolah untuk periode ($rincian) '
-        'saat ini tercatat belum lunas dengan total tunggakan: Rp ${Rupiah.format(totalTunggakan)}.\n\n'
+        'saat ini tercatat belum lunas dengan total tunggakan: ${Rupiah.format(totalTunggakan)}.\n\n'
         'Mohon untuk melakukan penyelesaian administrasi melalui loket kasir sekolah atau transfer rekening resmi sekolah. '
         'Rincian dan bukti pembayaran digital dapat diakses melalui aplikasi E-SPP Mobile.\n\n'
         'Terima kasih atas perhatian dan kerja sama Bapak/Ibu.$waliTxt';

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -56,7 +58,8 @@ class _WaliScreenState extends ConsumerState<WaliScreen> {
             children: [
               ErrorView(
                 message: e.toString(),
-                onRetry: () => ref.invalidate(rekapKelasProvider(widget.kelasId)),
+                onRetry: () =>
+                    ref.invalidate(rekapKelasProvider(widget.kelasId)),
               ),
             ],
           ),
@@ -209,29 +212,47 @@ class _WaliContent extends StatelessWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Uji Notifikasi SPP',
-                    icon: const Icon(LucideIcons.bellRing, color: AppColors.onHeader),
-                    onPressed: () async {
-                      await NotificationService().showNotification(
-                        id: 99,
-                        title: 'Pengingat Rekap SPP',
-                        body: 'Ada ${summary.siswaMenunggak} siswa di kelas ${summary.namaKelas} dengan tunggakan.',
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Notifikasi pengingat SPP terkirim ke sistem.'),
-                            duration: Duration(seconds: 2),
+                  ShadTooltip(
+                    anchor: const ShadAnchorAuto(
+                      offset: Offset(0, 8),
+                      followerAnchor: Alignment.topCenter,
+                      targetAnchor: Alignment.bottomCenter,
+                    ),
+                    builder: (_) => const Text('Uji Notifikasi SPP'),
+                    child: ShadIconButton.ghost(
+                      icon: const Icon(LucideIcons.bellRing,
+                          color: AppColors.onHeader),
+                      onPressed: () {
+                        unawaited(
+                          NotificationService().showNotification(
+                            id: 99,
+                            title: 'Pengingat Rekap SPP',
+                            body:
+                                'Ada ${summary.siswaMenunggak} siswa di kelas ${summary.namaKelas} dengan tunggakan.',
                           ),
                         );
-                      }
-                    },
+                        ShadToaster.of(context).show(
+                          const ShadToast(
+                            offset: Offset(16, 88),
+                            title: Text(
+                                'Notifikasi pengingat SPP terkirim ke sistem.'),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  IconButton(
-                    tooltip: 'Keluar',
-                    icon: const Icon(LucideIcons.logOut, color: AppColors.onHeader),
-                    onPressed: onLogout,
+                  ShadTooltip(
+                    anchor: const ShadAnchorAuto(
+                      offset: Offset(0, 8),
+                      followerAnchor: Alignment.topCenter,
+                      targetAnchor: Alignment.bottomCenter,
+                    ),
+                    builder: (_) => const Text('Keluar'),
+                    child: ShadIconButton.ghost(
+                      icon: const Icon(LucideIcons.logOut,
+                          color: AppColors.onHeader),
+                      onPressed: onLogout,
+                    ),
                   ),
                 ],
               ),
@@ -274,7 +295,11 @@ class _WaliContent extends StatelessWidget {
                             color: Colors.blue.shade700,
                           ),
                         ),
-                        Container(width: 1, height: 32, color: Colors.grey.shade300),
+                        Container(
+                          width: 1,
+                          height: 32,
+                          color: ShadTheme.of(context).colorScheme.border,
+                        ),
                         Expanded(
                           child: _MetricTile(
                             label: 'Lunas',
@@ -282,30 +307,43 @@ class _WaliContent extends StatelessWidget {
                             color: AppColors.paid(Theme.of(context).brightness),
                           ),
                         ),
-                        Container(width: 1, height: 32, color: Colors.grey.shade300),
+                        Container(
+                          width: 1,
+                          height: 32,
+                          color: ShadTheme.of(context).colorScheme.border,
+                        ),
                         Expanded(
                           child: _MetricTile(
                             label: 'Menunggak',
                             value: '${summary.siswaMenunggak}',
-                            color: AppColors.unpaid(Theme.of(context).brightness),
+                            color:
+                                AppColors.unpaid(Theme.of(context).brightness),
                           ),
                         ),
                       ],
                     ),
-                    const Divider(height: 24),
+                    const ShadSeparator.horizontal(
+                      margin: EdgeInsets.symmetric(vertical: 12),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Total Tunggakan:',
-                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: ShadTheme.of(context)
+                                .colorScheme
+                                .mutedForeground,
+                          ),
                         ),
                         Text(
-                          'Rp ${Rupiah.format(summary.totalTunggakan)}',
+                          Rupiah.format(summary.totalTunggakan),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.unpaid(Theme.of(context).brightness),
+                            color:
+                                AppColors.unpaid(Theme.of(context).brightness),
                           ),
                         ),
                       ],
@@ -343,7 +381,8 @@ class _WaliContent extends StatelessWidget {
                   _FilterChip(
                     label: 'Menunggak (${summary.siswaMenunggak})',
                     isSelected: activeFilter == 'menunggak',
-                    selectedColor: AppColors.unpaid(Theme.of(context).brightness),
+                    selectedColor:
+                        AppColors.unpaid(Theme.of(context).brightness),
                     onTap: () => onFilterChanged('menunggak'),
                   ),
                   const SizedBox(width: 8),
@@ -411,7 +450,10 @@ class _MetricTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 12,
+              color: ShadTheme.of(context).colorScheme.mutedForeground,
+            ),
           ),
         ],
       );
@@ -433,15 +475,18 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeCol = selectedColor ?? Theme.of(context).colorScheme.primary;
+    final shad = ShadTheme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? activeCol.withValues(alpha: 0.15) : Colors.transparent,
+          color: isSelected
+              ? activeCol.withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? activeCol : Colors.grey.shade400,
+            color: isSelected ? activeCol : shad.border,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -450,7 +495,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? activeCol : Colors.grey.shade700,
+            color: isSelected ? activeCol : shad.mutedForeground,
           ),
         ),
       ),
@@ -509,7 +554,11 @@ class _SiswaWaliCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'NISN: ${siswa.nisn} • NIS: ${siswa.nis}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              ShadTheme.of(context).colorScheme.mutedForeground,
+                        ),
                       ),
                     ],
                   ),
@@ -520,7 +569,9 @@ class _SiswaWaliCard extends StatelessWidget {
                   const ShadBadge.destructive(child: Text('Menunggak')),
               ],
             ),
-            const Divider(height: 20),
+            const ShadSeparator.horizontal(
+              margin: EdgeInsets.symmetric(vertical: 10),
+            ),
             if (siswa.isLunas)
               Row(
                 children: [
@@ -546,10 +597,13 @@ class _SiswaWaliCard extends StatelessWidget {
                 children: [
                   Text(
                     'Bulan: ${siswa.bulanMenunggak.join(", ")}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: ShadTheme.of(context).colorScheme.mutedForeground,
+                    ),
                   ),
                   Text(
-                    'Rp ${Rupiah.format(siswa.totalTunggakan)}',
+                    Rupiah.format(siswa.totalTunggakan),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -573,12 +627,12 @@ class _SiswaWaliCard extends StatelessWidget {
                       message: msg,
                     );
                     if (!ok && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
+                      ShadToaster.of(context).show(
+                        ShadToast.destructive(
+                          offset: const Offset(16, 88),
+                          title: Text(
                             'Tidak dapat membuka WhatsApp untuk nomor ${siswa.noHpWali}. Pastikan aplikasi WhatsApp terpasang.',
                           ),
-                          backgroundColor: Colors.red.shade700,
                         ),
                       );
                     }

@@ -50,7 +50,8 @@ class ProfilScreen extends ConsumerWidget {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -74,7 +75,8 @@ class ProfilScreen extends ConsumerWidget {
                                 ),
                                 Text(
                                   'SMK NEGERI CONTOH • AKREDITASI A',
-                                  style: theme.textTheme.muted.copyWith(fontSize: 10),
+                                  style: theme.textTheme.muted
+                                      .copyWith(fontSize: 10),
                                 ),
                               ],
                             ),
@@ -93,7 +95,9 @@ class ProfilScreen extends ConsumerWidget {
                             radius: 30,
                             backgroundColor: Colors.blue.shade100,
                             child: Text(
-                              d.namaSiswa.isNotEmpty ? d.namaSiswa[0].toUpperCase() : 'S',
+                              d.namaSiswa.isNotEmpty
+                                  ? d.namaSiswa[0].toUpperCase()
+                                  : 'S',
                               style: TextStyle(
                                 color: Colors.blue.shade900,
                                 fontSize: 24,
@@ -116,12 +120,15 @@ class ProfilScreen extends ConsumerWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   d.kelas,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'NISN: ${d.nisn}',
-                                  style: theme.textTheme.muted.copyWith(fontSize: 12),
+                                  style: theme.textTheme.muted
+                                      .copyWith(fontSize: 12),
                                 ),
                               ],
                             ),
@@ -136,7 +143,9 @@ class ProfilScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: ShadTheme.of(context).colorScheme.border,
+                          ),
                         ),
                         child: QrImageView(
                           data: d.nisn.isEmpty ? '0065432190' : d.nisn,
@@ -157,7 +166,8 @@ class ProfilScreen extends ConsumerWidget {
                 // Kartu Keamanan & Status Aplikasi
                 const ShadCard(
                   padding: EdgeInsets.all(16),
-                  title: Text('Keamanan & Aplikasi', style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text('Keamanan & Aplikasi',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   child: Column(
                     children: [
                       SizedBox(height: 10),
@@ -210,7 +220,8 @@ class ProfilScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => ShadDialog(
         title: const Text('Konfirmasi Keluar'),
-        description: const Text('Apakah Anda yakin ingin keluar dari akun E-SPP ini?'),
+        description:
+            const Text('Apakah Anda yakin ingin keluar dari akun E-SPP ini?'),
         actions: [
           ShadButton.outline(
             child: const Text('Batal'),
@@ -245,14 +256,24 @@ class _SettingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Icon(icon, size: 18, color: Colors.grey.shade700),
+          Icon(icon,
+              size: 18,
+              color: ShadTheme.of(context).colorScheme.mutedForeground),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13)),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: ShadTheme.of(context).colorScheme.mutedForeground,
+                  ),
+                ),
               ],
             ),
           ),

@@ -151,7 +151,13 @@ class _StatusLegend extends StatelessWidget {
             decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           ),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: ShadTheme.of(context).colorScheme.mutedForeground,
+            ),
+          ),
         ],
       );
 }
@@ -169,7 +175,8 @@ class _BulanCell extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '${item.bulan} ${item.tahun}, status ${s.label}, nominal ${Formatters.rupiah(item.nominal)}',
+      label:
+          '${item.bulan} ${item.tahun}, status ${s.label}, nominal ${Formatters.rupiah(item.nominal)}',
       child: GestureDetector(
         onTap: () => _showDetail(context),
         child: Container(
@@ -196,10 +203,11 @@ class _BulanCell extends StatelessWidget {
               Icon(_iconFor(s), size: 16, color: fg),
               const SizedBox(height: 4),
               Text(
-                s.label,
+                _cellLabel(s),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: fg, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    fontSize: 11, color: fg, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -207,6 +215,16 @@ class _BulanCell extends StatelessWidget {
       ),
     );
   }
+
+  /// Label ringkas agar tidak terpotong di sel grid yang sempit; label
+  /// lengkap tetap dipakai pada sheet detail dan [Semantics].
+  static String _cellLabel(StatusTagihan s) => switch (s) {
+        StatusTagihan.lunas => 'Lunas',
+        StatusTagihan.sebagian => 'Sebagian',
+        StatusTagihan.belum => 'Belum Lunas',
+        StatusTagihan.akanDatang => 'Akan Datang',
+        StatusTagihan.ditanggung => 'Ditanggung',
+      };
 
   static IconData _iconFor(StatusTagihan s) => switch (s) {
         StatusTagihan.lunas => LucideIcons.circleCheck,
@@ -243,12 +261,17 @@ class _BulanCell extends StatelessWidget {
               const SizedBox(height: 12),
               const ShadSeparator.horizontal(),
               const SizedBox(height: 12),
-              _DetailRow(label: 'Nominal Tagihan', value: Formatters.rupiah(item.nominal)),
-              _DetailRow(label: 'Jumlah Telah Dibayar', value: Formatters.rupiah(item.dibayar)),
+              _DetailRow(
+                  label: 'Nominal Tagihan',
+                  value: Formatters.rupiah(item.nominal)),
+              _DetailRow(
+                  label: 'Jumlah Telah Dibayar',
+                  value: Formatters.rupiah(item.dibayar)),
               _DetailRow(
                 label: 'Sisa Belum Lunas',
                 value: Formatters.rupiah(item.sisa),
-                valueColor: item.sisa > 0 ? AppColors.unpaid(b) : AppColors.paid(b),
+                valueColor:
+                    item.sisa > 0 ? AppColors.unpaid(b) : AppColors.paid(b),
                 isBold: true,
               ),
               if (item.noKuitansi != null) ...[
@@ -288,11 +311,18 @@ class _DetailRow extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: ShadTheme.of(context).colorScheme.mutedForeground,
+              ),
+            ),
             Text(
               value,
               style: isMono
-                  ? AppTheme.mono(fontWeight: FontWeight.w600, color: valueColor)
+                  ? AppTheme.mono(
+                      fontWeight: FontWeight.w600, color: valueColor)
                   : TextStyle(
                       fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
                       color: valueColor,
@@ -323,7 +353,8 @@ class _NonSppList extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: ShadCard(
-              title: Text(i.namaPos, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(i.namaPos,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               trailing: ShadBadge(
                 backgroundColor: i.status.background(b),
                 foregroundColor: i.status.color(b),
@@ -344,11 +375,17 @@ class _NonSppList extends StatelessWidget {
                       children: [
                         Text(
                           'Dibayar: ${Formatters.rupiah(i.dibayar)}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: ShadTheme.of(context)
+                                .colorScheme
+                                .mutedForeground,
+                          ),
                         ),
                         Text(
                           'Total: ${Formatters.rupiah(i.nominal)}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),

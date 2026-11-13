@@ -31,7 +31,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (mounted) setState(() => _biometricAvailable = available);
   }
 
-  Future<void> _submit([String? overrideUsername, String? overridePassword]) async {
+  Future<void> _submit(
+      [String? overrideUsername, String? overridePassword]) async {
     String username;
     String password;
     bool remember = true;
@@ -106,7 +107,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -137,7 +139,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ShadCard(
                     title: Text(
                       'Selamat Datang',
-                      style: theme.textTheme.h3.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.h3
+                          .copyWith(fontWeight: FontWeight.bold),
                     ),
                     description: const Text(
                       'Masuk dengan NISN siswa atau akun Wali Kelas Anda.',
@@ -152,7 +155,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           // Alert box jika terjadi kegagalan otentikasi
                           if (_error != null) ...[
                             ShadAlert.destructive(
-                              icon: const Icon(LucideIcons.circleAlert, size: 18),
+                              icon:
+                                  const Icon(LucideIcons.circleAlert, size: 18),
                               title: const Text('Gagal Masuk'),
                               description: Text(_error!),
                             ),
@@ -163,12 +167,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             id: 'username',
                             autofillHints: const [AutofillHints.username],
                             label: const Text('NISN / Username'),
-                            placeholder: const Text('Contoh: 0065432190 atau walikelas'),
+                            placeholder:
+                                const Text('Contoh: 0065432190 atau walikelas'),
                             leading: const ExcludeSemantics(
                               child: Icon(LucideIcons.user, size: 16),
                             ),
-                            validator: (v) =>
-                                v.trim().isEmpty ? 'NISN atau username wajib diisi' : null,
+                            validator: (v) => v.trim().isEmpty
+                                ? 'NISN atau username wajib diisi'
+                                : null,
                           ),
                           const SizedBox(height: 14),
 
@@ -186,7 +192,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 _obscure ? LucideIcons.eye : LucideIcons.eyeOff,
                                 size: 18,
                               ),
-                              onPressed: () => setState(() => _obscure = !_obscure),
+                              onPressed: () =>
+                                  setState(() => _obscure = !_obscure),
                             ),
                             validator: (v) =>
                                 v.isEmpty ? 'Kata sandi wajib diisi' : null,
@@ -207,13 +214,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ShadButton(
                             onPressed: _loading ? null : () => _submit(),
                             leading: _loading
-                                ? const SizedBox.square(
-                                    dimension: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
+                                ? const Icon(LucideIcons.loaderCircle, size: 16)
+                                    .animate(
+                                      onPlay: (controller) =>
+                                          controller.repeat(),
+                                    )
+                                    .rotate(
+                                      duration:
+                                          const Duration(milliseconds: 900),
+                                    )
                                 : const Icon(LucideIcons.logIn, size: 16),
                             child: const Text('Masuk ke Sistem'),
                           ),
@@ -222,7 +231,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             const SizedBox(height: 10),
                             ShadButton.outline(
                               onPressed: _loading ? null : _loginBiometric,
-                              leading: const Icon(LucideIcons.fingerprint, size: 16),
+                              leading:
+                                  const Icon(LucideIcons.fingerprint, size: 16),
                               child: const Text('Masuk Cepat dengan Biometrik'),
                             ),
                           ],
@@ -232,10 +242,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 14),
 
                           // Quick Test Accounts
-                          const Text(
+                          Text(
                             'Akun Uji Coba Cepat (1-Klik):',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.mutedForeground,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -245,7 +258,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   size: ShadButtonSize.sm,
                                   onPressed: _loading
                                       ? null
-                                      : () => _submit('0065432190', 'validpassword'),
+                                      : () => _submit(
+                                          '0065432190', 'validpassword'),
                                   child: const Text('👤 Siswa Demo'),
                                 ),
                               ),
@@ -255,7 +269,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   size: ShadButtonSize.sm,
                                   onPressed: _loading
                                       ? null
-                                      : () => _submit('walikelas', 'validpassword'),
+                                      : () =>
+                                          _submit('walikelas', 'validpassword'),
                                   child: const Text('🎓 Wali Kelas'),
                                 ),
                               ),

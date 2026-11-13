@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -74,7 +76,8 @@ class DashboardScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => ShadDialog(
         title: const Text('Konfirmasi Keluar'),
-        description: const Text('Apakah Anda yakin ingin keluar dari akun E-SPP?'),
+        description:
+            const Text('Apakah Anda yakin ingin keluar dari akun E-SPP?'),
         actions: [
           ShadButton.outline(
             child: const Text('Batal'),
@@ -182,31 +185,48 @@ class _DashboardContent extends StatelessWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Uji Pengingat Notifikasi',
-                    icon: const Icon(LucideIcons.bellRing, color: AppColors.onHeader),
-                    onPressed: () async {
-                      await NotificationService().showNotification(
-                        id: 101,
-                        title: 'Pengingat Pembayaran SPP',
-                        body: lunas
-                            ? 'Seluruh kewajiban SPP Anda telah lunas. Terima kasih!'
-                            : 'Tagihan SPP sebesar Rp ${Rupiah.format(data.tunggakanJatuhTempo)} jatuh tempo tanggal 10.',
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Notifikasi lokal SPP berhasil dipicu.'),
-                            duration: Duration(seconds: 2),
+                  ShadTooltip(
+                    anchor: const ShadAnchorAuto(
+                      offset: Offset(0, 8),
+                      followerAnchor: Alignment.topCenter,
+                      targetAnchor: Alignment.bottomCenter,
+                    ),
+                    builder: (_) => const Text('Uji Pengingat Notifikasi'),
+                    child: ShadIconButton.ghost(
+                      icon: const Icon(LucideIcons.bellRing,
+                          color: AppColors.onHeader),
+                      onPressed: () {
+                        unawaited(
+                          NotificationService().showNotification(
+                            id: 101,
+                            title: 'Pengingat Pembayaran SPP',
+                            body: lunas
+                                ? 'Seluruh kewajiban SPP Anda telah lunas. Terima kasih!'
+                                : 'Tagihan SPP sebesar ${Rupiah.format(data.tunggakanJatuhTempo)} jatuh tempo tanggal 10.',
                           ),
                         );
-                      }
-                    },
+                        ShadToaster.of(context).show(
+                          const ShadToast(
+                            offset: Offset(16, 88),
+                            title:
+                                Text('Notifikasi lokal SPP berhasil dipicu.'),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  IconButton(
-                    tooltip: 'Keluar',
-                    icon: const Icon(LucideIcons.logOut, color: AppColors.onHeader),
-                    onPressed: onLogout,
+                  ShadTooltip(
+                    anchor: const ShadAnchorAuto(
+                      offset: Offset(0, 8),
+                      followerAnchor: Alignment.topCenter,
+                      targetAnchor: Alignment.bottomCenter,
+                    ),
+                    builder: (_) => const Text('Keluar'),
+                    child: ShadIconButton.ghost(
+                      icon: const Icon(LucideIcons.logOut,
+                          color: AppColors.onHeader),
+                      onPressed: onLogout,
+                    ),
                   ),
                 ],
               ),
@@ -271,11 +291,13 @@ class _DashboardContent extends StatelessWidget {
                       children: [
                         Text(
                           'Terbayar: ${Formatters.rupiah(data.totalDibayar)}',
-                          style: theme.textTheme.small.copyWith(color: Colors.grey.shade700),
+                          style: theme.textTheme.small.copyWith(
+                              color: theme.colorScheme.mutedForeground),
                         ),
                         Text(
                           'Total: ${Formatters.rupiah(data.totalTagihan)}',
-                          style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
+                          style: theme.textTheme.small
+                              .copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -294,7 +316,8 @@ class _DashboardContent extends StatelessWidget {
             children: [
               Text(
                 'Menu Utama & Layanan',
-                style: theme.textTheme.large.copyWith(fontWeight: FontWeight.bold),
+                style:
+                    theme.textTheme.large.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Row(
@@ -339,18 +362,20 @@ class _DashboardContent extends StatelessWidget {
                       title: 'Pengingat',
                       subtitle: 'Jadwal Tgl 10',
                       color: Colors.amber.shade800,
-                      onTap: () async {
-                        await NotificationService().scheduleMonthlyReminder(
-                          bulan: 'Bulan Berjalan',
-                          nominal: data.tunggakanJatuhTempo,
+                      onTap: () {
+                        unawaited(
+                          NotificationService().scheduleMonthlyReminder(
+                            bulan: 'Bulan Berjalan',
+                            nominal: data.tunggakanJatuhTempo,
+                          ),
                         );
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Jadwal pengingat SPP aktif untuk tanggal 10.'),
-                            ),
-                          );
-                        }
+                        ShadToaster.of(context).show(
+                          const ShadToast(
+                            offset: Offset(16, 88),
+                            title: Text(
+                                'Jadwal pengingat SPP aktif untuk tanggal 10.'),
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -431,7 +456,11 @@ class _QuickActionCard extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color:
+                            ShadTheme.of(context).colorScheme.mutedForeground,
+                      ),
                     ),
                   ],
                 ),
