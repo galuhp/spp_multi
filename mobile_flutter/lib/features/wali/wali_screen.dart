@@ -66,9 +66,32 @@ class _WaliScreenState extends ConsumerState<WaliScreen> {
             searchQuery: _searchQuery,
             onFilterChanged: (f) => setState(() => _activeFilter = f),
             onSearchChanged: (q) => setState(() => _searchQuery = q),
-            onLogout: () => ref.read(authControllerProvider.notifier).logout(),
+            onLogout: () => _confirmLogout(context),
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showShadDialog(
+      context: context,
+      builder: (ctx) => ShadDialog(
+        title: const Text('Konfirmasi Keluar'),
+        description: const Text('Keluar dari portal perwalian kelas?'),
+        actions: [
+          ShadButton.outline(
+            child: const Text('Batal'),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ShadButton.destructive(
+            child: const Text('Ya, Keluar'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ref.read(authControllerProvider.notifier).logout();
+            },
+          ),
+        ],
       ),
     );
   }

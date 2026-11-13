@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/widgets/shad_bottom_nav.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
@@ -10,6 +11,7 @@ import 'features/riwayat/riwayat_screen.dart';
 import 'features/tagihan/tagihan_models.dart';
 import 'features/tagihan/tagihan_screen.dart';
 import 'features/wali/wali_screen.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 class _HomeDispatcher extends ConsumerWidget {
   const _HomeDispatcher();
@@ -35,52 +37,52 @@ class _Shell extends ConsumerWidget {
 
     return Scaffold(
       body: shell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        onDestinationSelected: (i) =>
+      bottomNavigationBar: ShadBottomNav(
+        currentIndex: shell.currentIndex,
+        onTap: (i) =>
             shell.goBranch(i, initialLocation: i == shell.currentIndex),
-        destinations: isWali
+        items: isWali
             ? const [
-                NavigationDestination(
-                  icon: Icon(Icons.school_outlined),
-                  selectedIcon: Icon(Icons.school),
+                ShadBottomNavItem(
+                  icon: LucideIcons.graduationCap,
+                  activeIcon: LucideIcons.graduationCap,
                   label: 'Perwalian',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long),
+                ShadBottomNavItem(
+                  icon: LucideIcons.receiptText,
+                  activeIcon: LucideIcons.receiptText,
                   label: 'Tagihan',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.history_outlined),
-                  selectedIcon: Icon(Icons.history),
+                ShadBottomNavItem(
+                  icon: LucideIcons.history,
+                  activeIcon: LucideIcons.history,
                   label: 'Riwayat',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.badge_outlined),
-                  selectedIcon: Icon(Icons.badge),
+                ShadBottomNavItem(
+                  icon: LucideIcons.user,
+                  activeIcon: LucideIcons.user,
                   label: 'Profil',
                 ),
               ]
             : const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
+                ShadBottomNavItem(
+                  icon: LucideIcons.house,
+                  activeIcon: LucideIcons.house,
                   label: 'Beranda',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long),
+                ShadBottomNavItem(
+                  icon: LucideIcons.receiptText,
+                  activeIcon: LucideIcons.receiptText,
                   label: 'Tagihan',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.history_outlined),
-                  selectedIcon: Icon(Icons.history),
+                ShadBottomNavItem(
+                  icon: LucideIcons.history,
+                  activeIcon: LucideIcons.history,
                   label: 'Riwayat',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.badge_outlined),
-                  selectedIcon: Icon(Icons.badge),
+                ShadBottomNavItem(
+                  icon: LucideIcons.idCard,
+                  activeIcon: LucideIcons.idCard,
                   label: 'Profil',
                 ),
               ],
