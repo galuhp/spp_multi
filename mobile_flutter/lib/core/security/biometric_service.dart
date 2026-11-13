@@ -1,15 +1,27 @@
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
+/// Kontrak autentikasi biometrik agar mudah diganti/di-fake pada test.
+abstract interface class BiometricAuth {
+  Future<bool> isAvailable();
+
+  Future<bool> authenticate({
+    String localizedReason =
+        'Pindai sidik jari atau Face ID untuk masuk ke E-SPP',
+  });
+}
+
 /// Service otentikasi biometrik nyata (Fingerprint / Face ID).
 /// Menggunakan graceful degradation jika perangkat tidak memiliki hardware biometrik
 /// atau berjalan pada environment pengujian headless.
-class BiometricService {
-  BiometricService([LocalAuthentication? auth]) : _auth = auth ?? LocalAuthentication();
+class BiometricService implements BiometricAuth {
+  BiometricService([LocalAuthentication? auth])
+      : _auth = auth ?? LocalAuthentication();
 
   final LocalAuthentication _auth;
 
   /// Memeriksa ketersediaan hardware sensor biometrik di perangkat.
+  @override
   Future<bool> isAvailable() async {
     try {
       final canCheck = await _auth.canCheckBiometrics;
@@ -25,8 +37,10 @@ class BiometricService {
   }
 
   /// Meminta verifikasi sidik jari / Face ID ke pengguna.
+  @override
   Future<bool> authenticate({
-    String localizedReason = 'Pindai sidik jari atau Face ID untuk masuk ke E-SPP',
+    String localizedReason =
+        'Pindai sidik jari atau Face ID untuk masuk ke E-SPP',
   }) async {
     try {
       final available = await isAvailable();

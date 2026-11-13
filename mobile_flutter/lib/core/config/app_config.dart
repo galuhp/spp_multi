@@ -4,8 +4,15 @@ enum AppEnvironment { dev, prod, demo }
 class AppConfig {
   AppConfig._();
 
-  static const String _envName = String.fromEnvironment('ENV', defaultValue: 'demo');
-  static const bool useMock = bool.fromEnvironment('USE_MOCK', defaultValue: true);
+  static const String _envName =
+      String.fromEnvironment('ENV', defaultValue: 'demo');
+  static const bool useMock =
+      bool.fromEnvironment('USE_MOCK', defaultValue: true);
+
+  /// Push notification butuh kredensial Firebase; aktifkan lewat
+  /// `--dart-define=ENABLE_PUSH=true` setelah konfigurasi tersedia.
+  static const bool pushEnabled =
+      bool.fromEnvironment('ENABLE_PUSH', defaultValue: false);
 
   static AppEnvironment get environment {
     switch (_envName.toLowerCase()) {

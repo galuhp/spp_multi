@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../core/security/app_lock_controller.dart';
 import '../../core/widgets/shad_app_bar.dart';
 import '../../core/widgets/state_views.dart';
 import '../auth/auth_controller.dart';
@@ -171,12 +172,7 @@ class ProfilScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       SizedBox(height: 10),
-                      _SettingRow(
-                        icon: LucideIcons.fingerprint,
-                        title: 'Autentikasi Biometrik',
-                        subtitle: 'Pindai sidik jari atau Face ID aktif',
-                        trailing: ShadBadge.secondary(child: Text('Tersedia')),
-                      ),
+                      _BiometricLockTile(),
                       SizedBox(height: 8),
                       ShadSeparator.horizontal(),
                       SizedBox(height: 8),
@@ -236,6 +232,38 @@ class ProfilScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Baris pengaturan kunci biometrik dengan status ketersediaan perangkat.
+class _BiometricLockTile extends ConsumerWidget {
+  const _BiometricLockTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lock = ref.watch(appLockControllerProvider);
+    return FutureBuilder<bool>(
+      future: ref.read(appLockControllerProvider.notifier).biometricAvailable(),
+      builder: (context, snapshot) {
+        final available = snapshot.data ?? false;
+        return _SettingRow(
+          icon: LucideIcons.fingerprint,
+          title: 'Kunci Biometrik',
+          subtitle: available
+              ? 'Minta sidik jari / Face ID saat membuka aplikasi'
+              : 'Tidak tersedia di perangkat ini',
+          trailing: ShadSwitch(
+            value: lock.enabled,
+            onChanged:
+                available && snapshot.connectionState == ConnectionState.done
+                    ? (value) => ref
+                        .read(appLockControllerProvider.notifier)
+                        .setEnabled(value)
+                    : null,
+          ),
+        );
+      },
     );
   }
 }

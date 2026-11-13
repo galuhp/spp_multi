@@ -5,14 +5,28 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'app_router.dart';
+import 'core/config/app_config.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/push/push_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/app_lock_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID');
   await NotificationService().initialize();
-  runApp(const ProviderScope(child: EsppApp()));
+
+  final container = ProviderContainer();
+  if (AppConfig.pushEnabled) {
+    await container.read(pushServiceProvider).initialize();
+  }
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const EsppApp(),
+    ),
+  );
 }
 
 class EsppApp extends ConsumerWidget {
@@ -33,5 +47,8 @@ class EsppApp extends ConsumerWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+        builder: (context, child) => AppLockGate(
+          child: child ?? const SizedBox.shrink(),
+        ),
       );
 }

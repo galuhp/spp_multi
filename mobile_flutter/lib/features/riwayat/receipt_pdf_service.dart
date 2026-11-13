@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -51,11 +52,31 @@ class ReceiptPdfService {
       } else if (val < 1000000000) {
         return '${hitung(val ~/ 1000000)} Juta ${hitung(val % 1000000)}'.trim();
       } else {
-        return '${hitung(val ~/ 1000000000)} Miliar ${hitung(val % 1000000000)}'.trim();
+        return '${hitung(val ~/ 1000000000)} Miliar ${hitung(val % 1000000000)}'
+            .trim();
       }
     }
 
     return '${hitung(n)} Rupiah';
+  }
+
+  /// Font lokal IBM Plex Sans agar kuitansi mendukung karakter Unicode
+  /// (font bawaan PDF hanya Latin-1). Fallback ke font bawaan jika aset gagal
+  /// dimuat, mis. pada lingkungan pengujian tanpa bundle aset.
+  static Future<pw.ThemeData> _pdfTheme() async {
+    try {
+      final data =
+          await rootBundle.load('assets/fonts/IBMPlexSans-Variable.ttf');
+      final font = pw.Font.ttf(data);
+      return pw.ThemeData.withFont(
+        base: font,
+        bold: font,
+        italic: font,
+        boldItalic: font,
+      );
+    } catch (_) {
+      return pw.ThemeData.base();
+    }
   }
 
   /// Membuat berkas PDF dalam bentuk bytes.
@@ -65,6 +86,7 @@ class ReceiptPdfService {
     required String kelas,
     required String nisn,
   }) async {
+    final theme = await _pdfTheme();
     final pdf = pw.Document();
 
     final base = ApiConstants.baseUrl.replaceFirst('/api/v1', '');
@@ -72,6 +94,7 @@ class ReceiptPdfService {
 
     pdf.addPage(
       pw.Page(
+        theme: theme,
         pageFormat: PdfPageFormat.a5,
         margin: const pw.EdgeInsets.all(24),
         build: (pw.Context context) {
@@ -96,19 +119,22 @@ class ReceiptPdfService {
                       ),
                       pw.Text(
                         'Sistem Keuangan & Pembayaran Digital',
-                        style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+                        style: const pw.TextStyle(
+                            fontSize: 10, color: PdfColors.grey700),
                       ),
                     ],
                   ),
                   pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
                     decoration: pw.BoxDecoration(
                       color: item.isVoid
                           ? PdfColor.fromHex('#FFF1F2')
                           : PdfColor.fromHex('#ECFDF5'),
                       borderRadius: pw.BorderRadius.circular(6),
                       border: pw.Border.all(
-                        color: item.isVoid ? PdfColors.red700 : PdfColors.green700,
+                        color:
+                            item.isVoid ? PdfColors.red700 : PdfColors.green700,
                       ),
                     ),
                     child: pw.Text(
@@ -116,7 +142,8 @@ class ReceiptPdfService {
                       style: pw.TextStyle(
                         fontSize: 11,
                         fontWeight: pw.FontWeight.bold,
-                        color: item.isVoid ? PdfColors.red700 : PdfColors.green700,
+                        color:
+                            item.isVoid ? PdfColors.red700 : PdfColors.green700,
                       ),
                     ),
                   ),
@@ -134,21 +161,37 @@ class ReceiptPdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('DATA SISWA:', style: const pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+                      pw.Text('DATA SISWA:',
+                          style: const pw.TextStyle(
+                              fontSize: 9,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.grey700)),
                       pw.SizedBox(height: 2),
-                      pw.Text('Nama  : $namaSiswa', style: const pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
-                      pw.Text('NISN  : $nisn', style: const pw.TextStyle(fontSize: 10)),
-                      pw.Text('Kelas : $kelas', style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text('Nama  : $namaSiswa',
+                          style: const pw.TextStyle(
+                              fontSize: 11, fontWeight: pw.FontWeight.bold)),
+                      pw.Text('NISN  : $nisn',
+                          style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text('Kelas : $kelas',
+                          style: const pw.TextStyle(fontSize: 10)),
                     ],
                   ),
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
-                      pw.Text('DETAIL KUITANSI:', style: const pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+                      pw.Text('DETAIL KUITANSI:',
+                          style: const pw.TextStyle(
+                              fontSize: 9,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.grey700)),
                       pw.SizedBox(height: 2),
-                      pw.Text('No: ${item.kode}', style: const pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Tgl: ${Formatters.tanggal(item.tanggal)}', style: const pw.TextStyle(fontSize: 10)),
-                      pw.Text('Metode: ${item.metode}', style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text('No: ${item.kode}',
+                          style: const pw.TextStyle(
+                              fontSize: 11, fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Tgl: ${Formatters.tanggal(item.tanggal)}',
+                          style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text('Metode: ${item.metode}',
+                          style: const pw.TextStyle(fontSize: 10)),
                     ],
                   ),
                 ],
@@ -160,15 +203,21 @@ class ReceiptPdfService {
                 border: pw.TableBorder.all(color: PdfColors.grey300),
                 children: [
                   pw.TableRow(
-                    decoration: pw.BoxDecoration(color: PdfColor.fromHex('#F8FAFC')),
+                    decoration:
+                        pw.BoxDecoration(color: PdfColor.fromHex('#F8FAFC')),
                     children: [
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text('Uraian Pembayaran', style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        child: pw.Text('Uraian Pembayaran',
+                            style: const pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold, fontSize: 10)),
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text('Jumlah', textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        child: pw.Text('Jumlah',
+                            textAlign: pw.TextAlign.right,
+                            style: const pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold, fontSize: 10)),
                       ),
                     ],
                   ),
@@ -179,8 +228,11 @@ class ReceiptPdfService {
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text('Pembayaran SPP / Biaya Sekolah', style: const pw.TextStyle(fontSize: 10)),
-                            pw.Text('Petugas Loket: ${item.petugas}', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                            pw.Text('Pembayaran SPP / Biaya Sekolah',
+                                style: const pw.TextStyle(fontSize: 10)),
+                            pw.Text('Petugas Loket: ${item.petugas}',
+                                style: const pw.TextStyle(
+                                    fontSize: 9, color: PdfColors.grey600)),
                           ],
                         ),
                       ),
@@ -189,7 +241,8 @@ class ReceiptPdfService {
                         child: pw.Text(
                           Formatters.rupiah(item.jumlah),
                           textAlign: pw.TextAlign.right,
-                          style: const pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+                          style: const pw.TextStyle(
+                              fontSize: 11, fontWeight: pw.FontWeight.bold),
                         ),
                       ),
                     ],
@@ -208,7 +261,8 @@ class ReceiptPdfService {
                 ),
                 child: pw.Text(
                   'Terbilang: #${terbilang(item.jumlah)}#',
-                  style: const pw.TextStyle(fontSize: 9, fontStyle: pw.FontStyle.italic),
+                  style: const pw.TextStyle(
+                      fontSize: 9, fontStyle: pw.FontStyle.italic),
                 ),
               ),
               pw.Spacer(),
@@ -226,22 +280,28 @@ class ReceiptPdfService {
                         data: verifyUrl,
                         width: 70,
                         height: 70,
+                        // QR tidak butuh teks di bawahnya; menghindari font
+                        // Courier bawaan yang tidak mendukung Unicode.
+                        drawText: false,
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
                         'Pindai untuk verifikasi digital',
-                        style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+                        style: const pw.TextStyle(
+                            fontSize: 8, color: PdfColors.grey600),
                       ),
                     ],
                   ),
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Text('Bendahara / Kasir Sekolah,', style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text('Bendahara / Kasir Sekolah,',
+                          style: const pw.TextStyle(fontSize: 10)),
                       pw.SizedBox(height: 40),
                       pw.Text(
                         item.petugas.isEmpty ? 'Bendahara SPP' : item.petugas,
-                        style: const pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                        style: const pw.TextStyle(
+                            fontSize: 10, fontWeight: pw.FontWeight.bold),
                       ),
                     ],
                   ),

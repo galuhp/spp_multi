@@ -5,6 +5,7 @@ import '../config/app_config.dart';
 import '../constants/api_constants.dart';
 import '../storage/token_storage.dart';
 import 'api_exception.dart';
+import 'json_cache.dart';
 import 'mock_interceptor.dart';
 
 /// Dipanggil saat server membalas 401 (token kedaluwarsa) agar UI logout.
@@ -85,6 +86,36 @@ Future<T> unwrap<T>(
     }
     return parse(body['data']);
   } on DioException catch (e) {
+    throw ApiException.fromDio(e);
+  }
+}
+
+/// Seperti [unwrap], tetapi menyimpan hasil ke [cache] dan memakai data cache
+/// sebagai fallback saat permintaan gagal (mis. offline).
+Future<T> unwrapWithCache<T>({
+  required Future<Response<dynamic>> Function() fetch,
+  required String cacheKey,
+  required JsonCache cache,
+  required T Function(dynamic data) parse,
+}) async {
+  try {
+    final res = await fetch();
+    final body = res.data as Map<String, dynamic>;
+    if (body['success'] != true) {
+      throw ApiException(
+        body['message'] as String? ?? 'Terjadi kesalahan.',
+        code: body['code'] as String?,
+        statusCode: res.statusCode,
+      );
+    }
+    final data = body['data'];
+    await cache.write(cacheKey, data);
+    return parse(data);
+  } on DioException catch (e) {
+    final cached = await cache.read(cacheKey);
+    if (cached != null) {
+      return parse(cached);
+    }
     throw ApiException.fromDio(e);
   }
 }
