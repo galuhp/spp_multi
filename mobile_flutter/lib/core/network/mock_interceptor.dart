@@ -63,6 +63,27 @@ class MockInterceptor extends Interceptor {
       );
     }
 
+    if (path.contains('/public/profil-sekolah')) {
+      return handler.resolve(
+        Response(
+          requestOptions: options,
+          statusCode: 200,
+          data: {
+            'success': true,
+            'message': 'Profil sekolah berhasil dimuat.',
+            'data': {
+              'nama_sekolah': 'SMK Negeri Contoh',
+              'alamat': 'Jl. Pendidikan No. 1, Sukajadi',
+              'no_telp': '(022) 1234567',
+              'website': 'www.smknegericontoh.sch.id',
+              'npsn': '20219876',
+              'kota': 'Bandung',
+            },
+          },
+        ),
+      );
+    }
+
     if (path.contains('/siswa/dashboard')) {
       return handler.resolve(
         Response(
@@ -116,29 +137,60 @@ class MockInterceptor extends Interceptor {
                 {
                   'kode_transaksi': 'SPP-20261012-0105',
                   'tgl_bayar': '2026-10-12T09:30:00Z',
+                  'created_at': '2026-10-12T09:30:12Z',
                   'jumlah_bayar': 250000,
                   'metode': 'Transfer Bank (BCA)',
                   'petugas': 'Bendahara Sekolah',
                   'status': 'valid',
                   'token': 'a8f4c2e1b9',
+                  'nis': '240101',
+                  'tahun_ajaran': '2026/2027',
+                  'rincian': [
+                    {
+                      'keterangan': 'SPP Bulan Oktober 2026',
+                      'tahun_ajaran': '2026/2027',
+                      'jumlah': 250000,
+                    },
+                  ],
                 },
                 {
                   'kode_transaksi': 'SPP-20260910-0088',
                   'tgl_bayar': '2026-09-10T08:15:00Z',
+                  'created_at': '2026-09-10T08:15:41Z',
                   'jumlah_bayar': 250000,
                   'metode': 'Tunai di Loket',
                   'petugas': 'Siti Rahmawati, S.Pd',
                   'status': 'valid',
                   'token': '3d5e7f1a2c',
+                  'nis': '240101',
+                  'tahun_ajaran': '2026/2027',
+                  'rincian': [
+                    {
+                      'keterangan': 'SPP Bulan September 2026',
+                      'tahun_ajaran': '2026/2027',
+                      'jumlah': 250000,
+                    },
+                  ],
                 },
                 {
                   'kode_transaksi': 'SRG-20260814-0045',
                   'tgl_bayar': '2026-08-14T11:00:00Z',
+                  'created_at': '2026-08-14T11:00:27Z',
                   'jumlah_bayar': 400000,
                   'metode': 'QRIS',
                   'petugas': 'Loket Kasir 1',
                   'status': 'valid',
                   'token': 'f7e9b1c3a5',
+                  'nis': '240101',
+                  'tahun_ajaran': '2026/2027',
+                  'rincian': [
+                    {
+                      'keterangan': 'Paket Seragam & Atribut',
+                      'tahun_ajaran': '2026/2027',
+                      'jumlah': 400000,
+                      'subsidi_persen': 10,
+                    },
+                  ],
                 },
               ],
             },

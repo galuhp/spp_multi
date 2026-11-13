@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../core/models/school_profile.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/shad_app_bar.dart';
@@ -167,6 +168,8 @@ class KuitansiScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ShadTheme.of(context);
     final studentData = ref.watch(dashboardProvider).valueOrNull;
+    final sekolah =
+        ref.watch(schoolProfileProvider).valueOrNull ?? SchoolProfile.fallback;
     final nama = studentData?.namaSiswa ?? 'M. Rizky Pratama';
     final kelas = studentData?.kelas ?? 'XII RPL 1';
     final nisn = studentData?.nisn ?? '0065432190';
@@ -191,9 +194,11 @@ class KuitansiScreen extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'E-SPP SEKOLAH',
-                          style: TextStyle(
+                        Text(
+                          sekolah.nama.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.2,
                             fontSize: 13,
@@ -308,6 +313,7 @@ class KuitansiScreen extends ConsumerWidget {
               namaSiswa: nama,
               kelas: kelas,
               nisn: nisn,
+              sekolah: sekolah,
             ),
             leading: const Icon(LucideIcons.printer, size: 16),
             child: const Text('Unduh / Cetak Dokumen PDF'),
@@ -319,6 +325,7 @@ class KuitansiScreen extends ConsumerWidget {
               namaSiswa: nama,
               kelas: kelas,
               nisn: nisn,
+              sekolah: sekolah,
             ),
             leading: const Icon(LucideIcons.share2, size: 16),
             child: const Text('Bagikan Kuitansi Digital'),

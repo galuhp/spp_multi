@@ -4,10 +4,14 @@ import '../../core/theme/app_theme.dart';
 
 enum StatusTagihan {
   lunas('Lunas', AppColors.success, AppColors.successBg, AppColors.successDark),
-  sebagian('Sebagian', AppColors.warning, AppColors.warningBg, AppColors.warningDark),
-  belum('Belum Lunas', AppColors.danger, AppColors.dangerBg, AppColors.dangerDark),
-  akanDatang('Akan Datang', AppColors.neutral, AppColors.neutralBg, AppColors.neutralDark),
-  ditanggung('Ditanggung Pemerintah', AppColors.subsidi, AppColors.subsidiBg, AppColors.subsidiDark);
+  sebagian('Sebagian', AppColors.warning, AppColors.warningBg,
+      AppColors.warningDark),
+  belum('Belum Lunas', AppColors.danger, AppColors.dangerBg,
+      AppColors.dangerDark),
+  akanDatang('Akan Datang', AppColors.neutral, AppColors.neutralBg,
+      AppColors.neutralDark),
+  ditanggung('Ditanggung Pemerintah', AppColors.subsidi, AppColors.subsidiBg,
+      AppColors.subsidiDark);
 
   const StatusTagihan(this.label, this._light, this._lightBg, this._dark);
 
@@ -86,6 +90,29 @@ class TagihanNonSppItem {
       );
 }
 
+/// Satu baris rincian pembayaran pada kuitansi (pos, tahun ajaran, subsidi).
+class PembayaranRincian {
+  const PembayaranRincian({
+    required this.keterangan,
+    required this.jumlah,
+    this.tahunAjaran,
+    this.subsidiPersen,
+  });
+
+  final String keterangan;
+  final num jumlah;
+  final String? tahunAjaran;
+  final num? subsidiPersen;
+
+  factory PembayaranRincian.fromJson(Map<String, dynamic> j) =>
+      PembayaranRincian(
+        keterangan: j['keterangan'] as String? ?? 'Pembayaran SPP',
+        jumlah: j['jumlah'] as num? ?? 0,
+        tahunAjaran: j['tahun_ajaran'] as String?,
+        subsidiPersen: j['subsidi_persen'] as num?,
+      );
+}
+
 class PembayaranItem {
   PembayaranItem({
     required this.kode,
@@ -95,6 +122,11 @@ class PembayaranItem {
     required this.petugas,
     required this.isVoid,
     this.tokenVerifikasi,
+    this.nis,
+    this.waktu,
+    this.voidAlasan,
+    this.tahunAjaran,
+    this.rincian = const [],
   });
 
   final String kode;
@@ -104,17 +136,46 @@ class PembayaranItem {
   final String petugas;
   final bool isVoid;
   final String? tokenVerifikasi;
+  final String? nis;
 
-  factory PembayaranItem.fromJson(Map<String, dynamic> j) => PembayaranItem(
-        kode: j['kode_transaksi'] as String? ?? '-',
-        tanggal: DateTime.tryParse(j['tgl_bayar'] as String? ?? '') ??
-            DateTime.now(),
-        jumlah: j['jumlah_bayar'] as num? ?? 0,
-        metode: j['metode'] as String? ?? '-',
-        petugas: j['petugas'] as String? ?? '-',
-        isVoid: j['status'] == 'void',
-        tokenVerifikasi: j['token'] as String?,
-      );
+  /// Waktu transaksi lengkap (created_at) untuk mencetak jam.
+  final DateTime? waktu;
+  final String? voidAlasan;
+  final String? tahunAjaran;
+  final List<PembayaranRincian> rincian;
+
+  /// Rincian yang selalu bisa dicetak: bila API belum mengirim rincian,
+  /// gunakan satu baris ringkasan dari nominal transaksi.
+  List<PembayaranRincian> get rincianEfektif => rincian.isNotEmpty
+      ? rincian
+      : [
+          PembayaranRincian(
+            keterangan: 'Pembayaran SPP / Biaya Sekolah',
+            jumlah: jumlah,
+            tahunAjaran: tahunAjaran,
+          ),
+        ];
+
+  factory PembayaranItem.fromJson(Map<String, dynamic> j) {
+    final rawRincian = (j['rincian'] ?? j['items']) as List?;
+    return PembayaranItem(
+      kode: j['kode_transaksi'] as String? ?? '-',
+      tanggal:
+          DateTime.tryParse(j['tgl_bayar'] as String? ?? '') ?? DateTime.now(),
+      jumlah: j['jumlah_bayar'] as num? ?? 0,
+      metode: j['metode'] as String? ?? '-',
+      petugas: j['petugas'] as String? ?? '-',
+      isVoid: j['status'] == 'void',
+      tokenVerifikasi: j['token'] as String?,
+      nis: j['nis'] as String?,
+      waktu: DateTime.tryParse(j['created_at'] as String? ?? ''),
+      voidAlasan: j['void_alasan'] as String?,
+      tahunAjaran: j['tahun_ajaran'] as String?,
+      rincian: (rawRincian ?? const [])
+          .map((e) => PembayaranRincian.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }
 
 /// Respons `GET /siswa/kartu-spp`.

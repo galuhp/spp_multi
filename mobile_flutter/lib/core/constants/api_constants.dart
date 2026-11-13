@@ -9,6 +9,7 @@ class ApiConstants {
   );
 
   static const String login = '/public/login';
+  static const String schoolProfile = '/public/profil-sekolah';
   static const String studentDashboard = '/siswa/dashboard';
   static const String studentCard = '/siswa/kartu-spp';
   static String studentReceipt(String kode) => '/siswa/kuitansi/$kode';
