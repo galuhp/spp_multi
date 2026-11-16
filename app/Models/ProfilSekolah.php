@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Storage;
 ])]
 class ProfilSekolah extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected static ?self $cachedCurrent = null;

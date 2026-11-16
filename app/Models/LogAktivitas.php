@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['user_id', 'aksi', 'subjek_tipe', 'subjek_id', 'deskripsi', 'data', 'ip_address'])]
 class LogAktivitas extends Model
 {
+    use BelongsToTenant;
     protected $table = 'log_aktivitas';
 
     /**

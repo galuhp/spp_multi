@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['siswa_id', 'kelas_id', 'tahun_ajaran_id', 'spp_id', 'status', 'batch_id'])]
 class RiwayatKelas extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     public const STATUS_AKTIF = 'aktif';

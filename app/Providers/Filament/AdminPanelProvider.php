@@ -7,7 +7,9 @@ use App\Filament\Resources\PembayaranGabungans\PembayaranGabunganResource;
 use App\Filament\Resources\PengeluaranSekolahs\PengeluaranSekolahResource;
 use App\Filament\Widgets\LatestPembayaranWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
+use App\Http\Middleware\EnsureTenantInvoiceIsPaid;
 use App\Models\ProfilSekolah;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Support\GlobalThemePreferenceStore;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
@@ -79,6 +81,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->tenant(Tenant::class, slugAttribute: 'slug')
+            ->tenantMiddleware([
+                EnsureTenantInvoiceIsPaid::class,
+            ], isPersistent: true)
             ->login(Login::class)
             ->plugin($socialitePlugin)
             ->plugin($meuiPlugin)

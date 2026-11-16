@@ -142,3 +142,7 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+
+Route::post('/webhooks/doku/tenant-invoice', [\App\Http\Controllers\DokuWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->name('webhooks.doku.tenant-invoice');

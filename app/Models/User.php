@@ -7,18 +7,22 @@ use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use DutchCodingCompany\FilamentSocialite\Models\SocialiteUser;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
-#[Fillable(['name', 'username', 'email', 'password', 'role'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'is_super_admin'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -28,6 +32,10 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        if ($panel->getId() === 'super-admin') {
+            return $this->isSuperAdmin();
+        }
+
         return true;
     }
 
@@ -42,7 +50,50 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'is_super_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * Determine whether the user is a super administrator.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
+    }
+
+    /**
+     * Tenants (schools) assigned to this user.
+     */
+    public function tenants(): BelongsToMany
+    {
+        return $this->belongsToMany(Tenant::class)
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * @return Collection<int, Tenant>
+     */
+    public function getTenants(Panel $panel): Collection
+    {
+        if ($this->isSuperAdmin()) {
+            return Tenant::query()->where('is_active', true)->get();
+        }
+
+        return $this->tenants()->where('is_active', true)->get();
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->tenants()
+            ->whereKey($tenant)
+            ->where('is_active', true)
+            ->exists();
     }
 
     /**
