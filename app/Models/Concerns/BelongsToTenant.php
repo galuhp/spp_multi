@@ -17,6 +17,8 @@ trait BelongsToTenant
 
             if ($tenantId !== null) {
                 $builder->where($builder->getModel()->qualifyColumn('tenant_id'), $tenantId);
+            } elseif (! app()->runningInConsole()) {
+                $builder->whereRaw('1 = 0');
             }
         });
 

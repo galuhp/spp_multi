@@ -17,12 +17,12 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 DOMAIN="${DOMAIN:-spp.example.com}"
-REPO_URL="${REPO_URL:-git@github.com:ORG/REPO.git}"
+REPO_URL="${REPO_URL:-https://github.com/galuhp/spp_multi.git}"
 BRANCH="${BRANCH:-main}"
-APP_ROOT="${APP_ROOT:-/var/www/spp}"
+APP_ROOT="${APP_ROOT:-/var/www/spp_multi}"
 PHP_VERSION="${PHP_VERSION:-8.4}"
-DB_NAME="${DB_NAME:-spp}"
-DB_USER="${DB_USER:-spp}"
+DB_NAME="${DB_NAME:-spp_multi}"
+DB_USER="${DB_USER:-spp_multi}"
 SSH_PORT="${SSH_PORT:-22}"
 CLOUDFLARE_TUNNEL_TOKEN="${CLOUDFLARE_TUNNEL_TOKEN:-}"
 
@@ -33,11 +33,6 @@ fi
 
 if [ "$DOMAIN" = "spp.example.com" ]; then
     echo "Set DOMAIN terlebih dahulu." >&2
-    exit 1
-fi
-
-if [[ "$REPO_URL" == *"ORG/REPO"* ]]; then
-    echo "Set REPO_URL terlebih dahulu." >&2
     exit 1
 fi
 

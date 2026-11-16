@@ -114,9 +114,14 @@ class DokuService
         string $rawBody,
         string $receivedSignature,
     ): bool {
+        $configuredClientId = (string) config('services.doku.client_id');
         $secretKey = (string) config('services.doku.secret_key');
 
-        if ($secretKey === '' || $receivedSignature === '') {
+        if ($configuredClientId === '' || $secretKey === '' || $receivedSignature === '') {
+            return false;
+        }
+
+        if (! hash_equals($configuredClientId, $clientId)) {
             return false;
         }
 

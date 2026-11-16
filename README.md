@@ -122,3 +122,49 @@ php artisan test
 
 Proyek ini dibangun di atas framework Laravel yang berlisensi [MIT](https://opensource.org/licenses/MIT).
 
+
+---
+
+## Fitur Multi-Tenant, Tagihan Bulanan & DOKU
+
+### 1. Arsitektur Multi-Tenant
+- **Single Database** dengan kolom `tenant_id` dan Global Scope (`BelongsToTenant`).
+- **Path URL**:
+  - Panel Admin Sekolah: `/admin/{slug}`
+  - Panel Super Admin: `/super-admin` (khusus user dengan `is_super_admin = true`)
+- **Tagihan & Pemblokiran Otomatis**:
+  - Setiap tenant memiliki konfigurasi `fee_per_transaction` (Rp per transaksi berhasil) di panel Super Admin.
+  - Generate tagihan bulanan: `php artisan tenants:generate-invoices --period=YYYY-MM`.
+  - Jika sekolah memiliki tagihan yang belum lunas, akses fitur sekolah otomatis diarahkan ke halaman pembayaran `/admin/{slug}/tenant-billing` (terhubung dengan **DOKU Checkout API** & webhook `POST /webhooks/doku/tenant-invoice`).
+
+### 2. Panduan Singkat Deploy ke VPS
+1. **Persiapan Server**: Pastikan terpasang PHP 8.3/8.4+, Nginx, MySQL/MariaDB, Redis, Composer, dan Node.js (atau gunakan `provision.sh`).
+2. **Clone & `.env`**:
+   ```bash
+   git clone https://github.com/galuhp/spp_multi.git /var/www/spp_multi
+   cd /var/www/spp_multi
+   cp .env.example .env
+   ```
+   Tambahkan konfigurasi DOKU di `.env`:
+   ```env
+   DOKU_CLIENT_ID=your_client_id
+   DOKU_SECRET_KEY=your_secret_key
+   DOKU_IS_PRODUCTION=true
+   ```
+3. **Install, Build & Migrasi**:
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   npm install && npm run build
+   php artisan key:generate
+   php artisan migrate --force
+   php artisan storage:link
+   php artisan config:cache && php artisan route:cache && php artisan view:cache
+   ```
+4. **Set Super Admin Pertama** (via `php artisan tinker`):
+   ```php
+   \App\Models\User::where('email', 'admin@domain.com')->update(['is_super_admin' => true]);
+   ```
+5. **Cron Job Tagihan Bulanan** (`crontab -e`):
+   ```cron
+   0 1 1 * * cd /var/www/spp_multi && php artisan tenants:generate-invoices >> /dev/null 2>&1
+   ```
