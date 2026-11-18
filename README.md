@@ -168,3 +168,17 @@ Proyek ini dibangun di atas framework Laravel yang berlisensi [MIT](https://open
    ```cron
    0 1 1 * * cd /var/www/spp_multi && php artisan tenants:generate-invoices >> /dev/null 2>&1
    ```
+
+### 3. Cara Install Otomatis di VPS Baru (`provision.sh`)
+Jalankan perintah berikut sebagai `root` di VPS Ubuntu/Debian baru:
+```bash
+curl -fsSL https://raw.githubusercontent.com/galuhp/spp_multi/main/provision.sh -o /tmp/provision.sh
+chmod +x /tmp/provision.sh
+DOMAIN=spp.domainanda.com sudo -E bash /tmp/provision.sh
+```
+Script ini akan otomatis meng-install PHP 8.4, Nginx, MySQL, Redis, Composer, Node.js, dan meng-clone repository ke `/var/www/spp_multi`.
+
+### 4. Pendaftaran Sekolah Baru (Self-Service)
+- Halaman pendaftaran publik tersedia di `/register-sekolah`.
+- Setelah mengisi data sekolah dan akun admin, sistem mengirim **Signed Verification Link** ke email admin.
+- Setelah link diklik, sekolah otomatis aktif dan admin diarahkan ke `/admin/{slug}`.

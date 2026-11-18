@@ -146,3 +146,12 @@ Route::middleware('auth')->group(function () {
 Route::post('/webhooks/doku/tenant-invoice', [\App\Http\Controllers\DokuWebhookController::class, 'handle'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('webhooks.doku.tenant-invoice');
+
+Route::get('/register-sekolah', [\App\Http\Controllers\SchoolRegistrationController::class, 'showForm'])
+    ->name('school.register.form');
+Route::post('/register-sekolah', [\App\Http\Controllers\SchoolRegistrationController::class, 'register'])
+    ->middleware('throttle:5,1')
+    ->name('school.register.submit');
+Route::get('/register-sekolah/verify/{user}/{tenant}', [\App\Http\Controllers\SchoolRegistrationController::class, 'verify'])
+    ->middleware('signed')
+    ->name('school.verify');
