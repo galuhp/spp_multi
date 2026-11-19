@@ -6,6 +6,7 @@ use App\Support\LisensiPaket;
 use BladeUI\Icons\Factory as IconFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->isProduction()) {
+            URL::forceScheme('https');
+        }
+
         Model::preventLazyLoading(! $this->app->isProduction());
 
         Blade::if('pro', fn (?string $feature = null): bool => $feature !== null
