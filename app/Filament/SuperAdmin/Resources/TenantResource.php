@@ -86,17 +86,21 @@ class TenantResource extends Resource
                     ->copyable(),
                 TextColumn::make('users_count')
                     ->label('Jumlah Pengguna')
-                    ->counts('users'),
+                    ->counts('users')
+                    ->alignEnd(),
                 TextColumn::make('fee_per_transaction')
                     ->label('Fee / Transaksi')
                     ->formatStateUsing(fn ($state): string => 'Rp ' . number_format((int) $state, 0, ',', '.'))
+                    ->alignEnd()
                     ->sortable(),
                 TextColumn::make('pembayarans_count')
                     ->label('Total Transaksi')
-                    ->counts('pembayarans'),
+                    ->counts('pembayarans')
+                    ->alignEnd(),
                 TextColumn::make('total_fee')
                     ->label('Total Fee')
-                    ->state(fn (Tenant $record): string => 'Rp ' . number_format((int) $record->fee_per_transaction * (int) $record->pembayarans_count, 0, ',', '.')),
+                    ->state(fn (Tenant $record): string => 'Rp ' . number_format((int) $record->fee_per_transaction * (int) $record->pembayarans_count, 0, ',', '.'))
+                    ->alignEnd(),
                 IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),

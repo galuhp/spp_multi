@@ -92,10 +92,12 @@ class TenantInvoiceResource extends Resource
                 TextColumn::make('transaction_count')
                     ->label('Transaksi')
                     ->numeric()
+                    ->alignEnd()
                     ->sortable(),
                 TextColumn::make('total_amount')
                     ->label('Total Tagihan')
                     ->formatStateUsing(fn ($state): string => 'Rp ' . number_format((int) $state, 0, ',', '.'))
+                    ->alignEnd()
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
