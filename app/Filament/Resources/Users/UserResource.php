@@ -43,6 +43,17 @@ class UserResource extends Resource
         return $user?->isAdmin() && RolePermission::allowed($user->role, RolePermission::PENGATURAN_AKSES);
     }
 
+    public static function canCreate(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenant instanceof \App\Models\Tenant && $tenant->isUserCreationDisabled()) {
+            return false;
+        }
+
+        return static::canViewAny();
+    }
+
     public static function canDelete(Model $record): bool
     {
         if ($record->id === auth()->id()) {

@@ -36,6 +36,12 @@ class ProfilSekolahSettings extends Page
 
     public static function canAccess(): bool
     {
+        $tenant = \Filament\Facades\Filament::getTenant();
+
+        if ($tenant instanceof \App\Models\Tenant && $tenant->isEditProfilSekolahDisabled()) {
+            return false;
+        }
+
         $user = auth()->user();
 
         return $user?->isAdmin() && RolePermission::allowed($user->role, RolePermission::PENGATURAN_AKSES);

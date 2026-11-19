@@ -63,6 +63,12 @@ class TenantResource extends Resource
                 Toggle::make('is_active')
                     ->label('Aktif')
                     ->default(true),
+                Toggle::make('settings.disable_user_creation')
+                    ->label('Nonaktifkan Pembuatan User Baru (Disable User Creation)')
+                    ->helperText('Jika aktif, admin sekolah ini tidak dapat menambah user baru.'),
+                Toggle::make('settings.disable_edit_profil_sekolah')
+                    ->label('Nonaktifkan Edit Profil Sekolah (Disable Edit Profil)')
+                    ->helperText('Jika aktif, admin sekolah ini tidak dapat mengakses/mengubah halaman Profil & Kop Sekolah.'),
             ]);
     }
 

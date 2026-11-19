@@ -55,4 +55,14 @@ class Tenant extends Model implements HasName
             ->where('total_amount', '>', 0)
             ->exists();
     }
+
+    public function isUserCreationDisabled(): bool
+    {
+        return (bool) data_get($this->settings, 'disable_user_creation', false);
+    }
+
+    public function isEditProfilSekolahDisabled(): bool
+    {
+        return (bool) data_get($this->settings, 'disable_edit_profil_sekolah', false);
+    }
 }
