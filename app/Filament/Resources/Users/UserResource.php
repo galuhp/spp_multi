@@ -22,6 +22,8 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
+    protected static ?string $tenantOwnershipRelationshipName = 'tenants';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
     protected static UnitEnum|string|null $navigationGroup = 'Pengaturan & Akses';
