@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('jenjang', 20)->nullable()->default('SMK');
             $table->string('pemerintah_daerah', 150)->nullable()->default('PEMERINTAH DAERAH PROVINSI JAWA BARAT');
             $table->string('dinas_pendidikan', 150)->nullable()->default('DINAS PENDIDIKAN DAN KEBUDAYAAN');
-            $table->text('alamat')->nullable()->default('Jl. Pendidikan No. 123');
+            $table->text('alamat')->nullable();
             $table->string('kota', 60)->nullable()->default('Bandung');
             $table->string('kode_pos', 15)->nullable()->default('40123');
             $table->string('no_telp', 40)->nullable()->default('(022) 1234567');
