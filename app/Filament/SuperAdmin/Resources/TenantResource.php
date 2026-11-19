@@ -78,6 +78,12 @@ class TenantResource extends Resource
                     ->label('Slug')
                     ->searchable()
                     ->copyable(),
+                TextColumn::make('login_url')
+                    ->label('URL Login Sekolah')
+                    ->state(fn (Tenant $record): string => url("/admin/{$record->slug}"))
+                    ->url(fn (Tenant $record): string => url("/admin/{$record->slug}"), shouldOpenInNewTab: true)
+                    ->color('primary')
+                    ->copyable(),
                 TextColumn::make('users_count')
                     ->label('Jumlah Pengguna')
                     ->counts('users'),
