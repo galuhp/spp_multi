@@ -37,20 +37,34 @@ class SmaDemoSiswaSeeder extends Seeder
 
         try {
             $tahunAjaran = TahunAjaran::query()->where('aktif', true)->first()
-                ?? TahunAjaran::query()->first()
-                ?? TahunAjaran::create([
-                    'nama' => '2026/2027',
+                ?? TahunAjaran::query()->first();
+
+            if (! $tahunAjaran) {
+                $namaTa = TahunAjaran::withoutGlobalScope('tenant')->where('nama', '2026/2027')->exists()
+                    ? "2026/2027-T{$tenant->id}"
+                    : '2026/2027';
+
+                $tahunAjaran = TahunAjaran::create([
+                    'nama' => $namaTa,
                     'tanggal_mulai' => '2026-07-01',
                     'tanggal_selesai' => '2027-06-30',
                     'aktif' => true,
                 ]);
+            }
 
-            $jurusan = Jurusan::query()->first()
-                ?? Jurusan::create([
-                    'kode' => 'IPA',
+            $jurusan = Jurusan::query()->first();
+
+            if (! $jurusan) {
+                $kodeJurusan = Jurusan::withoutGlobalScope('tenant')->where('kode', 'IPA')->exists()
+                    ? "IPA-T{$tenant->id}"
+                    : 'IPA';
+
+                $jurusan = Jurusan::create([
+                    'kode' => $kodeJurusan,
                     'nama' => 'Ilmu Pengetahuan Alam',
                     'deskripsi' => 'Program peminatan Ilmu Pengetahuan Alam.',
                 ]);
+            }
 
             $kelas = Kelas::query()->first()
                 ?? Kelas::create([
@@ -72,12 +86,14 @@ class SmaDemoSiswaSeeder extends Seeder
                     'keterangan' => "Tarif SPP Bulanan TA {$tahunAjaran->nama}",
                 ]);
 
+            $tenantPrefix = str_pad((string) $tenant->id, 2, '0', STR_PAD_LEFT);
+
             $daftarSiswa = [
-                ['Ahmad Fauzan', 'L', '30001001', '26101', 'Jl. Merdeka No. 10'],
-                ['Siti Nurhaliza', 'P', '30001002', '26102', 'Jl. Sudirman No. 14'],
-                ['Rizky Pratama', 'L', '30001003', '26103', 'Jl. Ahmad Yani No. 22'],
-                ['Dewi Lestari', 'P', '30001004', '26104', 'Jl. Diponegoro No. 5'],
-                ['Bima Saputra', 'L', '30001005', '26105', 'Jl. Kartini No. 18'],
+                ['Ahmad Fauzan', 'L', "30{$tenantPrefix}0001", "26{$tenantPrefix}01", 'Jl. Merdeka No. 10'],
+                ['Siti Nurhaliza', 'P', "30{$tenantPrefix}0002", "26{$tenantPrefix}02", 'Jl. Sudirman No. 14'],
+                ['Rizky Pratama', 'L', "30{$tenantPrefix}0003", "26{$tenantPrefix}03", 'Jl. Ahmad Yani No. 22'],
+                ['Dewi Lestari', 'P', "30{$tenantPrefix}0004", "26{$tenantPrefix}04", 'Jl. Diponegoro No. 5'],
+                ['Bima Saputra', 'L', "30{$tenantPrefix}0005", "26{$tenantPrefix}05", 'Jl. Kartini No. 18'],
             ];
 
             foreach ($daftarSiswa as [$nama, $jk, $nisn, $nis, $alamat]) {
