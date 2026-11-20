@@ -100,6 +100,7 @@ class SmaDemoSiswaSeeder extends Seeder
                 $siswa = Siswa::withoutEvents(fn () => Siswa::updateOrCreate(
                     ['nisn' => $nisn],
                     [
+                        'tenant_id' => $tenant->id,
                         'kelas_id' => $kelas->id,
                         'spp_id' => $spp->id,
                         'nis' => $nis,
