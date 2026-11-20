@@ -97,7 +97,7 @@ class SmaDemoSiswaSeeder extends Seeder
             ];
 
             foreach ($daftarSiswa as [$nama, $jk, $nisn, $nis, $alamat]) {
-                $siswa = Siswa::withoutEvents(fn () => Siswa::updateOrCreate(
+                $siswa = Siswa::withoutEvents(fn () => Siswa::withoutGlobalScope('tenant')->updateOrCreate(
                     ['nisn' => $nisn],
                     [
                         'tenant_id' => $tenant->id,
