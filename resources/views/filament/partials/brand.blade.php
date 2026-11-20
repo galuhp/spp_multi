@@ -11,6 +11,10 @@
             alt="Logo {{ $profil->nama_sekolah }}"
             class="h-9 w-9 shrink-0 rounded-lg object-contain"
         >
+    @else
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white shadow-xs dark:bg-primary-500">
+            <x-heroicon-o-academic-cap class="h-5 w-5" />
+        </span>
     @endif
 
     <span class="truncate">{{ $profil->appName() }}</span>

@@ -81,6 +81,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->spa()
             ->tenant(Tenant::class, slugAttribute: 'slug')
             ->tenantMiddleware([
                 EnsureTenantInvoiceIsPaid::class,
@@ -111,7 +112,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName(fn (): string => ProfilSekolah::current()->appName())
             ->brandLogo(fn (): View => view('filament.partials.brand'))
             ->brandLogoHeight('2.5rem')
-            ->favicon(fn (): ?string => ProfilSekolah::current()->logoUrl())
+            ->favicon(fn (): string => ProfilSekolah::current()->logoUrl() ?? asset('favicon.ico'))
             ->font('DM Sans')
             ->colors([
                 'primary' => Color::Blue,

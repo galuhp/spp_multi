@@ -120,6 +120,13 @@ class TenantResource extends Resource
             ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            \App\Filament\SuperAdmin\Resources\TenantResource\RelationManagers\UsersRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [

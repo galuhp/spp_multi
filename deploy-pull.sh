@@ -21,7 +21,6 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 # nilai dari deploy.env tidak mengarah ke folder root release.
 PULL_APP_ROOT="${APP_ROOT:-$SCRIPT_DIR}"
 BRANCH="${BRANCH:-main}"
-PHP_VERSION="${PHP_VERSION:-8.4}"
 PHP_BIN="${PHP_BIN:-php}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
 BUILD_ASSETS="${BUILD_ASSETS:-0}"
@@ -32,6 +31,11 @@ if [ -f "$CONFIG_FILE" ]; then
     # shellcheck disable=SC1090
     source "$CONFIG_FILE"
 fi
+
+if [ -z "${PHP_VERSION:-}" ] && command -v "$PHP_BIN" >/dev/null 2>&1; then
+    PHP_VERSION="$("$PHP_BIN" -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
+fi
+PHP_VERSION="${PHP_VERSION:-8.5}"
 
 APP_ROOT="$PULL_APP_ROOT"
 PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php${PHP_VERSION}-fpm}"

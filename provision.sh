@@ -20,7 +20,7 @@ DOMAIN="${DOMAIN:-spp.example.com}"
 REPO_URL="${REPO_URL:-https://github.com/galuhp/spp_multi.git}"
 BRANCH="${BRANCH:-main}"
 APP_ROOT="${APP_ROOT:-/var/www/spp_multi}"
-PHP_VERSION="${PHP_VERSION:-8.4}"
+PHP_VERSION="${PHP_VERSION:-8.5}"
 DB_NAME="${DB_NAME:-spp_multi}"
 DB_USER="${DB_USER:-spp_multi}"
 SSH_PORT="${SSH_PORT:-22}"
@@ -365,6 +365,11 @@ server {
         image/svg+xml
         font/woff2;
 
+    open_file_cache max=5000 inactive=60s;
+    open_file_cache_valid 30s;
+    open_file_cache_min_uses 2;
+    open_file_cache_errors on;
+
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
     }
@@ -376,6 +381,9 @@ server {
         fastcgi_param HTTPS on;
         fastcgi_param HTTP_X_FORWARDED_PROTO https;
         fastcgi_param HTTP_X_FORWARDED_FOR \$proxy_add_x_forwarded_for;
+        fastcgi_buffer_size 32k;
+        fastcgi_buffers 16 16k;
+        fastcgi_busy_buffers_size 64k;
         fastcgi_read_timeout 300;
     }
 
@@ -434,6 +442,30 @@ MAILTO=""
 EOF
 
 chmod 644 /etc/cron.d/spp-scheduler
+
+echo "==> Konfigurasi systemd queue worker"
+
+cat >/etc/systemd/system/spp-queue.service <<EOF
+[Unit]
+Description=SPP Laravel Queue Worker
+After=network.target redis-server.service mariadb.service
+
+[Service]
+User=deploy
+Group=www-data
+Restart=always
+RestartSec=3
+WorkingDirectory=${APP_ROOT}/current
+ExecStart=${PHP_BIN} artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+StandardOutput=append:${APP_ROOT}/shared/storage/logs/queue.log
+StandardError=append:${APP_ROOT}/shared/storage/logs/queue.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable spp-queue.service
 
 cat >/etc/cron.d/spp-backup <<EOF
 SHELL=/bin/bash

@@ -14,6 +14,8 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
 {
     protected static ?int $sort = 1;
 
+    protected static bool $isLazy = true;
+
     protected function getStats(): array
     {
         $user = auth()->user();
@@ -31,9 +33,10 @@ class StatsOverviewWidget extends BaseStatsOverviewWidget
                     ->whereNull('void_at')
                     ->where('spp_id', $siswa->spp_id)
                     ->whereNotNull('bulan_dibayar')
-                    ->get()
+                    ->selectRaw('bulan_dibayar')
                     ->groupBy('bulan_dibayar')
-                    ->filter(fn ($rows): bool => (int) $rows->sum('jumlah_bayar') >= $nominalSpp)
+                    ->havingRaw('COALESCE(SUM(jumlah_bayar), 0) >= ?', [$nominalSpp])
+                    ->pluck('bulan_dibayar')
                     ->count();
             }
 

@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
@@ -30,39 +32,67 @@ class ProfilSekolah extends Model
     use BelongsToTenant;
     use HasFactory;
 
-    protected static ?self $cachedCurrent = null;
+    /** @var array<int|string, self> */
+    protected static array $cachedCurrent = [];
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $profile): void {
+            static::clearCache($profile->tenant_id);
+        });
+
+        static::deleted(function (self $profile): void {
+            static::clearCache($profile->tenant_id);
+        });
+    }
+
+    protected static function cacheKey(int|string|null $tenantId): string
+    {
+        return 'profil_sekolah.tenant.'.($tenantId ?? 'default');
+    }
 
     /**
      * Get the singleton current school profile record.
      */
     public static function current(): self
     {
-        if (static::$cachedCurrent !== null && ! app()->runningUnitTests()) {
-            return static::$cachedCurrent;
+        $tenantId = TenantContext::id();
+        $cacheKey = static::cacheKey($tenantId);
+
+        if (isset(static::$cachedCurrent[$cacheKey]) && ! app()->runningUnitTests()) {
+            return static::$cachedCurrent[$cacheKey];
         }
 
-        $profile = static::first();
+        $resolver = function (): self {
+            $profile = static::first();
 
-        if ($profile === null) {
-            $profile = static::create([
-                'app_name' => 'E-SPP SEKOLAH',
-                'nama_sekolah' => 'SMK Negeri Contoh',
-                'npsn' => '20100001',
-                'jenjang' => 'SMK',
-                'pemerintah_daerah' => 'PEMERINTAH DAERAH PROVINSI JAWA BARAT',
-                'dinas_pendidikan' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
-                'alamat' => 'Jl. Pendidikan No. 123',
-                'kota' => 'Bandung',
-                'kode_pos' => '40123',
-                'no_telp' => '(022) 1234567',
-                'email' => 'info@smknegericontoh.sch.id',
-                'website' => 'https://www.smknegericontoh.sch.id',
-                'nama_kepala_sekolah' => 'Drs. H. Rahmat Hidayat, M.M.Pd.',
-                'nip_kepala_sekolah' => '19700101 199503 1 001',
-            ]);
-        }
+            if ($profile === null) {
+                $profile = static::create([
+                    'app_name' => 'E-SPP SEKOLAH',
+                    'nama_sekolah' => 'SMK Negeri Contoh',
+                    'npsn' => '20100001',
+                    'jenjang' => 'SMK',
+                    'pemerintah_daerah' => 'PEMERINTAH DAERAH PROVINSI JAWA BARAT',
+                    'dinas_pendidikan' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
+                    'alamat' => 'Jl. Pendidikan No. 123',
+                    'kota' => 'Bandung',
+                    'kode_pos' => '40123',
+                    'no_telp' => '(022) 1234567',
+                    'email' => 'info@smknegericontoh.sch.id',
+                    'website' => 'https://www.smknegericontoh.sch.id',
+                    'nama_kepala_sekolah' => 'Drs. H. Rahmat Hidayat, M.M.Pd.',
+                    'nip_kepala_sekolah' => '19700101 199503 1 001',
+                ]);
+            }
 
-        static::$cachedCurrent = $profile;
+            return $profile;
+        };
+
+        $profile = (! app()->runningUnitTests() && $tenantId !== null)
+            ? Cache::remember($cacheKey, 3600, $resolver)
+            : $resolver();
+
+        static::$cachedCurrent[$cacheKey] = $profile;
 
         return $profile;
     }
@@ -70,9 +100,20 @@ class ProfilSekolah extends Model
     /**
      * Clear cached instance.
      */
-    public static function clearCache(): void
+    public static function clearCache(int|string|null $tenantId = null): void
     {
-        static::$cachedCurrent = null;
+        $resolvedTenantId = $tenantId ?? TenantContext::id();
+        $cacheKey = static::cacheKey($resolvedTenantId);
+
+        unset(static::$cachedCurrent[$cacheKey]);
+
+        if ($tenantId === null) {
+            static::$cachedCurrent = [];
+        }
+
+        if ($resolvedTenantId !== null) {
+            Cache::forget($cacheKey);
+        }
     }
 
     /**

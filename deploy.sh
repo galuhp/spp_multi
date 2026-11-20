@@ -21,7 +21,7 @@ fi
 APP_ROOT="${APP_ROOT:-/var/www/spp}"
 REPO_URL="${REPO_URL:?REPO_URL belum diset di $CONFIG_FILE}"
 BRANCH="${BRANCH:-main}"
-PHP_VERSION="${PHP_VERSION:-8.4}"
+PHP_VERSION="${PHP_VERSION:-8.5}"
 PHP_BIN="${PHP_BIN:-/usr/bin/php${PHP_VERSION}}"
 KEEP_RELEASES="${KEEP_RELEASES:-5}"
 SKIP_ASSET_BUILD="${SKIP_ASSET_BUILD:-0}"
@@ -125,6 +125,7 @@ fi
 if "$PHP_BIN" -m 2>/dev/null | grep -qi '^redis$' && command -v redis-cli >/dev/null 2>&1 && redis-cli -h 127.0.0.1 ping >/dev/null 2>&1; then
     set_env SESSION_DRIVER redis "$ENV_FILE"
     set_env CACHE_STORE redis "$ENV_FILE"
+    set_env QUEUE_CONNECTION redis "$ENV_FILE"
     set_env REDIS_CLIENT phpredis "$ENV_FILE"
 fi
 
@@ -189,6 +190,7 @@ echo "==> Aktifkan release"
 
 ln -sfn "$RELEASE_DIR" "$APP_ROOT/current"
 sudo systemctl reload "php${PHP_VERSION}-fpm"
+"$PHP_BIN" artisan queue:restart >/dev/null 2>&1 || true
 "$PHP_BIN" artisan up
 
 trap - EXIT
