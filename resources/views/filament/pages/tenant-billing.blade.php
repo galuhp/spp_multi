@@ -5,7 +5,10 @@
     @endphp
 
     @if ($hasUnpaid)
-        <div class="rounded-xl border border-danger-300 bg-danger-50 p-4 text-danger-800 dark:border-danger-700 dark:bg-danger-950/50 dark:text-danger-200">
+        <div
+            class="fi-section rounded-xl bg-danger-50 p-4 text-danger-800 ring-1 ring-danger-300 dark:bg-danger-950/50 dark:text-danger-200 dark:ring-danger-700"
+            style="padding: 1rem; border-radius: 0.75rem;"
+        >
             <div class="font-semibold">Akses Fitur Sekolah Ditangguhkan</div>
             <p class="mt-1 text-sm">
                 Sekolah Anda memiliki tagihan bulanan yang belum dilunasi. Silakan selesaikan pembayaran melalui DOKU di bawah ini untuk mengaktifkan kembali seluruh fitur.
@@ -13,60 +16,84 @@
         </div>
     @endif
 
-    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                <tr>
-                    <th class="px-4 py-3">Periode</th>
-                    <th class="px-4 py-3">Jumlah Transaksi</th>
-                    <th class="px-4 py-3">Fee / Transaksi</th>
-                    <th class="px-4 py-3">Total Tagihan</th>
-                    <th class="px-4 py-3">Jatuh Tempo</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3 text-right">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                @forelse ($invoices as $invoice)
-                    <tr>
-                        <td class="px-4 py-3 font-medium">{{ $invoice->period }}</td>
-                        <td class="px-4 py-3">{{ number_format($invoice->transaction_count, 0, ',', '.') }}</td>
-                        <td class="px-4 py-3">Rp {{ number_format($invoice->fee_per_transaction, 0, ',', '.') }}</td>
-                        <td class="px-4 py-3 font-semibold">Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}</td>
-                        <td class="px-4 py-3">{{ $invoice->due_date?->format('d M Y') ?? '-' }}</td>
-                        <td class="px-4 py-3">
-                            @if ($invoice->isPaid())
-                                <span class="inline-flex items-center rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-medium text-success-800 dark:bg-success-900/40 dark:text-success-300">
-                                    Lunas
-                                </span>
-                            @else
-                                <span class="inline-flex items-center rounded-full bg-warning-100 px-2.5 py-0.5 text-xs font-medium text-warning-800 dark:bg-warning-900/40 dark:text-warning-300">
-                                    Belum Dibayar
-                                </span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            @if (! $invoice->isPaid() && $invoice->total_amount > 0)
-                                <x-filament::button
-                                    wire:click="payWithDoku({{ $invoice->id }})"
-                                    color="primary"
-                                    size="sm"
-                                >
-                                    Bayar Sekarang (DOKU)
-                                </x-filament::button>
-                            @else
-                                <span class="text-xs text-gray-400">-</span>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
-                            Belum ada tagihan untuk sekolah ini.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+    @if ($invoices->isEmpty())
+        <x-filament::section>
+            <div style="padding: 2.5rem 1rem; text-align: center;">
+                <div
+                    style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; border-radius: 9999px; background-color: rgb(241 245 249); color: rgb(100 116 139); display: flex; align-items: center; justify-content: center;"
+                >
+                    <x-heroicon-o-document-text width="24" height="24" style="width: 1.5rem; height: 1.5rem;" />
+                </div>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                    Belum ada tagihan untuk sekolah ini.
+                </p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Tagihan bulanan akan muncul otomatis di sini jika sudah diterbitkan.
+                </p>
+            </div>
+        </x-filament::section>
+    @else
+        <x-filament::section>
+            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <table class="w-full text-left text-sm" style="width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums;">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-xs uppercase text-gray-600 dark:border-white/10 dark:text-gray-300">
+                            <th style="padding: 0.75rem 1rem; white-space: nowrap;">Periode</th>
+                            <th style="padding: 0.75rem 1rem; white-space: nowrap;">Jumlah Transaksi</th>
+                            <th style="padding: 0.75rem 1rem; white-space: nowrap;">Fee / Transaksi</th>
+                            <th style="padding: 0.75rem 1rem; white-space: nowrap;">Total Tagihan</th>
+                            <th style="padding: 0.75rem 1rem; white-space: nowrap;">Jatuh Tempo</th>
+                            <th style="padding: 0.75rem 1rem; white-space: nowrap;">Status</th>
+                            <th style="padding: 0.75rem 1rem; text-align: right; white-space: nowrap;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-white/10">
+                        @foreach ($invoices as $invoice)
+                            <tr>
+                                <td style="padding: 0.75rem 1rem; white-space: nowrap;" class="font-medium text-gray-900 dark:text-white">
+                                    {{ $invoice->period }}
+                                </td>
+                                <td style="padding: 0.75rem 1rem; white-space: nowrap;">
+                                    {{ number_format($invoice->transaction_count, 0, ',', '.') }}
+                                </td>
+                                <td style="padding: 0.75rem 1rem; white-space: nowrap;">
+                                    Rp {{ number_format($invoice->fee_per_transaction, 0, ',', '.') }}
+                                </td>
+                                <td style="padding: 0.75rem 1rem; white-space: nowrap;" class="font-semibold text-gray-900 dark:text-white">
+                                    Rp {{ number_format($invoice->total_amount, 0, ',', '.') }}
+                                </td>
+                                <td style="padding: 0.75rem 1rem; white-space: nowrap;">
+                                    {{ $invoice->due_date?->format('d M Y') ?? '-' }}
+                                </td>
+                                <td style="padding: 0.75rem 1rem; white-space: nowrap;">
+                                    @if ($invoice->isPaid())
+                                        <x-filament::badge color="success">
+                                            Lunas
+                                        </x-filament::badge>
+                                    @else
+                                        <x-filament::badge color="warning">
+                                            Belum Dibayar
+                                        </x-filament::badge>
+                                    @endif
+                                </td>
+                                <td style="padding: 0.75rem 1rem; text-align: right; white-space: nowrap;">
+                                    @if (! $invoice->isPaid() && $invoice->total_amount > 0)
+                                        <x-filament::button
+                                            wire:click="payWithDoku({{ $invoice->id }})"
+                                            color="primary"
+                                            size="sm"
+                                        >
+                                            Bayar Sekarang (DOKU)
+                                        </x-filament::button>
+                                    @else
+                                        <span class="text-xs text-gray-400">-</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-filament::section>
+    @endif
 </x-filament-panels::page>
