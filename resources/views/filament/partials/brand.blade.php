@@ -12,8 +12,14 @@
             class="h-9 w-9 shrink-0 rounded-lg object-contain"
         >
     @else
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white shadow-xs dark:bg-primary-500">
-            <x-heroicon-o-academic-cap class="h-5 w-5" />
+        <span
+            style="width: 2.25rem; height: 2.25rem; min-width: 2.25rem; border-radius: 0.5rem; background-color: var(--primary-600, #2563eb); color: #ffffff; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+        >
+            <x-heroicon-o-academic-cap
+                width="20"
+                height="20"
+                style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;"
+            />
         </span>
     @endif
 
