@@ -12,6 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\ResolveWebTenantContext::class,
+        ]);
+
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\ResolveWebTenantContext::class,
+        );
+
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'pro' => \App\Http\Middleware\EnsureProTier::class,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pembayaran;
+use App\Support\TenantContext;
 use Illuminate\Http\Response;
 
 class BuktiPembayaranController extends Controller
@@ -12,7 +13,7 @@ class BuktiPembayaranController extends Controller
      */
     public function show(string $kode, string $token): Response
     {
-        $rows = Pembayaran::with(['siswa.kelas.jurusan', 'user', 'spp'])
+        $rows = Pembayaran::withoutGlobalScope('tenant')
             ->where('kode_transaksi', $kode)
             ->orderBy('id')
             ->get();
@@ -26,6 +27,12 @@ class BuktiPembayaranController extends Controller
                 'kode' => $kode,
             ], 404);
         }
+
+        if ($pembayaran->tenant_id !== null) {
+            TenantContext::setId((int) $pembayaran->tenant_id);
+        }
+
+        $rows->load(['siswa.kelas.jurusan', 'user', 'spp']);
 
         $activeRows = $rows->filter(fn (Pembayaran $row): bool => ! $row->isVoid())->values();
 
