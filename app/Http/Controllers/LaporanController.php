@@ -8,7 +8,9 @@ use App\Models\Pembayaran;
 use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\Spp;
+use App\Models\Tenant;
 use App\Support\Laporan\LaporanSppService;
+use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -137,6 +139,8 @@ class LaporanController extends Controller
             }
         }
 
+        $this->resolveTenantContext($request);
+
         $filters = [
             'tahun_ajaran_id' => $request->query('tahun_ajaran_id'),
             'kelas_id' => $request->query('kelas_id'),
@@ -182,9 +186,11 @@ class LaporanController extends Controller
      */
     public function cetakKartu(Request $request, LaporanSppService $service): View
     {
-        $this->pastikanAkses();
+        $this->pastikanAkses(resolveTenant: false);
 
-        $siswa = Siswa::query()->findOrFail($request->integer('siswa_id'));
+        $siswa = Siswa::withoutGlobalScope('tenant')->findOrFail($request->integer('siswa_id'));
+        $this->resolveTenantContext($request, $siswa->tenant_id !== null ? (int) $siswa->tenant_id : null);
+
         $tahunAjaran = $service->resolveTahunAjaran($request->query('tahun_ajaran_id'));
 
         abort_if(! $tahunAjaran, 404, 'Tahun ajaran tidak ditemukan.');
@@ -199,12 +205,63 @@ class LaporanController extends Controller
         ]);
     }
 
-    protected function pastikanAkses(): void
+    protected function pastikanAkses(bool $resolveTenant = true): void
     {
-        $user = request()->user();
+        $request = request();
+        $user = $request->user();
 
         if (! $user?->isStaff() || ! RolePermission::allowed($user->role, RolePermission::LAPORAN)) {
             abort(403);
+        }
+
+        if ($resolveTenant) {
+            $this->resolveTenantContext($request);
+        }
+    }
+
+    protected function resolveTenantContext(Request $request, ?int $preferredTenantId = null): void
+    {
+        if (TenantContext::id() !== null) {
+            return;
+        }
+
+        $user = $request->user();
+
+        if (! $user) {
+            return;
+        }
+
+        if ($preferredTenantId !== null) {
+            $tenant = Tenant::query()->whereKey($preferredTenantId)->where('is_active', true)->first();
+
+            if (! $tenant || ! $user->canAccessTenant($tenant)) {
+                abort(403);
+            }
+
+            TenantContext::set($tenant);
+
+            return;
+        }
+
+        if ($request->filled('tenant')) {
+            $tenant = Tenant::query()
+                ->where('slug', (string) $request->query('tenant'))
+                ->where('is_active', true)
+                ->first();
+
+            if ($tenant && $user->canAccessTenant($tenant)) {
+                TenantContext::set($tenant);
+
+                return;
+            }
+        }
+
+        $tenant = $user->isSuperAdmin()
+            ? Tenant::query()->where('is_active', true)->orderBy('id')->first()
+            : $user->tenants()->where('is_active', true)->orderBy('tenants.id')->first();
+
+        if ($tenant) {
+            TenantContext::set($tenant);
         }
     }
 }

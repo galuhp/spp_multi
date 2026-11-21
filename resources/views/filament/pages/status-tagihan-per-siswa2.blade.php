@@ -133,7 +133,7 @@
                     @if($isStaff)
                         <div class="shrink-0 flex items-center gap-2">
                             <x-filament::button tag="a"
-                                href="{{ route('laporan.kartu.cetak', ['siswa_id' => $siswa->id]) }}"
+                                href="{{ route('laporan.kartu.cetak', array_filter(['siswa_id' => $siswa->id, 'tenant' => \Filament\Facades\Filament::getTenant()?->slug])) }}"
                                 target="_blank" color="primary" size="sm" icon="heroicon-o-printer">
                                 Cetak Kartu Ledger
                             </x-filament::button>

@@ -100,6 +100,7 @@ class KartuPembayaranSiswa extends Page
                 ->icon(Heroicon::OutlinedPrinter)
                 ->color('primary')
                 ->url(fn (): string => route('laporan.kartu.cetak', array_filter([
+                    'tenant' => \Filament\Facades\Filament::getTenant()?->slug,
                     'tahun_ajaran_id' => $this->tahun_ajaran_id,
                     'siswa_id' => $this->siswa_id,
                 ], fn ($nilai): bool => filled($nilai))))
