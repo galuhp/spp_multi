@@ -85,6 +85,18 @@
                                         >
                                             Bayar Sekarang (DOKU)
                                         </x-filament::button>
+                                    @elseif ($invoice->isPaid())
+                                        <x-filament::button
+                                            tag="a"
+                                            href="{{ route('tenant-invoices.cetak', $invoice->id) }}"
+                                            target="_blank"
+                                            color="gray"
+                                            outlined
+                                            size="sm"
+                                            icon="heroicon-o-printer"
+                                        >
+                                            Cetak / PDF
+                                        </x-filament::button>
                                     @else
                                         <span class="text-xs text-gray-400">-</span>
                                     @endif

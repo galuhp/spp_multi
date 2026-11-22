@@ -56,6 +56,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/panduan/unduh', [\App\Http\Controllers\PanduanController::class, 'unduh'])
         ->name('panduan.unduh');
 
+    // Cetak / Simpan PDF Invoice Tagihan Tenant
+    Route::get('/tenant-invoices/{invoice}/cetak', \App\Http\Controllers\TenantInvoicePrintController::class)
+        ->name('tenant-invoices.cetak');
+
     // Admin & Petugas (Staff) Routes
     Route::middleware('role:admin,petugas')->group(function () {
         // Data Master Siswa
