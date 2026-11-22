@@ -30,6 +30,7 @@ class SuperAdminPanelProvider extends PanelProvider
             ->path('super-admin')
             ->spa()
             ->login(Login::class)
+            ->passwordReset()
             ->font('DM Sans')
             ->favicon(asset('favicon.ico'))
             ->colors([
