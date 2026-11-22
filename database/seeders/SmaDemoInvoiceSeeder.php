@@ -34,9 +34,9 @@ class SmaDemoInvoiceSeeder extends Seeder
                 'period' => $period,
             ],
             [
-                'transaction_count' => 10,
+                'transaction_count' => 25,
                 'fee_per_transaction' => 1000,
-                'total_amount' => 10000,
+                'total_amount' => 25000,
                 'status' => 'unpaid',
                 'due_date' => now()->addDays(7)->toDateString(),
                 'paid_at' => null,
@@ -44,6 +44,6 @@ class SmaDemoInvoiceSeeder extends Seeder
             ]
         );
 
-        $this->command?->info("Berhasil membuat tagihan uji coba #{$invoice->id} (periode {$period}, Rp 10.000) untuk tenant: {$tenant->name} ({$tenant->slug}).");
+        $this->command?->info("Berhasil membuat tagihan uji coba #{$invoice->id} (periode {$period}, Rp 25.000) untuk tenant: {$tenant->name} ({$tenant->slug}).");
     }
 }
