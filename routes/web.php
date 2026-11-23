@@ -145,6 +145,10 @@ Route::post('/webhooks/doku/tenant-invoice', [\App\Http\Controllers\DokuWebhookC
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('webhooks.doku.tenant-invoice');
 
+Route::post('/webhooks/tenant-payment/{provider}/{tenant:slug}', [\App\Http\Controllers\TenantPaymentWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->name('webhooks.tenant-payment');
+
 Route::get('/register-sekolah', [\App\Http\Controllers\SchoolRegistrationController::class, 'showForm'])
     ->name('school.register.form');
 Route::post('/register-sekolah', [\App\Http\Controllers\SchoolRegistrationController::class, 'register'])

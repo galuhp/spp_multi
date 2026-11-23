@@ -65,4 +65,17 @@ class Tenant extends Model implements HasName
     {
         return (bool) data_get($this->settings, 'disable_edit_profil_sekolah', false);
     }
+
+    public function paymentGateways(): HasMany
+    {
+        return $this->hasMany(TenantPaymentGateway::class);
+    }
+
+    public function activePaymentGateway(): ?TenantPaymentGateway
+    {
+        return $this->paymentGateways()
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
+    }
 }

@@ -8,14 +8,21 @@ use App\Models\RolePermission;
 use App\Models\Siswa;
 use App\Models\SiswaSubsidi;
 use App\Models\Spp;
+use App\Models\StudentPaymentOrder;
+use App\Models\Tenant;
+use App\Models\TenantPaymentGateway;
+use App\Services\PaymentGateway\PaymentGatewayManager;
 use App\Support\Pembayaran\SubsidiSiswaService;
 use App\Support\Pembayaran\TanggunganPemerintahService;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Throwable;
 use UnitEnum;
 
 class TagihanSiswa extends Page
@@ -35,6 +42,9 @@ class TagihanSiswa extends Page
     protected string $view = 'filament.pages.tagihan-siswa';
 
     public ?int $selectedSiswaId = null;
+
+    /** @var array<int, string> */
+    public array $selectedPaymentKeys = [];
 
     public static function canAccess(): bool
     {
@@ -683,5 +693,163 @@ class TagihanSiswa extends Page
         usort($matriks, fn (array $a, array $b): int => $a['urutan'] <=> $b['urutan']);
 
         return $matriks;
+    }
+
+    public function getActiveGatewayProperty(): ?TenantPaymentGateway
+    {
+        return TenantPaymentGateway::query()
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
+    }
+
+    /**
+     * @return array<string, array{key: string, spp_id: int, label: string, bulan_dibayar: ?string, tahun_dibayar: int, nominal: int}>
+     */
+    public function getPayableItemsProperty(): array
+    {
+        $siswa = $this->siswa;
+
+        if (! $siswa) {
+            return [];
+        }
+
+        $tagihan = $this->tagihanData;
+        $items = [];
+
+        if ($siswa->spp_id) {
+            foreach ($tagihan['bulanStatus'] ?? [] as $row) {
+                $sisa = (int) ($row['sisa'] ?? 0);
+
+                if ($sisa <= 0 || ($row['ditanggung'] ?? false)) {
+                    continue;
+                }
+
+                $key = "spp:{$siswa->spp_id}:{$row['bulan']}:{$row['tahun']}";
+                $items[$key] = [
+                    'key' => $key,
+                    'spp_id' => (int) $siswa->spp_id,
+                    'label' => "SPP {$row['bulan']} {$row['tahun']}",
+                    'bulan_dibayar' => (string) $row['bulan'],
+                    'tahun_dibayar' => (int) $row['tahun'],
+                    'nominal' => $sisa,
+                ];
+            }
+        }
+
+        foreach ($tagihan['nonSppStatus'] ?? [] as $row) {
+            $sisa = (int) ($row['sisa'] ?? 0);
+            $tarif = $row['tarif'] ?? null;
+
+            if ($sisa <= 0 || ($row['ditanggung'] ?? false) || ! $tarif instanceof Spp) {
+                continue;
+            }
+
+            $bulan = $row['bulan'] ?? null;
+            $tahun = (int) ($row['tahun'] ?? $tarif->tahunMulai());
+            $key = "nonspp:{$tarif->id}:".($bulan ?? 'once').":{$tahun}";
+            $label = $tarif->nama ?: $tarif->kategori;
+
+            if ($bulan) {
+                $label .= " ({$bulan} {$tahun})";
+            }
+
+            $items[$key] = [
+                'key' => $key,
+                'spp_id' => (int) $tarif->id,
+                'label' => $label,
+                'bulan_dibayar' => $bulan ? (string) $bulan : null,
+                'tahun_dibayar' => $tahun,
+                'nominal' => $sisa,
+            ];
+        }
+
+        return $items;
+    }
+
+    public function getSelectedTotalAmountProperty(): int
+    {
+        $payable = $this->payableItems;
+        $total = 0;
+
+        foreach ($this->selectedPaymentKeys as $key) {
+            if (isset($payable[$key])) {
+                $total += (int) $payable[$key]['nominal'];
+            }
+        }
+
+        return $total;
+    }
+
+    public function paySelectedOnline(PaymentGatewayManager $manager): void
+    {
+        $siswa = $this->siswa;
+        $tenant = Filament::getTenant();
+        $gateway = $this->activeGateway;
+
+        if (! $siswa || ! $tenant instanceof Tenant || ! $gateway) {
+            Notification::make()
+                ->title('Pembayaran online belum tersedia.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $payable = $this->payableItems;
+        $selectedItems = [];
+        $totalAmount = 0;
+
+        foreach (array_unique($this->selectedPaymentKeys) as $key) {
+            if (isset($payable[$key])) {
+                $selectedItems[] = $payable[$key];
+                $totalAmount += (int) $payable[$key]['nominal'];
+            }
+        }
+
+        if ($selectedItems === [] || $totalAmount <= 0) {
+            Notification::make()
+                ->title('Pilih minimal satu tagihan yang ingin dibayar.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $order = StudentPaymentOrder::create([
+                'tenant_id' => $tenant->id,
+                'siswa_id' => $siswa->id,
+                'user_id' => auth()->id(),
+                'order_number' => sprintf('SPP-T%d-%s-%s', $tenant->id, now()->format('YmdHis'), Str::upper(Str::random(4))),
+                'provider' => $gateway->provider,
+                'total_amount' => $totalAmount,
+                'status' => StudentPaymentOrder::STATUS_PENDING,
+                'items' => $selectedItems,
+            ]);
+
+            $returnUrl = static::getUrl(tenant: $tenant);
+            $webhookUrl = route('webhooks.tenant-payment', [
+                'provider' => $gateway->provider,
+                'tenant' => $tenant->slug,
+            ]);
+
+            $checkout = $manager->driver($gateway->provider)->createCheckout($order, $gateway, $returnUrl, $webhookUrl);
+
+            $order->update([
+                'payment_url' => $checkout['payment_url'] ?? null,
+                'snap_token' => $checkout['snap_token'] ?? null,
+            ]);
+
+            if (! empty($checkout['payment_url'])) {
+                $this->redirect($checkout['payment_url'], navigate: false);
+            }
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title('Gagal membuat pembayaran online')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 }

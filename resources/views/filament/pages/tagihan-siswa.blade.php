@@ -186,6 +186,57 @@
                 </x-ui.card>
             </div>
 
+            @if($this->activeGateway && count($this->payableItems) > 0)
+                <x-filament::section>
+                    <x-slot name="heading">
+                        Pembayaran Online ({{ $this->activeGateway->providerLabel() }})
+                    </x-slot>
+                    <x-slot name="description">
+                        Centang satu atau beberapa tagihan yang ingin Anda bayar sekaligus dalam 1 transaksi checkout.
+                    </x-slot>
+
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach($this->payableItems as $item)
+                            <label
+                                wire:key="pay-item-{{ $item['key'] }}"
+                                class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm hover:border-primary-400 dark:border-white/10 dark:bg-white/5"
+                            >
+                                <span class="flex items-center gap-2.5 min-w-0">
+                                    <input
+                                        type="checkbox"
+                                        value="{{ $item['key'] }}"
+                                        wire:model.live="selectedPaymentKeys"
+                                        class="size-4 rounded accent-primary-600"
+                                    >
+                                    <span class="truncate font-medium text-slate-800 dark:text-gray-200">{{ $item['label'] }}</span>
+                                </span>
+                                <span class="shrink-0 font-semibold text-slate-900 dark:text-white tabular-nums">
+                                    Rp {{ number_format($item['nominal'], 0, ',', '.') }}
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-white/10">
+                        <div class="text-sm text-slate-600 dark:text-gray-300">
+                            Total Dipilih:
+                            <span class="text-base font-bold text-slate-900 dark:text-white tabular-nums">
+                                Rp {{ number_format($this->selectedTotalAmount, 0, ',', '.') }}
+                            </span>
+                        </div>
+                        <x-filament::button
+                            type="button"
+                            wire:click="paySelectedOnline"
+                            wire:loading.attr="disabled"
+                            :disabled="$this->selectedTotalAmount <= 0"
+                            icon="heroicon-o-credit-card"
+                        >
+                            Bayar Online ({{ $this->activeGateway->providerLabel() }})
+                        </x-filament::button>
+                    </div>
+                </x-filament::section>
+            @endif
+
             @if(($tagihan['totalTunggakanPrior'] ?? 0) > 0)
                 <div class="rounded-xl border border-rose-300 bg-rose-50/70 p-5 shadow-xs dark:border-rose-500/30 dark:bg-rose-950/30">
                     <div class="flex flex-wrap items-center justify-between gap-3">
