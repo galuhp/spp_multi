@@ -60,6 +60,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/tenant-invoices/{invoice}/cetak', \App\Http\Controllers\TenantInvoicePrintController::class)
         ->name('tenant-invoices.cetak');
 
+    // Keluar dari mode impersonate tenant kembali ke SuperAdmin
+    Route::post('/impersonate/leave', [\App\Http\Controllers\ImpersonationController::class, 'leave'])
+        ->name('impersonate.leave');
+
     // Admin & Petugas (Staff) Routes
     Route::middleware('role:admin,petugas')->group(function () {
         // Data Master Siswa

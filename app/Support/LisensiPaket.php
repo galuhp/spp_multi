@@ -3,15 +3,29 @@
 namespace App\Support;
 
 use App\Enums\AppTier;
+use App\Models\Tenant;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LisensiPaket
 {
     /**
-     * Current active application tier (Basic or Pro).
+     * Current active application tier (Basic or Pro), resolved per-tenant when available.
      */
     public static function tier(): AppTier
     {
+        $tenantId = TenantContext::id();
+
+        if ($tenantId !== null) {
+            $tenantTier = Tenant::query()
+                ->whereKey($tenantId)
+                ->first()
+                ?->configuredTier();
+
+            if ($tenantTier !== null) {
+                return AppTier::fromString($tenantTier);
+            }
+        }
+
         return AppTier::fromString((string) config('spp.tier', 'basic'));
     }
 

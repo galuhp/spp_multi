@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('impor-siswa:bersihkan-staging')->daily();
+Schedule::command('tenants:generate-invoices')->monthlyOn(1, '01:00');

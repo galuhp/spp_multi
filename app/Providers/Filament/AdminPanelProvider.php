@@ -109,6 +109,18 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::SIDEBAR_START,
                 fn (): View => view('filament.partials.sidebar-toggle-button'),
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn (): View => view('filament.partials.impersonation-banner'),
+            )
+            ->renderHook(
+                PanelsRenderHook::CONTENT_START,
+                fn (): View => view('filament.partials.tenant-invoice-grace-banner'),
+            )
+            ->renderHook(
+                PanelsRenderHook::CONTENT_START,
+                fn (): View => view('filament.partials.tenant-announcements-banner'),
+            )
             ->brandName(fn (): string => ProfilSekolah::current()->appName())
             ->brandLogo(fn (): View => view('filament.partials.brand'))
             ->brandLogoHeight('2.5rem')

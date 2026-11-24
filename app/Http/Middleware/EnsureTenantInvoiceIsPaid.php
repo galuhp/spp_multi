@@ -12,13 +12,13 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureTenantInvoiceIsPaid
 {
     /**
-     * Redirect to the tenant billing page if the tenant has unpaid invoices.
+     * Redirect to the tenant billing page if the tenant has overdue invoices.
      */
     public function handle(Request $request, Closure $next): Response
     {
         $tenant = Filament::getTenant();
 
-        if ($tenant instanceof Tenant && $tenant->hasUnpaidInvoices()) {
+        if ($tenant instanceof Tenant && $tenant->hasOverdueInvoices()) {
             $routeName = $request->route()?->getName();
 
             if (

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Exports\LaporanPembayaranExport;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\RolePermission;
@@ -12,6 +13,7 @@ use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 use UnitEnum;
 
 class LaporanPembayaran extends Page
@@ -72,6 +74,14 @@ class LaporanPembayaran extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('ekspor_excel')
+                ->label('Ekspor Excel')
+                ->icon(Heroicon::OutlinedArrowDownTray)
+                ->color('success')
+                ->action(fn () => Excel::download(
+                    new LaporanPembayaranExport($this->filteredPembayarans),
+                    'laporan-pembayaran-'.now()->format('Ymd-His').'.xlsx',
+                )),
             Action::make('cetak')
                 ->label('Cetak Laporan / PDF')
                 ->icon(Heroicon::OutlinedPrinter)

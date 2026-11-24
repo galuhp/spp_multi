@@ -2,18 +2,29 @@
 
 namespace App\Filament\SuperAdmin\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\SuperAdmin\Resources\TenantResource\Pages;
+use App\Models\LogAktivitas;
 use App\Models\Tenant;
+use App\Models\User;
+use App\Support\TenantContext;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class TenantResource extends Resource
@@ -30,6 +41,9 @@ class TenantResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
+        $defaultStartYear = now()->month >= 7 ? now()->year : now()->year - 1;
+        $defaultAcademicYear = "{$defaultStartYear}/".($defaultStartYear + 1);
+
         return $schema
             ->components([
                 TextInput::make('name')
@@ -69,6 +83,96 @@ class TenantResource extends Resource
                 Toggle::make('settings.disable_edit_profil_sekolah')
                     ->label('Nonaktifkan Edit Profil Sekolah (Disable Edit Profil)')
                     ->helperText('Jika aktif, admin sekolah ini tidak dapat mengakses/mengubah halaman Profil & Kop Sekolah.'),
+
+                Section::make('Paket & Kuota Sekolah')
+                    ->description('Atur paket fitur (Basic/Pro) dan batas kuota siswa khusus untuk sekolah ini.')
+                    ->columnSpanFull()
+                    ->columns(2)
+                    ->schema([
+                        Select::make('settings.tier')
+                            ->label('Paket Fitur (Tier)')
+                            ->options([
+                                'basic' => 'Basic',
+                                'pro' => 'Pro',
+                            ])
+                            ->placeholder('Ikuti Default Sistem')
+                            ->helperText('Kosongkan untuk mengikuti konfigurasi default aplikasi.'),
+
+                        TextInput::make('settings.max_siswa')
+                            ->label('Kuota Maksimal Siswa')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->helperText('Isi 0 atau kosongkan untuk tanpa batas.'),
+                    ]),
+
+                Section::make('Onboarding Sekolah Otomatis')
+                    ->description('Buat akun Admin Sekolah pertama dan Tahun Ajaran awal sekaligus agar sekolah langsung siap digunakan.')
+                    ->visibleOn('create')
+                    ->columnSpanFull()
+                    ->columns(2)
+                    ->schema([
+                        Toggle::make('create_initial_admin')
+                            ->label('Buat Akun Admin Sekolah Pertama')
+                            ->default(true)
+                            ->live()
+                            ->columnSpanFull(),
+
+                        TextInput::make('admin_name')
+                            ->label('Nama Admin Sekolah')
+                            ->maxLength(100)
+                            ->visible(fn (Get $get): bool => (bool) $get('create_initial_admin'))
+                            ->required(fn (Get $get): bool => (bool) $get('create_initial_admin')),
+
+                        TextInput::make('admin_username')
+                            ->label('Username Login Admin')
+                            ->maxLength(50)
+                            ->unique(User::class, 'username')
+                            ->visible(fn (Get $get): bool => (bool) $get('create_initial_admin'))
+                            ->required(fn (Get $get): bool => (bool) $get('create_initial_admin')),
+
+                        TextInput::make('admin_email')
+                            ->label('Email Admin (Opsional)')
+                            ->email()
+                            ->maxLength(100)
+                            ->unique(User::class, 'email')
+                            ->visible(fn (Get $get): bool => (bool) $get('create_initial_admin')),
+
+                        TextInput::make('admin_password')
+                            ->label('Kata Sandi Awal')
+                            ->password()
+                            ->revealable()
+                            ->minLength(8)
+                            ->maxLength(255)
+                            ->visible(fn (Get $get): bool => (bool) $get('create_initial_admin'))
+                            ->required(fn (Get $get): bool => (bool) $get('create_initial_admin')),
+
+                        Toggle::make('create_initial_tahun_ajaran')
+                            ->label('Buat Tahun Ajaran Awal Aktif')
+                            ->default(true)
+                            ->live()
+                            ->columnSpanFull(),
+
+                        TextInput::make('tahun_ajaran_nama')
+                            ->label('Nama Tahun Ajaran')
+                            ->default($defaultAcademicYear)
+                            ->maxLength(50)
+                            ->visible(fn (Get $get): bool => (bool) $get('create_initial_tahun_ajaran'))
+                            ->required(fn (Get $get): bool => (bool) $get('create_initial_tahun_ajaran')),
+
+                        DatePicker::make('tahun_ajaran_mulai')
+                            ->label('Tanggal Mulai')
+                            ->default("{$defaultStartYear}-07-01")
+                            ->visible(fn (Get $get): bool => (bool) $get('create_initial_tahun_ajaran'))
+                            ->required(fn (Get $get): bool => (bool) $get('create_initial_tahun_ajaran')),
+
+                        DatePicker::make('tahun_ajaran_selesai')
+                            ->label('Tanggal Selesai')
+                            ->default(($defaultStartYear + 1).'-06-30')
+                            ->afterOrEqual('tahun_ajaran_mulai')
+                            ->visible(fn (Get $get): bool => (bool) $get('create_initial_tahun_ajaran'))
+                            ->required(fn (Get $get): bool => (bool) $get('create_initial_tahun_ajaran')),
+                    ]),
             ]);
     }
 
@@ -107,6 +211,19 @@ class TenantResource extends Resource
                     ->label('Total Fee')
                     ->state(fn (Tenant $record): string => 'Rp ' . number_format((int) $record->fee_per_transaction * (int) $record->pembayarans_count, 0, ',', '.'))
                     ->alignEnd(),
+                TextColumn::make('tier')
+                    ->label('Paket')
+                    ->badge()
+                    ->state(fn (Tenant $record): string => match ($record->configuredTier()) {
+                        'pro' => 'Pro',
+                        'basic' => 'Basic',
+                        default => 'Default',
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'Pro' => 'primary',
+                        'Basic' => 'info',
+                        default => 'gray',
+                    }),
                 IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),
@@ -116,6 +233,69 @@ class TenantResource extends Resource
                     ->sortable(),
             ])
             ->recordActions([
+                Action::make('impersonate')
+                    ->label('Masuk sebagai Admin')
+                    ->icon(Heroicon::OutlinedArrowRightOnRectangle)
+                    ->color('warning')
+                    ->visible(fn (Tenant $record): bool => $record->is_active && $record->users()->where('is_super_admin', false)->exists())
+                    ->schema(fn (Tenant $record): array => [
+                        Select::make('user_id')
+                            ->label('Pilih Akun Sekolah')
+                            ->options(
+                                $record->users()
+                                    ->where('is_super_admin', false)
+                                    ->get()
+                                    ->mapWithKeys(fn (User $user): array => [
+                                        $user->id => "{$user->name} ({$user->username} — {$user->role->label()})",
+                                    ])
+                                    ->all()
+                            )
+                            ->default(
+                                $record->users()
+                                    ->where('is_super_admin', false)
+                                    ->wherePivot('role', UserRole::Admin->value)
+                                    ->value('users.id')
+                                ?? $record->users()
+                                    ->where('is_super_admin', false)
+                                    ->value('users.id')
+                            )
+                            ->required()
+                            ->searchable(),
+                    ])
+                    ->action(function (array $data, Tenant $record) {
+                        $superAdmin = Auth::guard('web')->user();
+
+                        if (! $superAdmin instanceof User || ! $superAdmin->isSuperAdmin()) {
+                            abort(403);
+                        }
+
+                        $targetUser = $record->users()
+                            ->where('is_super_admin', false)
+                            ->findOrFail($data['user_id']);
+
+                        $session = request()->session();
+                        $session->put('impersonator_id', $superAdmin->id);
+                        $session->put('impersonator_tenant_id', $record->id);
+                        $session->put('impersonator_return_url', static::getUrl('index'));
+
+                        try {
+                            TenantContext::set($record);
+                            LogAktivitas::catat(
+                                'tenant.impersonate',
+                                "SuperAdmin {$superAdmin->name} masuk sebagai {$targetUser->name} ({$targetUser->username})",
+                                $targetUser,
+                                ['impersonator_id' => $superAdmin->id, 'tenant_id' => $record->id],
+                            );
+                        } finally {
+                            TenantContext::clear();
+                        }
+
+                        Auth::guard('web')->login($targetUser);
+                        $session->put('password_hash_web', $targetUser->getAuthPassword());
+                        $session->regenerate();
+
+                        return redirect()->to(Filament::getPanel('admin')->getUrl($record));
+                    }),
                 EditAction::make(),
             ]);
     }

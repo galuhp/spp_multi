@@ -47,4 +47,17 @@ class TenantInvoice extends Model
     {
         return $this->status === 'paid';
     }
+
+    public function isOverdue(): bool
+    {
+        if ($this->isPaid() || $this->total_amount <= 0) {
+            return false;
+        }
+
+        if ($this->status === 'overdue') {
+            return true;
+        }
+
+        return $this->due_date !== null && $this->due_date->lt(today());
+    }
 }

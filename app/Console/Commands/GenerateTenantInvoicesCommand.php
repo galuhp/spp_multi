@@ -40,6 +40,15 @@ class GenerateTenantInvoicesCommand extends Command
         $tenants = Tenant::query()->where('is_active', true)->get();
 
         foreach ($tenants as $tenant) {
+            $existing = TenantInvoice::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('period', $period)
+                ->first();
+
+            if ($existing?->isPaid()) {
+                continue;
+            }
+
             $transactionCount = Pembayaran::withoutGlobalScopes()
                 ->where('tenant_id', $tenant->id)
                 ->whereYear('created_at', $date->year)

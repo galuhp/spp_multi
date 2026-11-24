@@ -56,6 +56,30 @@ class Tenant extends Model implements HasName
             ->exists();
     }
 
+    public function hasOverdueInvoices(): bool
+    {
+        return $this->invoices()
+            ->where('status', '!=', 'paid')
+            ->where('total_amount', '>', 0)
+            ->where(function ($query): void {
+                $query->where('status', 'overdue')
+                    ->orWhere(function ($dateQuery): void {
+                        $dateQuery->whereNotNull('due_date')
+                            ->whereDate('due_date', '<', today());
+                    });
+            })
+            ->exists();
+    }
+
+    public function nextDueUnpaidInvoice(): ?TenantInvoice
+    {
+        return $this->invoices()
+            ->where('status', '!=', 'paid')
+            ->where('total_amount', '>', 0)
+            ->orderByRaw('due_date IS NULL, due_date ASC')
+            ->first();
+    }
+
     public function isUserCreationDisabled(): bool
     {
         return (bool) data_get($this->settings, 'disable_user_creation', false);
@@ -77,5 +101,40 @@ class Tenant extends Model implements HasName
             ->where('is_active', true)
             ->orderBy('id')
             ->first();
+    }
+
+    public function announcements(): BelongsToMany
+    {
+        return $this->belongsToMany(TenantAnnouncement::class, 'tenant_announcement_tenant');
+    }
+
+    public function siswas(): HasMany
+    {
+        return $this->hasMany(Siswa::class);
+    }
+
+    public function configuredTier(): ?string
+    {
+        $tier = data_get($this->settings, 'tier');
+
+        return in_array($tier, ['basic', 'pro'], true) ? $tier : null;
+    }
+
+    public function maxSiswa(): ?int
+    {
+        $max = (int) data_get($this->settings, 'max_siswa', 0);
+
+        return $max > 0 ? $max : null;
+    }
+
+    public function canAddSiswa(): bool
+    {
+        $max = $this->maxSiswa();
+
+        if ($max === null) {
+            return true;
+        }
+
+        return $this->siswas()->withoutGlobalScopes()->where('tenant_id', $this->id)->count() < $max;
     }
 }

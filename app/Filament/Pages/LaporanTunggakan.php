@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Exports\LaporanTunggakanExport;
 use App\Models\Kelas;
 use App\Models\RolePermission;
 use App\Models\Siswa;
@@ -14,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 use UnitEnum;
 
 class LaporanTunggakan extends Page
@@ -133,6 +135,15 @@ class LaporanTunggakan extends Page
                     'mode' => 'per_kelas',
                 ], fn ($nilai): bool => filled($nilai))))
                 ->openUrlInNewTab(),
+
+            Action::make('ekspor_excel')
+                ->label('Ekspor Excel')
+                ->icon(Heroicon::OutlinedArrowDownTray)
+                ->color('success')
+                ->action(fn () => Excel::download(
+                    new LaporanTunggakanExport($this->laporan['siswa']),
+                    'laporan-tunggakan-'.now()->format('Ymd-His').'.xlsx',
+                )),
 
             Action::make('cetak')
                 ->label('Cetak Rekap Laporan')

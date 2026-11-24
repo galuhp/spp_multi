@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Exports\RekapPotensiPenerimaanExport;
 use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\RolePermission;
@@ -13,6 +14,7 @@ use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 use UnitEnum;
 
 class RekapPotensiPenerimaan extends Page
@@ -89,6 +91,14 @@ class RekapPotensiPenerimaan extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('ekspor_excel')
+                ->label('Ekspor Excel')
+                ->icon(Heroicon::OutlinedArrowDownTray)
+                ->color('success')
+                ->action(fn () => Excel::download(
+                    new RekapPotensiPenerimaanExport($this->rekap['baris']),
+                    'rekap-potensi-penerimaan-'.now()->format('Ymd-His').'.xlsx',
+                )),
             Action::make('cetak')
                 ->label('Cetak Laporan / PDF')
                 ->icon(Heroicon::OutlinedPrinter)
