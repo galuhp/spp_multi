@@ -12,16 +12,21 @@ use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Collection;
 use Throwable;
+use UnitEnum;
 
 class TenantBilling extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
+
+    protected static UnitEnum|string|null $navigationGroup = 'Pengaturan & Akses';
 
     protected static ?string $navigationLabel = 'Tagihan & Pembayaran';
 
     protected static ?string $title = 'Tagihan & Pembayaran Sekolah';
 
     protected static ?string $slug = 'tenant-billing';
+
+    protected static ?int $navigationSort = 99;
 
     protected string $view = 'filament.pages.tenant-billing';
 
