@@ -20,9 +20,9 @@ class TenantBilling extends Page
 
     protected static UnitEnum|string|null $navigationGroup = 'Pengaturan & Akses';
 
-    protected static ?string $navigationLabel = 'Tagihan & Pembayaran';
+    protected static ?string $navigationLabel = 'Tagihan Pintarr';
 
-    protected static ?string $title = 'Tagihan & Pembayaran Sekolah';
+    protected static ?string $title = 'Tagihan Pintarr';
 
     protected static ?string $slug = 'tenant-billing';
 
